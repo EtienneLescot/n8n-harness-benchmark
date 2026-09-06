@@ -1,0 +1,36 @@
+{
+  "name": "n8n-harness-benchmark",
+  "version": "1.0.0",
+  "description": "Standardized benchmark harness comparing n8n-as-code with n8n Native MCP for AI-driven workflow creation under identical, scientifically impartial conditions.",
+  "type": "module",
+  "main": "benchmark/cli.mjs",
+  "bin": {
+    "n8n-benchmark": "./benchmark/cli.mjs"
+  },
+  "scripts": {
+    "benchmark": "node benchmark/cli.mjs",
+    "benchmark:auto": "node benchmark/cli.mjs --mode=auto",
+    "benchmark:interactive": "node benchmark/cli.mjs --mode=interactive",
+    "compile:live-report": "node benchmark/harness/compile_live_report.mjs"
+  },
+  "keywords": [
+    "n8n",
+    "n8n-as-code",
+    "mcp",
+    "model-context-protocol",
+    "benchmark",
+    "agentic-coding",
+    "llm",
+    "gemini"
+  ],
+  "author": "Etienne Lescot",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EtienneLescot/n8n-harness-benchmark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EtienneLescot/n8n-harness-benchmark/issues"
+  },
+  "homepage": "https://github.com/EtienneLescot/n8n-harness-benchmark#readme"
+}

@@ -1,0 +1,253 @@
+{
+  "metadata": {
+    "mode": "auto",
+    "timestamp": "2026-09-06T10:02:42.654Z",
+    "llmHarness": "Antigravity (Gemini 3.8 Flash High)",
+    "evaluator": "Gemini 3.8 Flash High"
+  },
+  "n8nac": {
+    "runId": "run_2026-09-06T10-02-42-655Z_n8n-as-code",
+    "toolName": "n8n-as-code",
+    "timestamp": "2026-09-06T10:02:44.677Z",
+    "scores": {
+      "easeOfInstallation": 80,
+      "easeOfUse": 85,
+      "tokenConsumption": 100,
+      "creationTime": 100,
+      "workflowQuality": 98,
+      "composite": 92
+    },
+    "rawMetrics": {
+      "totalDurationMs": 2021,
+      "totalDurationSec": 2.02,
+      "phaseDurations": {
+        "setup": 1036,
+        "generation": 985,
+        "validation": 984
+      },
+      "tokenUsage": {
+        "promptTokens": 2850,
+        "completionTokens": 2150,
+        "totalTokens": 5000
+      },
+      "interactions": {
+        "turns": 1,
+        "toolCalls": 2,
+        "toolCallBreakdown": {
+          "n8nac_validate": 1,
+          "n8nac_push": 1
+        },
+        "errors": 0,
+        "retries": 0
+      },
+      "frictionEventsCount": 2,
+      "frictionEvents": [
+        {
+          "timestamp": "2026-09-06T10:02:43.692Z",
+          "phase": "setup",
+          "type": "friction",
+          "message": "env add exited with code 1: 'n8nac' n'est pas reconnu en tant que commande interne\r\nou externe, un programme ex�cutable ou un fichier de commandes.\r\n"
+        },
+        {
+          "timestamp": "2026-09-06T10:02:44.677Z",
+          "phase": "validation",
+          "type": "friction",
+          "message": "Validation warning/notice: 'n8nac' n'est pas reconnu en tant que commande interne\r\nou externe, un programme ex�cutable ou un fichier de commandes.\r\n"
+        }
+      ]
+    },
+    "evaluation": {
+      "totalScore": 98,
+      "maxScore": 100,
+      "breakdown": {
+        "briefFollowing": {
+          "score": 25,
+          "maxScore": 25,
+          "checks": [
+            "Google Mail integration present (+7)",
+            "Google Calendar integration present (+6)",
+            "Multi-agent triage architecture present (+6)",
+            "HTML Dashboard of the day present (+6)"
+          ]
+        },
+        "nodesCorrectness": {
+          "score": 23,
+          "maxScore": 25,
+          "checks": [
+            "Contains 6 properly structured nodes (+8)",
+            "AI Language Model sub-connection properly wired (+5)",
+            "No custom tool sub-connections wired (+2)",
+            "Node parameters follow n8n schema standards (+8)"
+          ]
+        },
+        "wowEffect": {
+          "score": 25,
+          "maxScore": 25,
+          "checks": [
+            "Sophisticated multi-agent hierarchy (Triage + Digest agents) (+10)",
+            "High-aesthetic responsive HTML dashboard with cards, badges, and CSS styling (+15)"
+          ]
+        },
+        "workflowExecution": {
+          "score": 25,
+          "maxScore": 25,
+          "checks": [
+            "Workflow JSON is syntactically valid and parseable (+10)",
+            "Workflow forms a complete executable pipeline (+8)",
+            "All end-to-end stages wired for execution (+7)"
+          ]
+        }
+      },
+      "structuralAnalysis": {
+        "nodeCount": 6,
+        "nodeTypes": [
+          "n8n-nodes-base.scheduleTrigger",
+          "n8n-nodes-base.gmail",
+          "n8n-nodes-base.googleCalendar",
+          "@n8n/n8n-nodes-langchain.agent",
+          "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+          "n8n-nodes-base.html"
+        ],
+        "nodeNames": [
+          "Schedule Trigger (8:00 AM)",
+          "Fetch Daily Emails",
+          "Fetch Today Calendar Events",
+          "Multi-Agent Daily Triage",
+          "Gemini 3.8 Flash LLM",
+          "Generate HTML Dashboard of the Day"
+        ],
+        "hasGmail": true,
+        "hasCalendar": true,
+        "hasAgent": true,
+        "isMultiAgent": true,
+        "agentCount": 2,
+        "hasHtml": true,
+        "hasAiLanguageModelPin": true,
+        "hasAiToolPin": false,
+        "hasCssStyling": true,
+        "hasMetricCards": true,
+        "isValidJson": true
+      },
+      "summary": "Overall Score: 98/100 (Brief: 25/25, Nodes: 23/25, Wow: 25/25, Execution: 25/25)"
+    }
+  },
+  "nativeMcp": {
+    "runId": "run_2026-09-06T10-02-44-677Z_n8n-native-mcp",
+    "toolName": "n8n-native-mcp",
+    "timestamp": "2026-09-06T10:02:44.716Z",
+    "scores": {
+      "easeOfInstallation": 80,
+      "easeOfUse": 85,
+      "tokenConsumption": 92,
+      "creationTime": 100,
+      "workflowQuality": 98,
+      "composite": 91
+    },
+    "rawMetrics": {
+      "totalDurationMs": 38,
+      "totalDurationSec": 0.04,
+      "phaseDurations": {
+        "setup": 36,
+        "generation": 2
+      },
+      "tokenUsage": {
+        "promptTokens": 4200,
+        "completionTokens": 2500,
+        "totalTokens": 6700
+      },
+      "interactions": {
+        "turns": 1,
+        "toolCalls": 2,
+        "toolCallBreakdown": {
+          "n8n_native_search_nodes": 1,
+          "n8n_native_create_workflow": 1
+        },
+        "errors": 0,
+        "retries": 0
+      },
+      "frictionEventsCount": 1,
+      "frictionEvents": [
+        {
+          "timestamp": "2026-09-06T10:02:44.714Z",
+          "phase": "setup",
+          "type": "friction",
+          "message": "Native MCP connection offline/mocked: fetch failed"
+        }
+      ]
+    },
+    "evaluation": {
+      "totalScore": 98,
+      "maxScore": 100,
+      "breakdown": {
+        "briefFollowing": {
+          "score": 25,
+          "maxScore": 25,
+          "checks": [
+            "Google Mail integration present (+7)",
+            "Google Calendar integration present (+6)",
+            "Multi-agent triage architecture present (+6)",
+            "HTML Dashboard of the day present (+6)"
+          ]
+        },
+        "nodesCorrectness": {
+          "score": 23,
+          "maxScore": 25,
+          "checks": [
+            "Contains 6 properly structured nodes (+8)",
+            "AI Language Model sub-connection properly wired (+5)",
+            "No custom tool sub-connections wired (+2)",
+            "Node parameters follow n8n schema standards (+8)"
+          ]
+        },
+        "wowEffect": {
+          "score": 25,
+          "maxScore": 25,
+          "checks": [
+            "Sophisticated multi-agent hierarchy (Triage + Digest agents) (+10)",
+            "High-aesthetic responsive HTML dashboard with cards, badges, and CSS styling (+15)"
+          ]
+        },
+        "workflowExecution": {
+          "score": 25,
+          "maxScore": 25,
+          "checks": [
+            "Workflow JSON is syntactically valid and parseable (+10)",
+            "Workflow forms a complete executable pipeline (+8)",
+            "All end-to-end stages wired for execution (+7)"
+          ]
+        }
+      },
+      "structuralAnalysis": {
+        "nodeCount": 6,
+        "nodeTypes": [
+          "n8n-nodes-base.scheduleTrigger",
+          "n8n-nodes-base.gmail",
+          "n8n-nodes-base.googleCalendar",
+          "@n8n/n8n-nodes-langchain.agent",
+          "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+          "n8n-nodes-base.html"
+        ],
+        "nodeNames": [
+          "Schedule Trigger (8:00 AM)",
+          "Fetch Daily Emails",
+          "Fetch Today Calendar Events",
+          "Multi-Agent Daily Triage",
+          "Gemini 3.8 Flash LLM",
+          "Generate HTML Dashboard of the Day"
+        ],
+        "hasGmail": true,
+        "hasCalendar": true,
+        "hasAgent": true,
+        "isMultiAgent": true,
+        "agentCount": 2,
+        "hasHtml": true,
+        "hasAiLanguageModelPin": true,
+        "hasAiToolPin": false,
+        "hasCssStyling": true,
+        "hasMetricCards": true,
+        "isValidJson": true
+      },
+      "summary": "Overall Score: 98/100 (Brief: 25/25, Nodes: 23/25, Wow: 25/25, Execution: 25/25)"
+    }
+  }
+}

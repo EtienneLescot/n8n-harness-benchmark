@@ -1,0 +1,369 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+/**
+ * Generates an interactive, visually stunning HTML Dashboard (Generative UI)
+ * showcasing the benchmark comparison results with side-by-side charts, scores, and node breakdowns.
+ */
+export class DashboardReporter {
+  static generateHtml(results) {
+    const { n8nac, nativeMcp, metadata = {} } = results;
+    const n8nacScore = n8nac?.scores || {};
+    const mcpScore = nativeMcp?.scores || {};
+
+    const winner = (n8nacScore.composite || 0) >= (mcpScore.composite || 0)
+      ? 'n8n-as-code'
+      : 'n8n Native MCP';
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benchmark: n8n-as-code vs. n8n Native MCP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent-n8nac: #3b82f6;
+      --accent-mcp: #ec4899;
+      --accent-win: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      padding: 32px 20px;
+      line-height: 1.5;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #1e293b;
+      color: #38bdf8;
+      margin-bottom: 12px;
+      border: 1px solid #334155;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .prompt-box {
+      background: #1e293b;
+      border-left: 4px solid var(--accent-n8nac);
+      padding: 12px 18px;
+      border-radius: 6px;
+      margin: 20px auto;
+      max-width: 800px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      text-align: left;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    .score-display {
+      font-size: 2.75rem;
+      font-weight: 800;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .score-n8nac { color: var(--accent-n8nac); }
+    .score-mcp { color: var(--accent-mcp); }
+    .score-max { font-size: 1rem; color: var(--text-muted); }
+    .table-container {
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: #0f172a;
+    }
+    td { font-size: 0.9rem; }
+    .winner-tag {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-win);
+      border: 1px solid var(--accent-win);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+    .chart-container {
+      height: 320px;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Standardized Benchmark Harness</div>
+      <h1>n8n-as-code vs. n8n Native MCP</h1>
+      <p style="color: var(--text-muted);">Antigravity + Gemini 3.8 Flash High Evaluation</p>
+      <div class="prompt-box">
+        <strong>Tested Prompt:</strong> "build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"
+      </div>
+    </header>
+
+    <!-- Top Score Overview -->
+    <div class="grid-2">
+      <div class="card" style="border-top: 4px solid var(--accent-n8nac);">
+        <div class="card-title">n8n-as-code Composite</div>
+        <div class="score-display">
+          <span class="score-n8nac">${n8nacScore.composite ?? 0}</span>
+          <span class="score-max">/ 100</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
+          Local GitOps authoring, grounded schema linter, instant offline feedback
+        </p>
+      </div>
+
+      <div class="card" style="border-top: 4px solid var(--accent-mcp);">
+        <div class="card-title">n8n Native MCP Composite</div>
+        <div class="score-display">
+          <span class="score-mcp">${mcpScore.composite ?? 0}</span>
+          <span class="score-max">/ 100</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
+          Remote instance-level JSON-RPC protocol, direct live mutation
+        </p>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Metric Breakdown Radar</div>
+        <div class="chart-container">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Resource Consumption Comparison</div>
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics Table -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-title">Detailed Metric Comparison</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Weight</th>
+              <th>n8n-as-code</th>
+              <th>n8n Native MCP</th>
+              <th>Winner</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Ease of Installation</strong></td>
+              <td>20%</td>
+              <td>${n8nacScore.easeOfInstallation ?? 0}/100</td>
+              <td>${mcpScore.easeOfInstallation ?? 0}/100</td>
+              <td><span class="winner-tag">${(n8nacScore.easeOfInstallation || 0) >= (mcpScore.easeOfInstallation || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>2. Ease of Use</strong></td>
+              <td>20%</td>
+              <td>${n8nacScore.easeOfUse ?? 0}/100</td>
+              <td>${mcpScore.easeOfUse ?? 0}/100</td>
+              <td><span class="winner-tag">${(n8nacScore.easeOfUse || 0) >= (mcpScore.easeOfUse || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>3. Token Consumption</strong></td>
+              <td>15%</td>
+              <td>${n8nacScore.tokenConsumption ?? 0}/100 (${n8nac?.rawMetrics?.tokenUsage?.totalTokens ?? 0} tokens)</td>
+              <td>${mcpScore.tokenConsumption ?? 0}/100 (${nativeMcp?.rawMetrics?.tokenUsage?.totalTokens ?? 0} tokens)</td>
+              <td><span class="winner-tag">${(n8nacScore.tokenConsumption || 0) >= (mcpScore.tokenConsumption || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>4. Creation Time</strong></td>
+              <td>15%</td>
+              <td>${n8nacScore.creationTime ?? 0}/100 (${n8nac?.rawMetrics?.totalDurationSec ?? 0}s)</td>
+              <td>${mcpScore.creationTime ?? 0}/100 (${nativeMcp?.rawMetrics?.totalDurationSec ?? 0}s)</td>
+              <td><span class="winner-tag">${(n8nacScore.creationTime || 0) >= (mcpScore.creationTime || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>5. Workflow Quality</strong></td>
+              <td>30%</td>
+              <td>${n8nacScore.workflowQuality ?? 0}/100</td>
+              <td>${mcpScore.workflowQuality ?? 0}/100</td>
+              <td><span class="winner-tag">${(n8nacScore.workflowQuality || 0) >= (mcpScore.workflowQuality || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Radar Chart
+    const radarCtx = document.getElementById('radarChart').getContext('2d');
+    new Chart(radarCtx, {
+      type: 'radar',
+      data: {
+        labels: ['Ease of Install', 'Ease of Use', 'Tokens', 'Creation Time', 'Workflow Quality'],
+        datasets: [
+          {
+            label: 'n8n-as-code',
+            data: [
+              ${n8nacScore.easeOfInstallation ?? 0},
+              ${n8nacScore.easeOfUse ?? 0},
+              ${n8nacScore.tokenConsumption ?? 0},
+              ${n8nacScore.creationTime ?? 0},
+              ${n8nacScore.workflowQuality ?? 0}
+            ],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            pointBackgroundColor: '#3b82f6',
+          },
+          {
+            label: 'n8n Native MCP',
+            data: [
+              ${mcpScore.easeOfInstallation ?? 0},
+              ${mcpScore.easeOfUse ?? 0},
+              ${mcpScore.tokenConsumption ?? 0},
+              ${mcpScore.creationTime ?? 0},
+              ${mcpScore.workflowQuality ?? 0}
+            ],
+            borderColor: '#ec4899',
+            backgroundColor: 'rgba(236, 72, 153, 0.2)',
+            pointBackgroundColor: '#ec4899',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { color: '#9ca3af', backdropColor: 'transparent' },
+            grid: { color: '#1f2937' },
+            pointLabels: { color: '#cbd5e1', font: { size: 11, family: 'Inter' } }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#f9fafb' } }
+        }
+      }
+    });
+
+    // Bar Chart
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Total Tokens (/100)', 'Total Duration (s)'],
+        datasets: [
+          {
+            label: 'n8n-as-code',
+            data: [
+              Math.round((${n8nac?.rawMetrics?.tokenUsage?.totalTokens ?? 0}) / 100),
+              ${n8nac?.rawMetrics?.totalDurationSec ?? 0}
+            ],
+            backgroundColor: '#3b82f6',
+          },
+          {
+            label: 'n8n Native MCP',
+            data: [
+              Math.round((${nativeMcp?.rawMetrics?.tokenUsage?.totalTokens ?? 0}) / 100),
+              ${nativeMcp?.rawMetrics?.totalDurationSec ?? 0}
+            ],
+            backgroundColor: '#ec4899',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
+          x: { grid: { color: '#1f2937' }, ticks: { color: '#cbd5e1' } }
+        },
+        plugins: {
+          legend: { labels: { color: '#f9fafb' } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>`;
+  }
+
+  static writeReport(results, outputPath = './benchmark/reports/benchmark_dashboard.html') {
+    const content = this.generateHtml(results);
+    const resolvedPath = path.resolve(outputPath);
+    const parentDir = path.dirname(resolvedPath);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+    fs.writeFileSync(resolvedPath, content, 'utf8');
+    return resolvedPath;
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "name": "n8n-as-code-vs-native-mcp-benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark harness comparing n8n-as-code and n8n Native MCP for AI-driven workflow generation",
+  "prompt": "build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day",
+  "targetTools": ["n8n-as-code", "native-mcp"],
+  "model": {
+    "provider": "google",
+    "modelName": "gemini-2.5-flash",
+    "temperature": 0.2
+  },
+  "metrics": [
+    {
+      "id": "ease_of_installation",
+      "name": "Ease of Installation",
+      "weight": 0.2,
+      "description": "Documentation clarity, setup steps, prerequisite complexity, setup time, friction events"
+    },
+    {
+      "id": "ease_of_use",
+      "name": "Ease of Use",
+      "weight": 0.2,
+      "description": "Ergonomics, interaction turns, schema feedback loop, error recovery, cognitive load"
+    },
+    {
+      "id": "token_consumption",
+      "name": "Token Consumption",
+      "weight": 0.15,
+      "description": "Input prompt tokens, output tokens, total tokens, tool call overhead"
+    },
+    {
+      "id": "creation_time",
+      "name": "Time to Create Workflow",
+      "weight": 0.15,
+      "description": "Wall-clock time from initial prompt to verified workflow deployed"
+    },
+    {
+      "id": "workflow_quality",
+      "name": "Quality of the Workflow",
+      "weight": 0.3,
+      "subcriteria": [
+        { "id": "brief_following", "name": "Initial Brief Following", "maxScore": 25 },
+        { "id": "nodes_correctness", "name": "Nodes Correctness & Wiring", "maxScore": 25 },
+        { "id": "wow_effect", "name": "Wow Effect & Aesthetics", "maxScore": 25 },
+        { "id": "workflow_execution", "name": "Workflow Execution & Dry-Run", "maxScore": 25 }
+      ]
+    }
+  ],
+  "requirements": {
+    "expectedNodeTypes": [
+      "n8n-nodes-base.gmail",
+      "n8n-nodes-base.googleCalendar",
+      "@n8n/n8n-nodes-langchain.agent",
+      "n8n-nodes-base.html"
+    ],
+    "expectedCapabilities": [
+      "Daily trigger (schedule or manual)",
+      "Gmail message retrieval / search",
+      "Google Calendar event retrieval",
+      "Multi-agent triage (classification, prioritization, conflict detection)",
+      "HTML summary dashboard generation"
+    ]
+  },
+  "sandbox": {
+    "baseDir": "./benchmark/sandboxes",
+    "cleanUpOnFinish": false,
+    "tagPrefix": "benchmark"
+  }
+}
