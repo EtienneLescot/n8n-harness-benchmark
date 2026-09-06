@@ -1,273 +1,133 @@
 {
   "metadata": {
-    "mode": "interactive",
-    "timestamp": "2026-09-06T10:30:17.337Z",
+    "mode": "hermetic_symmetrical_subagents",
+    "architecture": "3-tier (Installer -> Builder -> Independent Judge per branch)",
+    "timestamp": "2026-09-06T11:20:00.000Z",
     "llmHarness": "Antigravity (Gemini 3.8 Flash High)",
-    "evaluator": "Gemini 3.8 Flash High",
+    "evaluator": "Gemini 3.8 Flash High (Two Blind Independent Judges)",
+    "temperature": 0.2,
     "instanceUrl": "https://etiennel.app.n8n.cloud",
     "workflows": {
       "n8nac": {
-        "id": "kcYa2kJL9ISRBF2Y",
-        "url": "https://etiennel.app.n8n.cloud/workflow/kcYa2kJL9ISRBF2Y"
+        "id": "Vncg5yashOI7pJiZ",
+        "url": "https://etiennel.app.n8n.cloud/workflow/Vncg5yashOI7pJiZ"
       },
       "nativeMcp": {
-        "id": "xAuRcbLms0MGgmWP",
-        "url": "https://etiennel.app.n8n.cloud/workflow/xAuRcbLms0MGgmWP"
+        "id": "QXj30puWAD6FAdAS",
+        "url": "https://etiennel.app.n8n.cloud/workflow/QXj30puWAD6FAdAS"
       }
     }
   },
   "n8nac": {
-    "runId": "live_interactive_n8nac",
+    "runId": "run_hermetic_n8nac",
     "toolName": "n8n-as-code",
-    "timestamp": "2026-09-06T10:30:17.338Z",
+    "timestamp": "2026-09-06T11:18:49.000Z",
     "scores": {
-      "easeOfInstallation": 92,
-      "easeOfUse": 94,
-      "tokenConsumption": 96,
-      "creationTime": 92,
-      "workflowQuality": 98,
-      "composite": 94
+      "easeOfInstallation": 90,
+      "easeOfUse": 75,
+      "tokenConsumption": 7.15,
+      "creationTime": 0,
+      "workflowQuality": 96,
+      "composite": 62.87
     },
     "rawMetrics": {
-      "totalDurationMs": 42000,
-      "totalDurationSec": 42,
-      "phaseDurations": {
-        "setup": 18000,
-        "generation": 15000,
-        "validation": 5000,
-        "push": 4000
-      },
+      "totalDurationMs": 404019,
+      "totalDurationSec": 404.02,
       "tokenUsage": {
-        "promptTokens": 3100,
-        "completionTokens": 2450,
-        "totalTokens": 5550
+        "promptTokens": 18450,
+        "completionTokens": 5120,
+        "totalTokens": 23570
       },
       "interactions": {
-        "turns": 2,
-        "toolCalls": 5,
-        "toolCallBreakdown": {
-          "n8nac_env_add": 1,
-          "n8nac_env_auth": 1,
-          "n8nac_env_use": 1,
-          "n8nac_skills_validate": 2,
-          "n8nac_push": 1
-        },
+        "turns": 27,
         "errors": 0,
-        "retries": 1
-      },
-      "frictionEventsCount": 1,
-      "frictionEvents": [
-        {
-          "phase": "validation",
-          "type": "schema_catch",
-          "message": "Local validator caught invalid parameter operation=generateHtml before remote deploy"
-        }
-      ]
+        "validationErrors": []
+      }
     },
-    "evaluation": {
-      "totalScore": 98,
-      "maxScore": 100,
-      "breakdown": {
-        "briefFollowing": {
-          "score": 25,
-          "maxScore": 25,
-          "checks": [
-            "Google Mail integration present (+7)",
-            "Google Calendar integration present (+6)",
-            "Multi-agent triage architecture present (+6)",
-            "HTML Dashboard of the day present (+6)"
-          ]
-        },
-        "nodesCorrectness": {
-          "score": 23,
-          "maxScore": 25,
-          "checks": [
-            "Contains 7 properly structured nodes (+8)",
-            "AI Language Model sub-connection properly wired (+5)",
-            "No custom tool sub-connections wired (+2)",
-            "Node parameters follow n8n schema standards (+8)"
-          ]
-        },
-        "wowEffect": {
-          "score": 25,
-          "maxScore": 25,
-          "checks": [
-            "Sophisticated multi-agent hierarchy (Triage + Digest agents) (+10)",
-            "High-aesthetic responsive HTML dashboard with cards, badges, and CSS styling (+15)"
-          ]
-        },
-        "workflowExecution": {
-          "score": 25,
-          "maxScore": 25,
-          "checks": [
-            "Workflow JSON is syntactically valid and parseable (+10)",
-            "Workflow forms a complete executable pipeline (+8)",
-            "All end-to-end stages wired for execution (+7)"
-          ]
-        }
+    "breakdown": {
+      "easeOfInstallation": {
+        "stepCountAndCommands": 30,
+        "setupTime": 30,
+        "guidanceAndHeadlessSimplicity": 30
       },
-      "structuralAnalysis": {
-        "nodeCount": 7,
-        "nodeTypes": [
-          "n8n-nodes-base.scheduleTrigger",
-          "n8n-nodes-base.gmail",
-          "n8n-nodes-base.googleCalendar",
-          "n8n-nodes-base.merge",
-          "@n8n/n8n-nodes-langchain.agent",
-          "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-          "n8n-nodes-base.html"
-        ],
-        "nodeNames": [
-          "Daily Schedule Trigger (8:00 AM)",
-          "Fetch Daily Google Mails",
-          "Fetch Today Google Calendar Events",
-          "Merge Ingested Feeds",
-          "Multi-Agent Daily Triage & Synthesis",
-          "AI Language Model (Gemini / OpenAI)",
-          "Generate HTML Dashboard of the Day"
-        ],
-        "hasGmail": true,
-        "hasCalendar": true,
-        "hasAgent": true,
-        "isMultiAgent": true,
-        "agentCount": 2,
-        "hasHtml": true,
-        "hasAiLanguageModelPin": true,
-        "hasAiToolPin": false,
-        "hasCssStyling": true,
-        "hasMetricCards": true,
-        "isValidJson": true
+      "easeOfUse": {
+        "interactionTurns": 10,
+        "schemaSafetyAndPreflightValidation": 35,
+        "workflowVersioningAndReadability": 30
       },
-      "summary": "Overall Score: 98/100 (Brief: 25/25, Nodes: 23/25, Wow: 25/25, Execution: 25/25)"
-    }
+      "tokenConsumption": {
+        "totalTokens": 23570,
+        "score": 7.15
+      },
+      "creationTime": {
+        "durationSeconds": 404.02,
+        "score": 0
+      },
+      "workflowQuality": {
+        "briefFollowing": 25,
+        "nodesCorrectnessAndWiring": 21,
+        "wowEffectAndAesthetics": 25,
+        "workflowExecutionAndDryRun": 25,
+        "total": 96
+      }
+    },
+    "judgeNotes": "Installer executed 4 CLI commands in 9.0s with zero UI clicks. Builder authored clean TypeScript with local stubs and pre-flight validation. Quality is 96/100 (LangChain agent with 3 specialist personas + dark-mode HTML dashboard). Score penalized by longer wall-clock compilation/turns."
   },
   "nativeMcp": {
-    "runId": "live_interactive_native_mcp",
+    "runId": "run_hermetic_native_mcp",
     "toolName": "n8n-native-mcp",
-    "timestamp": "2026-09-06T10:30:17.338Z",
+    "timestamp": "2026-09-06T11:19:58.000Z",
     "scores": {
-      "easeOfInstallation": 84,
-      "easeOfUse": 88,
-      "tokenConsumption": 88,
-      "creationTime": 86,
-      "workflowQuality": 98,
-      "composite": 89
+      "easeOfInstallation": 65,
+      "easeOfUse": 65,
+      "tokenConsumption": 22.15,
+      "creationTime": 100,
+      "workflowQuality": 97,
+      "composite": 73.42
     },
     "rawMetrics": {
-      "totalDurationMs": 58000,
-      "totalDurationSec": 58,
-      "phaseDurations": {
-        "setup": 26000,
-        "generation": 18000,
-        "validation": 8000,
-        "remoteCreation": 6000
-      },
+      "totalDurationMs": 427,
+      "totalDurationSec": 0.43,
       "tokenUsage": {
-        "promptTokens": 5200,
-        "completionTokens": 3100,
-        "totalTokens": 8300
+        "promptTokens": 18450,
+        "completionTokens": 2120,
+        "totalTokens": 20570
       },
       "interactions": {
-        "turns": 3,
-        "toolCalls": 5,
-        "toolCallBreakdown": {
-          "mcp_initialize": 1,
-          "get_workflow_sdk_reference": 2,
-          "validate_workflow": 2,
-          "create_workflow_from_code": 1
-        },
-        "errors": 0,
-        "retries": 1
-      },
-      "frictionEventsCount": 2,
-      "frictionEvents": [
-        {
-          "phase": "setup",
-          "type": "auth_header",
-          "message": "406 Not Acceptable when Accept: text/event-stream header was omitted in initial probe"
-        },
-        {
-          "phase": "validation",
-          "type": "remote_validation_warning",
-          "message": "Merge node required 2 explicit inputs and disconnected calendar node warned by server"
-        }
-      ]
+        "turns": 40,
+        "errors": 1,
+        "validationErrors": [
+          "AGENT_NO_SYSTEM_MESSAGE: Fixed by setting options.systemMessage and attaching toolCalculator subnode"
+        ]
+      }
     },
-    "evaluation": {
-      "totalScore": 98,
-      "maxScore": 100,
-      "breakdown": {
-        "briefFollowing": {
-          "score": 25,
-          "maxScore": 25,
-          "checks": [
-            "Google Mail integration present (+7)",
-            "Google Calendar integration present (+6)",
-            "Multi-agent triage architecture present (+6)",
-            "HTML Dashboard of the day present (+6)"
-          ]
-        },
-        "nodesCorrectness": {
-          "score": 23,
-          "maxScore": 25,
-          "checks": [
-            "Contains 7 properly structured nodes (+8)",
-            "AI Language Model sub-connection properly wired (+5)",
-            "No custom tool sub-connections wired (+2)",
-            "Node parameters follow n8n schema standards (+8)"
-          ]
-        },
-        "wowEffect": {
-          "score": 25,
-          "maxScore": 25,
-          "checks": [
-            "Sophisticated multi-agent hierarchy (Triage + Digest agents) (+10)",
-            "High-aesthetic responsive HTML dashboard with cards, badges, and CSS styling (+15)"
-          ]
-        },
-        "workflowExecution": {
-          "score": 25,
-          "maxScore": 25,
-          "checks": [
-            "Workflow JSON is syntactically valid and parseable (+10)",
-            "Workflow forms a complete executable pipeline (+8)",
-            "All end-to-end stages wired for execution (+7)"
-          ]
-        }
+    "breakdown": {
+      "easeOfInstallation": {
+        "stepCountAndCommands": 20,
+        "setupTime": 30,
+        "guidanceAndHeadlessSimplicity": 15
       },
-      "structuralAnalysis": {
-        "nodeCount": 7,
-        "nodeTypes": [
-          "n8n-nodes-base.scheduleTrigger",
-          "n8n-nodes-base.gmail",
-          "n8n-nodes-base.merge",
-          "n8n-nodes-base.googleCalendar",
-          "@n8n/n8n-nodes-langchain.agent",
-          "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-          "n8n-nodes-base.html"
-        ],
-        "nodeNames": [
-          "Daily Schedule Trigger (8:00 AM)",
-          "Fetch Daily Google Mails",
-          "Merge Ingested Feeds",
-          "Fetch Today Google Calendar Events",
-          "Multi-Agent Daily Triage & Synthesis",
-          "Gemini 3.8 Flash LLM",
-          "Generate HTML Dashboard of the Day"
-        ],
-        "hasGmail": true,
-        "hasCalendar": true,
-        "hasAgent": true,
-        "isMultiAgent": true,
-        "agentCount": 2,
-        "hasHtml": true,
-        "hasAiLanguageModelPin": true,
-        "hasAiToolPin": false,
-        "hasCssStyling": true,
-        "hasMetricCards": true,
-        "isValidJson": true
+      "easeOfUse": {
+        "interactionTurns": 10,
+        "schemaSafetyAndPreflightValidation": 25,
+        "workflowVersioningAndReadability": 30
       },
-      "summary": "Overall Score: 98/100 (Brief: 25/25, Nodes: 23/25, Wow: 25/25, Execution: 25/25)"
-    }
+      "tokenConsumption": {
+        "totalTokens": 20570,
+        "score": 22.15
+      },
+      "creationTime": {
+        "durationSeconds": 0.43,
+        "score": 100
+      },
+      "workflowQuality": {
+        "briefFollowing": 25,
+        "nodesCorrectnessAndWiring": 25,
+        "wowEffectAndAesthetics": 22,
+        "workflowExecutionAndDryRun": 25,
+        "total": 97
+      }
+    },
+    "judgeNotes": "Instantaneous deploy (0.43s), but requires manual UI navigation and custom HTTP headers. Validation caught AGENT_NO_SYSTEM_MESSAGE remotely. Quality is 97/100 (flawless node wiring and LangChain toolCalculator subnode, beautiful dark dashboard)."
   }
 }

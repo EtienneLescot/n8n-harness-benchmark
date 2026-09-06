@@ -90,18 +90,22 @@ To achieve absolute scientific neutrality and eliminate both self-evaluation and
 
 ---
 
-## 🏆 Live Benchmark Results
+## 🏆 Live Hermetic Benchmark Results (Double Blind Judges)
 
-Tested and validated on a live n8n instance:
+Tested live on `https://etiennel.app.n8n.cloud` with strictly separated Installers, Builders, and independent Judges (`Judge A` and `Judge B`):
 
 | Evaluated Metric | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Ease of Installation** | 20% | **92 / 100** | **84 / 100** | **+8 pts n8n-as-code** |
-| **2. Ease of Use & Feedback Loop** | 20% | **94 / 100** | **88 / 100** | **+6 pts n8n-as-code** |
-| **3. Token Consumption** | 15% | **96 / 100** *(5,550 tokens)* | **88 / 100** *(8,300 tokens)* | **+8 pts n8n-as-code** |
-| **4. Creation Time** | 15% | **92 / 100** *(42s)* | **86 / 100** *(58s)* | **+6 pts n8n-as-code** |
-| **5. Workflow Quality** | 30% | **98 / 100** | **98 / 100** | **Tie** |
-| **Overall Composite Score** | **100%** | **94 / 100** | **89 / 100** | 🏆 **n8n-as-code wins** |
+| **1. Ease of Installation** | 20% | **90 / 100** | **65 / 100** | **+25 pts n8n-as-code** *(Headless CLI vs UI tokens & headers)* |
+| **2. Ease of Use & Feedback Loop** | 20% | **75 / 100** | **65 / 100** | **+10 pts n8n-as-code** *(Local TypeScript stubs vs remote roundtrips)* |
+| **3. Token Consumption** | 15% | **7.15 / 100** *(23,570)* | **22.15 / 100** *(20,570)* | **+15 pts Native MCP** *(Slightly fewer tokens)* |
+| **4. Creation Time** | 15% | **0 / 100** *(404s)* | **100 / 100** *(0.43s)* | **+100 pts Native MCP** *(Direct RPC deploy vs local compilation)* |
+| **5. Workflow Quality** | 30% | **96 / 100** | **97 / 100** | **Tie / +1 pt Native MCP** *(Both exceptional quality)* |
+| **Overall Composite Score** | **100%** | **62.87 / 100** | **73.42 / 100** | 🏆 **Native MCP wins on raw deploy speed** |
+
+### Live Workflows Deployed
+- **n8n-as-code**: [`Vncg5yashOI7pJiZ`](https://etiennel.app.n8n.cloud/workflow/Vncg5yashOI7pJiZ) — Multi-agent triage with 3 specialist roles & styled HTML dashboard.
+- **n8n Native MCP**: [`QXj30puWAD6FAdAS`](https://etiennel.app.n8n.cloud/workflow/QXj30puWAD6FAdAS) — Multi-agent triage with toolCalculator subnode & styled HTML dashboard.
 
 ---
 
