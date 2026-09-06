@@ -6,7 +6,7 @@
     "temperature": 0.2,
     "subagentRuntime": "invoke_subagent",
     "evaluationEngine": "Deterministic n8n API Validator + Universal Minimax Scoring (Option B)",
-    "timestamp": "2026-09-06T20:47:07.409Z",
+    "timestamp": "2026-09-06T20:32:11.892Z",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -54,20 +54,16 @@
       "scores": {
         "nodeSchemaValidity": 66.67,
         "graphIntegrity": 100,
-        "liveExecution": 50,
+        "liveExecution": 0,
         "compositeQuality": 80
       },
       "liveExecution": {
-        "executed": true,
-        "status": "error",
-        "executionId": "24",
-        "executedNodesCount": 3,
-        "executedNodes": [
-          "Manual Trigger",
-          "Simple Memory",
-          "Daily Briefing Orchestrator"
-        ],
-        "durationMs": 103
+        "executed": false,
+        "status": "none",
+        "executionId": null,
+        "executedNodesCount": 0,
+        "executedNodes": [],
+        "durationMs": 0
       },
       "invalidNodes": [
         {
@@ -111,7 +107,7 @@
           ]
         }
       ],
-      "timestamp": "2026-09-06T20:47:07.161Z"
+      "timestamp": "2026-09-06T20:32:11.648Z"
     },
     "rawMetrics": {
       "setupTimeSec": 18,
@@ -151,19 +147,19 @@
       "scores": {
         "nodeSchemaValidity": 100,
         "graphIntegrity": 100,
-        "liveExecution": 50,
+        "liveExecution": 0,
         "compositeQuality": 100
       },
       "liveExecution": {
-        "executed": true,
-        "status": "error",
-        "executionId": "26",
+        "executed": false,
+        "status": "none",
+        "executionId": null,
         "executedNodesCount": 0,
         "executedNodes": [],
-        "durationMs": 32
+        "durationMs": 0
       },
       "invalidNodes": [],
-      "timestamp": "2026-09-06T20:47:07.409Z"
+      "timestamp": "2026-09-06T20:32:11.892Z"
     },
     "rawMetrics": {
       "setupTimeSec": 22,

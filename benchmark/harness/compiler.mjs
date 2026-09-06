@@ -221,13 +221,21 @@ export async function compileBenchmarkResults(options = {}) {
   };
 
   const outputDir = path.resolve('benchmark/reports');
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
+  const resultsDir = path.resolve('results');
+  const docsDir = path.resolve('docs');
+
+  [outputDir, resultsDir, docsDir].forEach(d => {
+    if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
+  });
 
   const jsonFile = JsonReporter.writeReport(results, path.join(outputDir, 'benchmark_results.json'));
   const mdFile = MarkdownReporter.writeReport(results, path.join(outputDir, 'benchmark_report.md'));
   const htmlFile = DashboardReporter.writeReport(results, path.join(outputDir, 'benchmark_dashboard.html'));
+
+  // Mirror to results/ and docs/
+  JsonReporter.writeReport(results, path.join(resultsDir, 'benchmark_results.json'));
+  MarkdownReporter.writeReport(results, path.join(resultsDir, 'benchmark_report.md'));
+  JsonReporter.writeReport(results, path.join(docsDir, 'results.json'));
 
   return {
     results,

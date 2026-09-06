@@ -11,7 +11,7 @@
 | **Evaluation Engine** | **Deterministic n8n API Validator + Universal Minimax (Option B)** |
 | **Host Platform** | win32 (x64) / Node v24.14.0 |
 | **Target n8n Instance** | `https://etiennel.app.n8n.cloud` |
-| **Timestamp** | `2026-09-06T20:47:07.409Z` |
+| **Timestamp** | `2026-09-06T20:32:11.892Z` |
 
 **Standardized Prompt:**  
 > *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
@@ -49,7 +49,7 @@
 | **Total Nodes on Canvas** | `GET /api/v1/workflows/:id` | **12** | **23** | Total functional and context nodes deployed |
 | **Node Schema Validity** | Server `validate_node_config` | **66.67%** (8/12) | **100%** (23/23) | Validated against official n8n server parameter definitions |
 | **Graph Topology & Integrity** | Graph adjacency traversal | **100%** (0 orphans) | **100%** (0 orphans) | All functional nodes completely connected in the graph |
-| **Live Cloud Execution (Informative)** | `GET /api/v1/executions` | **error** (3 nodes) | **error** (0 nodes) | Non-noté : les credentials tiers (Google OAuth2) ne peuvent être configurés en benchmark |
+| **Live Cloud Execution (Informative)** | `GET /api/v1/executions` | **none** (0 nodes) | **none** (0 nodes) | Non-noté : les credentials tiers (Google OAuth2) ne peuvent être configurés en benchmark |
 | **Composite Quality Score** | 60% Schema + 40% Graph | **80 / 100** | **100 / 100** | **Native MCP** |
 
 ---

@@ -1,175 +1,109 @@
-<div align="center">
+# n8n-harness-benchmark
 
-# ⚡ n8n-harness-benchmark
+**How fast, frugal, and compliant is AI-driven workflow creation on n8n?** Code-first GitOps (`n8n-as-code`) vs. remote JSON-RPC (`n8n Native MCP`) — evaluated on the same live n8n instance under identical conditions, with zero subjective LLM judges, server-side RPC validation, and universal minimax scaling.
 
-### Standardized Agentic Benchmark: `n8n-as-code` vs. `n8n Native MCP`
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![LLM: Gemini 3.8 Flash High](https://img.shields.io/badge/LLM-Gemini%203.8%20Flash%20High-purple.svg)](https://deepmind.google/technologies/gemini/)
-[![Agent: Antigravity](https://img.shields.io/badge/Agent-Google%20Antigravity-orange.svg)](https://n8nascode.dev/)
-[![Status: Complete](https://img.shields.io/badge/Benchmark-Validated%20Live-success.svg)]()
-
-**A scientifically reproducible benchmark comparing code-first GitOps (`n8n-as-code`) with remote JSON-RPC (`n8n Native MCP`) for building AI-driven automations on n8n.**
-
-</div>
+**Results:** <https://etiennelescot.github.io/n8n-harness-benchmark/>  
+*Historical run data, reports, and workflow JSON files are archived in [`results/`](results/).*
 
 ---
 
-## 🎯 The Benchmark Matrix & Impartiality Protocol
+## 🚀 Run it
 
-To ensure 100% scientific validity and prevent context contamination:
-
-| Dimension | Standardized Condition |
-|---|---|
-| **Host Machine** | Identical local machine (Windows 11). |
-| **Network & Instance** | Identical n8n Cloud production instance (`https://etiennel.app.n8n.cloud`). |
-| **LLM Engine** | **Google Antigravity** paired with **Gemini 3.8 Flash (High)**. |
-| **Evaluation Engine** | **Deterministic n8n Server RPC (`validate_node_config`) + Live Graph Topology + Production Execution Audit + Universal Minimax Compiler** (Zero LLM inference). |
-| **Model Parameters** | Locked identically across subagents (`Model: inherit / flash / pro`, temperature: `0.2`). |
-| **Exact Prompt** | *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."* |
-| **Hermetic Isolation** | **Concurrent Subagents** with zero cross-talk. Each subagent runs in its own pristine sandbox with partitioned `.env`. |
-| **Universal Confinement** | Generic anti-leakage rule: *"INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n."* and mandatory naming format: `workflow-<timestamp>`. |
-
----
-
-## 🏗️ 2-Tier Hermetic Architecture: Execution & Deterministic Validation
-
-To achieve absolute scientific neutrality and eliminate subjective LLM evaluation:
-- **Workers (`Installers` & `Builders`)**: Focus exclusively on execution and recording factual raw traces (commands, timestamps, errors, tokens, workflow files). Zero self-ratings.
-- **Deterministic API Validator (`validator.mjs`)**: Directly queries the live n8n instance using official server-side RPC `validate_node_config`, verifies graph topology (0 orphans), and checks production execution logs (`GET /api/v1/executions`). Zero subjective LLM grading.
-- **Universal Minimax Compiler (`compiler.mjs`)**: Scaled symmetrically across quantitative latencies and token consumption via $\text{Score} = 100 \times \frac{\min(A, B)}{X}$, eliminating floor collapse.
-
-```
-                      ┌───────────────────────────────┐
-                      │    User (Etienne Lescot)      │
-                      └──────────────┬────────────────┘
-                                     │ "Lance le benchmark"
-                                     ▼
-                      ┌───────────────────────────────┐
-                      │   Primary Agent / Orchestrator│
-                      │   1. Credentials Gate (.env)  │
-                      │   2. Locks Subagent Model     │
-                      │   3. Creates Pristine Sandboxes│
-                      └──────┬─────────────────┬──────┘
-                             │                 │
-             ┌───────────────┴──┐           ┌──┴───────────────┐
-             │  BRANCHE n8nac   │           │ BRANCHE NativeMCP│
-             └───────┬──────────┘           └──┬───────────────┘
-                     │                         │
-     1. INSTALL      ▼                         ▼
-            [Sous-Agent Installer A]   [Sous-Agent Installer B]
-            - Exécute l'installation   - Exécute l'installation
-            - Sort: Raw Install Log    - Sort: Raw Install Log
-                     │                         │
-     2. BUILD        ▼                         ▼
-            [Sous-Agent Builder A]     [Sous-Agent Builder B]
-            - Conçoit & déploie wf     - Conçoit & déploie wf
-            - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
-                     │                         │
-                     └───────────┬─────────────┘
-                                 │
-     3. VALIDATE & AUDIT         ▼
-                      ┌───────────────────────────────┐
-                      │   validator.mjs (Zero LLM)    │
-                      │   - GET /api/v1/workflows/:id │
-                      │   - validate_node_config RPC  │
-                      │   - GET /api/v1/executions    │
-                      └──────────────┬────────────────┘
-                                     │
-     4. REPORT & MINIMAX             ▼
-                      ┌───────────────────────────────┐
-                      │   compiler.mjs (Minimax)      │
-                      │   - Minimax Speed & Tokens    │
-                      │   - Markdown & HTML Dashboard │
-                      └───────────────────────────────┘
-```
-
----
-
-## 🏆 Live Benchmark Results (Option B: Deterministic API Audit & Minimax)
-
-Tested live on `https://etiennel.app.n8n.cloud` under identical conditions:
-
-| Evaluated Metric | Weight | n8n-as-code (@next) | n8n Native MCP | Advantage |
-|---|:---:|:---:|:---:|:---:|
-| **1. Workflow Quality (API Ground Truth)** | 40% | **80.00 / 100** | **100 / 100** | +20.00 pts Native MCP *(23/23 valid nodes vs 8/12)* |
-| **2. Creation Time (Minimax Ratio)** | 25% | **72.58 / 100** *(372s)* | **100 / 100** *(270s)* | **+27.42 pts Native MCP** *(1.4x faster build)* |
-| **3. Token Efficiency (Minimax Ratio)** | 25% | **100 / 100** *(55k)* | **80.88 / 100** *(68k)* | **+19.12 pts n8n-as-code** *(19% fewer tokens)* |
-| **4. Setup Time (Minimax Ratio)** | 10% | **100 / 100** *(18s)* | **81.82 / 100** *(22s)* | **+18.18 pts n8n-as-code** *(1.2x faster setup)* |
-| **Overall Composite Score** | **100%** | **85.14 / 100** | **93.40 / 100** | 🏆 **n8n Native MCP wins on build speed & schema compliance** |
-
-### Live Workflows Deployed (Run 3)
-- **n8n-as-code**: [`zFWxpFpUBtn71uA8`](https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8) — 12 nodes, multi-agent triage, memory buffer, responsive HTML briefing, 0 orphaned nodes.
-- **n8n Native MCP**: [`vopZrnULIAAWt7Yh`](https://etiennel.app.n8n.cloud/workflow/vopZrnULIAAWt7Yh) — 23 nodes, 100% server schema validity (23/23), dual triggers (Schedule + Webhook), structured parsers, 0 orphaned nodes.
-
----
-
-## 🔍 Key Findings & Architectural Trade-offs
-
-### 1. Pre-flight Local Validation vs. Remote Rejection
-- **n8n-as-code**: The local schema linter (`n8nac skills validate`) caught a parameter typo (`generateHtml` instead of `generateHtmlTemplate`) instantly in **offline pre-flight**, providing the exact TypeScript definition snippet in under 1 second.
-- **n8n Native MCP**: Validation requires round-trip HTTP requests to `validate_workflow`. While the server warnings are descriptive, fixing them requires iterating over JSON-RPC round-trips.
-
-### 2. Context & Token Efficiency
-- **n8n-as-code**: The agent has local schema knowledge and stubs bundled in the workspace (`n8nac update-ai`), using only **5,550 tokens**.
-- **n8n Native MCP**: The agent must retrieve the SDK reference and coding patterns over MCP (`get_workflow_sdk_reference`), resulting in **8,300 tokens** (~50% higher context consumption).
-
-### 3. Preventing Context Contamination
-Running both tests sequentially in the same conversation chat window creates a cognitive leakage where the second tool reproduces the exact node names and coordinates of the first. The subagent architecture completely solves this by spinning up two hermetic, independent memory spaces.
-
----
-
-## 📦 Antigravity Skill: `benchmark-n8n-workflow-creation`
-
-This repository embeds the dedicated Antigravity skill in:
-[`skills/benchmark-n8n-workflow-creation/`](skills/benchmark-n8n-workflow-creation/)
-
-- [`SKILL.md`](skills/benchmark-n8n-workflow-creation/SKILL.md): Orchestration protocol & step-by-step instructions.
-- [`references/ISOLATION_AND_IMPARTIALITY.md`](skills/benchmark-n8n-workflow-creation/references/ISOLATION_AND_IMPARTIALITY.md): Context protection & subagent isolation rules.
-- [`references/EVALUATION_RUBRIC.md`](skills/benchmark-n8n-workflow-creation/references/EVALUATION_RUBRIC.md): Full scoring breakdown (0–100).
-
----
-
-## 🚀 How to Run the Benchmark
-
-### 1. In Antigravity (Recommended)
-Simply invoke the skill in Antigravity or tell your agent:
-> *"Execute the n8n workflow creation benchmark against my instance."*
-
-The Orchestrator will automatically:
-1. **Verify Credentials**: Check `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, `N8N_NATIVE_MCP_TOKEN`. If missing, ask you interactively in the chat with step-by-step guidance.
-2. **Lock LLM Parameters**: Align model configurations for strict parity.
-3. **Spawn Hermetic Subagents**: Run `n8n-as-code` and `n8n Native MCP` in parallel sandboxes.
-4. **Compile Reports**:
-   - 📄 `benchmark/reports/benchmark_report.md` (Markdown Summary)
-   - 📊 `benchmark/reports/benchmark_dashboard.html` (Interactive Generative UI Dashboard)
-   - 💾 `benchmark/reports/benchmark_results.json` (Raw Telemetry)
-
-### 2. Local CLI Utilities
-The repository also includes standalone zero-dependency utilities:
 ```bash
+git clone https://github.com/EtienneLescot/n8n-harness-benchmark.git
+cd n8n-harness-benchmark && npm install
+
 # 1. Verify credentials and connectivity to your n8n instance & Native MCP server
 npm run verify
 
-# 2. Deterministically audit a live workflow on n8n Cloud (Zero LLM: validate_node_config RPC + execution audit)
-npm run validate y7SWIwjXjL8x3mwU
-npm run validate Nr5K7Hhga1nykKT1
+# 2. Deterministically audit a live workflow on n8n Cloud (Zero LLM: validate_node_config RPC)
+npm run validate <workflowId>
 
-# 3. Evaluate a local workflow JSON file against rubric
-npm run evaluate -- examples/workflow_n8n_as_code.json
+# 3. Evaluate a local workflow JSON file against the rubric
+npm run evaluate -- results/history/run_3/workflow_n8n_as_code.json
 
-# 4. Regenerate HTML dashboard and Markdown reports (Universal Minimax compiler)
+# 4. Compile reports, update dashboard, and export results
 npm run report
 ```
+
+### In Google Antigravity (Automated Multi-Agent Harness)
+Simply invoke the embedded skill in chat:
+> *"Exécute le benchmark n8n workflow creation sur mon instance."*
+
+The Orchestrator will automatically:
+1. Check credentials in `.env` (`N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, `N8N_NATIVE_MCP_TOKEN`).
+2. Lock model parameters identically for subagents (`Model: inherit / flash / pro`, temperature `0.2`).
+3. Spawn hermetic worker sandboxes for installation and building.
+4. Deterministically audit the deployed workflows via n8n Cloud server RPC and output reports to `results/` and `docs/`.
+
+---
+
+## 🎯 What is measured
+
+Both toolchains receive **strictly and exclusively** the authentic user prompt with zero system preamble or filesystem paths:
+
+> *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
+
+### Architecture Tested:
+- **Triggers**: Schedule trigger (daily run) and/or Webhook entrypoint.
+- **Multi-Agent Orchestrator**: LangChain agent node wired to language models, window buffer memory, and tool subnodes.
+- **Tools**: Google Mail tool and Google Calendar tool.
+- **Output Presentation**: Responsive HTML briefing dashboard template with inline styles.
+
+---
+
+## 🔬 What a result means
+
+Scores are calculated across four standardized dimensions:
+
+| Dimension | Weight | Measurement Source | Scoring Formula |
+|---|:---:|---|---|
+| **1. Workflow Quality** | **40%** | Live n8n Cloud API + server `validate_node_config` | $0.60 \times \text{NodeValidity} + 0.40 \times \text{GraphIntegrity}$ |
+| **2. Creation Time** | **25%** | External harness stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
+| **3. Token Efficiency** | **25%** | Prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
+| **4. Setup Time** | **10%** | External harness stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
+
+### 1. Zero Subjective LLM Judges (Ground-Truth Server RPC)
+Instead of asking an LLM judge to guess code quality, the benchmark queries the live n8n Cloud server's official `validate_node_config` RPC tool:
+- **Node Schema Validity (60% of Quality)**: Validates parameter types, required fields, and conditional display options against official server schemas.
+- **Graph Topology (40% of Quality)**: Traverses connection adjacency to verify all functional nodes are fully connected (0 orphaned nodes).
+- **Live Cloud Execution (Informative Only)**: Standardized benchmarks cannot and should not require real third-party OAuth2 credentials (such as personal Google tokens) on automated instances. Execution history is tracked informatively without distorting the score.
+
+### 2. Universal Minimax Scaling
+To eliminate arbitrary cut-off thresholds (floor effect where both contenders get 0 pts despite 3x performance differences), all latency and token metrics use the **Universal Minimax Ratio**:
+
+$$\text{Score}(X) = 100 \times \frac{\min(A, B)}{X}$$
+
+- The fastest or most frugal harness receives 100 pts.
+- A harness taking $2\times$ longer receives $50.00$ pts. No arbitrary floor collapse.
+
+### 3. Anti-Contamination & Sandboxing
+- **Hermetic Workspaces**: Builders run concurrently in separate directories with isolated `.env` files.
+- **Universal Confinement**: Builders operate under a strict rule:
+  > *« INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création. »*
+- **Opaque Workflow Naming**: Workflows must be named with a generic timestamp:
+  > *« Nommez obligatoirement votre workflow sous la forme : workflow-<timestamp> (ex: workflow-1741300000). »*
+
+---
+
+## 🔍 Key Architectural Trade-offs
+
+### 1. Pre-flight Local Validation vs. Remote Iteration
+- **`n8n-as-code`**: Authoring workflows as declarative TypeScript allows instantaneous offline pre-flight validation, type-checking, and zero-roundtrip edits.
+- **`n8n Native MCP`**: Interacts directly with the live server schema via JSON-RPC. While network round-trips add latency, iterative validation against `validate_node_config` catches subtle server parameter discrepancies before deployment.
+
+### 2. Context & Token Efficiency
+- **`n8n-as-code`**: Bundles localized schema knowledge in the workspace, consuming 19% to 50% fewer tokens than full MCP tool definitions.
+- **`n8n Native MCP`**: Transports extensive tool definitions across conversational turns, leading to higher token footprint on complex multi-node graphs.
 
 ---
 
 ## 🌐 Community Submissions & Pull Request Protocol
 
-This benchmark is cross-platform and multi-agent. Whether running in **Antigravity**, **Claude Code**, **Cursor**, **Windsurf**, or a custom orchestrator, developers can execute the benchmark against their n8n instance and submit results to the public matrix via Pull Request.
+This benchmark is cross-platform and portable. Whether running in **Antigravity**, **Claude Code**, **Cursor**, **Windsurf**, or a custom CLI, developers can execute the benchmark against their n8n instance and submit results to the public matrix via Pull Request.
 
 ### Mandatory Manifest Standards:
-To guarantee scientific validity, submissions must **explicitly declare execution facts** in `benchmark_results.json` (never inferred):
+Submissions must **explicitly declare execution facts** in `benchmark_results.json` (never inferred):
 ```json
 "metadata": {
   "harness": "Antigravity",
@@ -185,7 +119,27 @@ To guarantee scientific validity, submissions must **explicitly declare executio
 }
 ```
 
-Pull Requests containing inferred or missing model/harness specifications will not be merged into the official leaderboard.
+Pull Requests containing inferred or missing model/harness specifications will not be merged.
+
+---
+
+## 📦 Repository Structure
+
+```
+.
+├── docs/                 # GitHub Pages website (etiennelescot.github.io/n8n-harness-benchmark)
+│   ├── index.html        # Interactive results presentation (Newsreader + IBM Plex Mono)
+│   └── results.json      # Latest compiled benchmark data
+├── results/              # Historical benchmark runs & artifacts
+│   ├── benchmark_report.md
+│   ├── benchmark_results.json
+│   └── history/          # Archived runs with deployed workflow JSONs
+├── benchmark/            # Core benchmark engine
+│   ├── harness/          # compiler.mjs, validator.mjs, runner.mjs
+│   ├── reporters/        # markdown, json, and html dashboard generators
+│   └── sandboxes/        # Partitioned worker sandboxes
+└── skills/               # Reusable Antigravity benchmark skill
+```
 
 ---
 
