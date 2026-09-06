@@ -39,6 +39,9 @@
 - **Workflow Versioning & Readability (30 pts)**:
   - GitOps-compatible files (.ts / .json), clean diffs: 30 pts
   - Opaque remote state only: 15 pts
+- **Toolchain Adherence Check**:
+  - The builder must utilize its designated toolchain (CLI `n8nac` commands for Branch A, Native MCP tools for Branch B).
+  - Bypassing the assigned tool (e.g. hand-crafting direct HTTP curl requests instead of using MCP/CLI) incurs a **-25 pts penalty** on this metric.
 
 ---
 

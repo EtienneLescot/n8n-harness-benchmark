@@ -123,38 +123,19 @@ Spawn two independent installer subagents via `invoke_subagent`:
 Spawn two independent builder subagents in their respective configured sandboxes.
 
 > [!IMPORTANT]
-> **Agnostic User Prompt Rule**: Builders must be tested under natural, realistic conditions. They must receive an agnostic user request without technical implementation micro-management (no forced list of node types, no local JSON formatting requirements, no self-evaluation or self-timing instructions).
+> **100% Natural Agnostic User Request**:
+> Both builders receive **strictly and exclusively** the authentic user request. No system role preamble, no technical micro-management, no instruction telling them how to structure files or report internal IDs.
+> 
+> **Exact Prompt Sent to Both Builders**:
+> ```
+> Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.
+> ```
 
-#### Builder A (`n8n-as-code Builder`)
-- **Initial Prompt**:
-  ```markdown
-  You are an AI assistant in an n8n development workspace configured with the tool `n8n-as-code` (n8nac).
-  Target environment: connected to the user's n8n instance.
-
-  User request:
-  "Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."
-
-  Instructions:
-  - Use your tools to build and deploy the workflow to the connected instance.
-  - Once deployed, reply with the deployed workflow ID and a brief summary of what you built.
-  ```
-
-#### Builder B (`Native MCP Builder`)
-- **Initial Prompt**:
-  ```markdown
-  You are an AI assistant in an n8n development workspace configured with the `n8n Native MCP` server.
-  Target environment: connected to the user's n8n instance via MCP.
-
-  User request:
-  "Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."
-
-  Instructions:
-  - Use your tools to build and deploy the workflow to the connected instance.
-  - Once deployed, reply with the deployed workflow ID and a brief summary of what you built.
-  ```
-
-> [!TIP]
-> **External Timing Measurement**: The Orchestrator records `startTime` when spawning the builder and `endTime` when the subagent signals completion (`durationMs = endTime - startTime`). This ensures 100% symmetric, objective time measurement across branches, free of self-reporting bias.
+- **How Builders Discover Their Toolchain**:
+  - **Branch A (`n8n-as-code`)**: Discovers its environment through its sandbox setup (`AGENTS.md`, `.agents/skills/n8n-architect/`, `n8nac` commands).
+  - **Branch B (`n8n Native MCP`)**: Discovers its environment through the MCP server tools exposed in its runtime.
+- **External Harness Stopwatch**:
+  - The Orchestrator records `startTime` upon dispatching the prompt and `endTime` when the subagent signals completion (`durationMs = endTime - startTime`).
 
 ---
 
@@ -162,39 +143,45 @@ Spawn two independent builder subagents in their respective configured sandboxes
 Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own branch in complete isolation.
 
 > [!IMPORTANT]
-> **Live Instance JSON Retrieval**: Builders are NOT required to dump or convert JSON locally. Instead, the Judge uses the deployed `workflowId` returned by the Builder and fetches the workflow directly from the target instance:
-> `GET {N8N_HOST}/api/v1/workflows/{WORKFLOW_ID}` (with header `X-N8N-API-KEY: {N8N_API_KEY}`)
-> The retrieved JSON is saved to `workflows/deployed_workflow.json` in the sandbox for archiving and evaluation.
+> **Live Instance JSON Retrieval & Toolchain Adherence**:
+> 1. **Toolchain Adherence**: The Judge verifies that the builder genuinely used its assigned toolchain (CLI `n8nac` commands for Branch A, Native MCP tools for Branch B) without bypassing it.
+> 2. **Workflow Identification**: The Judge identifies the deployed `workflowId` from the builder's natural response, tool execution traces, or by querying `GET /api/v1/workflows` on the instance.
+> 3. **Direct Cloud Download**: The Judge retrieves the deployed workflow JSON directly from the instance:
+>    `GET {N8N_HOST}/api/v1/workflows/{WORKFLOW_ID}` (with header `X-N8N-API-KEY: {N8N_API_KEY}`)
+>    The fetched JSON is archived to `workflows/deployed_workflow.json` in the sandbox.
 
 #### Judge A (`Judge n8n-as-code`)
 - **Input**:
   - Installer A Log (`logs/installer_log.json`)
-  - Deployed `workflowId` from Builder A
+  - Builder A Transcript & Final Message
   - External Telemetry (Orchestrator-measured duration, turns, token count)
   - Target instance credentials (`N8N_HOST`, `N8N_API_KEY`)
   - Rubric: [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)
 - **Task**:
-  1. Fetch live workflow JSON from target instance and save to `workflows/deployed_workflow.json`.
-  2. Score Installation A (20%)
-  3. Score Ease of Use / DX A (20%)
-  4. Compute Tokens A (15%) and Time A (15%) using the rubric mathematical formula on external telemetry.
-  5. Score Workflow Quality A (30%) on the live workflow JSON.
-  6. Save scorecard to `logs/judge_log.json` and return it.
+  1. Verify toolchain adherence (did Builder A use `n8n-as-code`?).
+  2. Retrieve the deployed workflow JSON from the live instance and save to `workflows/deployed_workflow.json`.
+  3. Score Installation A (20%)
+  4. Score Ease of Use / DX A (20%)
+  5. Compute Tokens A (15%) and Time A (15%) using the rubric mathematical formula on external telemetry.
+  6. Score Workflow Quality A (30%) on the live workflow JSON.
+  7. Save scorecard to `logs/judge_log.json` and return it.
 
 #### Judge B (`Judge Native MCP`)
 - **Input**:
   - Installer B Log (`logs/installer_log.json`)
-  - Deployed `workflowId` from Builder B
+  - Builder B Transcript & Final Message
   - External Telemetry (Orchestrator-measured duration, turns, token count)
   - Target instance credentials (`N8N_HOST`, `N8N_API_KEY`)
   - Rubric: [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)
 - **Task**:
-  1. Fetch live workflow JSON from target instance and save to `workflows/deployed_workflow.json`.
-  2. Score Installation B (20%)
-  3. Score Ease of Use / DX B (20%)
-  4. Compute Tokens B (15%) and Time B (15%) using the rubric mathematical formula on external telemetry.
-  5. Score Workflow Quality B (30%) on the live workflow JSON.
-  6. Save scorecard to `logs/judge_log.json` and return it.
+  1. Verify toolchain adherence (did Builder B use Native MCP tools?).
+  2. Retrieve the deployed workflow JSON from the live instance and save to `workflows/deployed_workflow.json`.
+  3. Score Installation B (20%)
+  4. Score Ease of Use / DX B (20%)
+  5. Compute Tokens B (15%) and Time B (15%) using the rubric mathematical formula on external telemetry.
+  6. Score Workflow Quality B (30%) on the live workflow JSON.
+  7. Save scorecard to `logs/judge_log.json` and return it.
+
 
 ---
 

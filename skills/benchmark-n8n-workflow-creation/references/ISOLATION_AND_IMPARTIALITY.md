@@ -33,11 +33,13 @@ Because benchmark results can be contributed by multiple developers and agent ru
 - These fields must be explicit, verifiable facts—never inferred, assumed, or approximated.
 - Pull Requests submitted to the leaderboard without this verified manifest are rejected.
 
-### 🗣️ Principle 4: Agnostic User Prompts (No Technical Micro-Management)
-Builders must be tested under natural, realistic user conditions:
-- **No Implementation Guidance**: Prompts must NEVER dictate the internal implementation (e.g., specifying which node types to wire, subnodes to attach, or syntax patterns to use). The tool's ability to guide the model towards correct architectural choices is a core facet of Developer Experience (DX).
-- **No Formatting / File Overhead**: Prompts must NEVER ask builders to convert files locally, write specific JSON filenames, or output internal diagnostics.
-- **Natural Request Format**: The prompt must read like an authentic user request: *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
+### 🗣️ Principle 4: Pure Natural User Prompts (Zero Preamble, Zero Micro-Management)
+Builders must be tested under 100% natural, realistic user conditions:
+- **No System Role Preamble**: Prompts must NEVER include artificial meta-instructions like *"You are an AI assistant in an workspace configured with..."* or *"Target environment: connected to..."*. If the workspace is properly initialized, the agent discovers its tools organically through its environment (e.g., `AGENTS.md` and `.agents/skills` for `n8n-as-code`, or MCP tools for `Native MCP`).
+- **No Implementation Guidance**: Prompts must NEVER dictate internal implementation (e.g. specifying node types to wire, subnodes, or expression syntax). A tool's capacity to guide the model towards idiomatic architecture is a core facet of Developer Experience (DX).
+- **No File or Reporting Overhead**: Prompts must NEVER ask builders to convert files locally, write specific JSON artifacts, or compute telemetry.
+- **Pure Authentic User Request**: The prompt contains strictly:
+  > *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
 
 ### ⏱️ Principle 5: External Harness-Measured Timing (No Self-Report Asymmetry)
 To prevent disparate duration reporting (such as one subagent recording an entire 400s human-like authoring session while another records only a 400ms HTTP POST network latency):
@@ -45,10 +47,11 @@ To prevent disparate duration reporting (such as one subagent recording an entir
 - `durationMs = endTime - startTime` is calculated externally and passed directly to the Judge.
 - Both branches are subjected to the exact same wall-clock stopwatch.
 
-### 🌐 Principle 6: Direct Live Instance Retrieval by Judge
-Builders only deploy the workflow and return its `workflowId`.
-- The **Judge** connects directly to the live n8n instance via REST API (`GET /api/v1/workflows/:id`) using the deployed ID.
+### 🌐 Principle 6: Live Instance Retrieval & Toolchain Adherence Verification
+- **Toolchain Adherence**: The Judge verifies from the execution trace that Branch A actually utilized `n8n-as-code` (CLI commands, local validation) and Branch B actually utilized `n8n Native MCP` (JSON-RPC tools), penalizing any branch that bypassed its assigned toolchain.
+- **Direct Cloud Download**: The Judge identifies the deployed `workflowId` (from the builder's final message, tool logs, or instance workflow list) and fetches the workflow directly via REST API: `GET {N8N_HOST}/api/v1/workflows/{WORKFLOW_ID}`.
 - This verifies that the workflow actually exists and compiles in production, avoiding local mock files and ensuring the evaluated artifact is the real deployed state.
+
 
 
 ---
