@@ -14,12 +14,10 @@
     },
     "workflows": {
       "n8nac": {
-        "id": "zFWxpFpUBtn71uA8",
-        "url": "https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8"
+        "id": "zFWxpFpUBtn71uA8"
       },
       "nativeMcp": {
-        "id": "vopZrnULIAAWt7Yh",
-        "url": "https://etiennel.app.n8n.cloud/workflow/vopZrnULIAAWt7Yh"
+        "id": "vopZrnULIAAWt7Yh"
       }
     }
   },
@@ -42,7 +40,6 @@
     "qualityAudit": {
       "workflowId": "zFWxpFpUBtn71uA8",
       "workflowName": "Multi-Agent Daily Briefing & Dashboard",
-      "instanceUrl": "https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8",
       "metrics": {
         "nodeCount": 12,
         "functionalNodeCount": 12,
@@ -139,7 +136,6 @@
     "qualityAudit": {
       "workflowId": "vopZrnULIAAWt7Yh",
       "workflowName": "Multi-Agent Daily Executive Briefing & Dashboard",
-      "instanceUrl": "https://etiennel.app.n8n.cloud/workflow/vopZrnULIAAWt7Yh",
       "metrics": {
         "nodeCount": 23,
         "functionalNodeCount": 20,

@@ -258,7 +258,6 @@ export async function validateWorkflowOnInstance(workflowId) {
   return {
     workflowId,
     workflowName: wfData.name,
-    instanceUrl: `${N8N_HOST}/workflow/${workflowId}`,
     metrics: {
       nodeCount: nodes.length,
       functionalNodeCount: functionalNodes.length,

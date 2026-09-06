@@ -155,12 +155,10 @@ export async function compileBenchmarkResults(options = {}) {
       },
       workflows: {
         n8nac: {
-          id: n8nacWfId,
-          url: `${(process.env.N8N_HOST || 'https://etiennel.app.n8n.cloud').replace(/\/+$/, '')}/workflow/${n8nacWfId}`
+          id: n8nacWfId
         },
         nativeMcp: {
-          id: mcpWfId,
-          url: `${(process.env.N8N_HOST || 'https://etiennel.app.n8n.cloud').replace(/\/+$/, '')}/workflow/${mcpWfId}`
+          id: mcpWfId
         }
       }
     },
