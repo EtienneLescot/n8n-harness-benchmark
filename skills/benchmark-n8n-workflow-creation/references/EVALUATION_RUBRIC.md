@@ -1,81 +1,62 @@
-# Standardized Evaluation Rubric (0–100)
+# Standardized Benchmark Rubric (Option B: Ground-Truth API & Universal Minimax)
 
-| Metric | Max Score | Weight | Measurement Method |
-|---|:---:|:---:|---|
-| **1. Ease of Installation** | 100 | 20% | Documentation clarity, command count, setup time, user guidance, friction events. |
-| **2. Ease of Use** | 100 | 20% | Interaction turns, schema validation loops, error diagnostics, code readability. |
-| **3. Token Consumption** | 100 | 15% | Prompt tokens + completion tokens + tool call payload overhead. |
-| **4. Time to Create Workflow** | 100 | 15% | Wall-clock time from initial prompt submission to verified live deployment. |
-| **5. Quality of the Workflow** | 100 | 30% | Objective structural analysis across 4 sub-criteria (25 pts each). |
+This rubric establishes a 100% deterministic, reproducible evaluation model. It eliminates subjective LLM grading in favor of **ground-truth n8n API validation** and **symmetrical Minimax scaling** across all quantitative performance metrics.
 
 ---
 
-## Metric 1: Ease of Installation (100 pts)
-- **Step Count & Commands (40 pts)**:
-  - <= 3 simple CLI commands: 40 pts
-  - 4-6 commands: 30 pts
-  - Complex multi-step configuration (custom headers, manual proxies): 20 pts
-  - Breaking issues / missing prerequisites: 10 pts
-- **Setup Time (30 pts)**:
-  - < 30s: 30 pts
-  - 30s - 60s: 25 pts
-  - 1m - 3m: 15 pts
-  - > 3m: 5 pts
-- **Guidance & Headless Simplicity (30 pts)**:
-  - Agent can guide the user in < 2 prompts: 30 pts
-  - Requires navigating multiple complex UI screens: 15 pts
+## 🏆 Summary of Evaluated Dimensions
+
+| Dimension | Weight | Measurement Source | Scoring Formula |
+|---|:---:|---|---|
+| **1. Workflow Quality** | **35%** | Live n8n Cloud API + `validate_node_config` | $0.40 \times \text{NodeValidity} + 0.30 \times \text{GraphIntegrity} + 0.30 \times \text{LiveExecution}$ |
+| **2. Creation Time** | **25%** | External stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
+| **3. Token Efficiency** | **20%** | Total prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
+| **4. Setup Time** | **20%** | External stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
+| **Composite Score** | **100%** | Weighted combination of 4 dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
 
 ---
 
-## Metric 2: Ease of Use (100 pts)
-- **Interaction Turns (35 pts)**:
-  - 1-2 turns: 35 pts
-  - 3-4 turns: 25 pts
-  - 5+ turns: 10 pts
-- **Schema Safety & Pre-flight Validation (35 pts)**:
-  - Local validation / instant linting before remote deployment: 35 pts
-  - Remote API diagnostics with clean error messages: 25 pts
-  - Generic 400/500 errors without actionable guidance: 10 pts
-- **Workflow Versioning & Readability (30 pts)**:
-  - GitOps-compatible files (.ts / .json), clean diffs: 30 pts
-  - Opaque remote state only: 15 pts
-- **Toolchain Adherence Check**:
-  - The builder must utilize its designated toolchain (CLI `n8nac` commands for Branch A, Native MCP tools for Branch B).
-  - Bypassing the assigned tool (e.g. hand-crafting direct HTTP curl requests instead of using MCP/CLI) incurs a **-25 pts penalty** on this metric.
+## 🔬 Dimension 1: Workflow Quality (35% Weight — Ground-Truth API Audit)
+
+Workflow Quality is evaluated with ZERO LLM inference directly on the live n8n instance via `GET /api/v1/workflows/:id` and `validate_node_config`:
+
+### 1.1 Node Schema Validity (40% of Quality Score)
+Every node in the deployed workflow is audited by n8n's server-side `validate_node_config` tool:
+$$\text{NodeValidityScore} = 100 \times \frac{\text{Valid Nodes (0 errors)}}{\text{Total Nodes}}$$
+- Audits parameter types, required fields, subnodes, and display options against the official n8n server schema.
+- Flags parameter discrepancies (e.g. invalid default flags, missing required subnodes).
+
+### 1.2 Graph Topology & Integrity (30% of Quality Score)
+Audits the mathematical graph structure formed by nodes and connections:
+- Identifies functional orphaned nodes (nodes with 0 incoming and 0 outgoing edges, excluding valid triggers and response sinks).
+- Verifies subconnection wiring (`ai_languageModel`, `ai_tool`, `ai_memory`, `ai_outputParser`).
+$$\text{GraphIntegrityScore} = 100 \times \frac{\text{Functional Nodes} - \text{Orphaned Nodes}}{\text{Functional Nodes}}$$
+
+### 1.3 Live Cloud Execution Verification (30% of Quality Score)
+Queries `GET /api/v1/executions?workflowId=:id&includeData=true` on the live cloud instance:
+- **100 pts**: Workflow was executed in production with `status === 'success'` and generated a non-empty output payload.
+- **50 pts**: Workflow was executed but experienced execution warnings or incomplete branches.
+- **0 pts**: Workflow was never executed live on the cloud instance.
 
 ---
 
-## Metric 3: Token Consumption (100 pts)
-$$\text{Score} = \max\left(0, \min\left(100, 100 - \frac{\text{Total Tokens} - 5000}{200}\right)\right)$$
-- Tracks prompt tokens, completion tokens, and SDK reference overhead.
+## ⚡ Dimensions 2, 3 & 4: Universal Minimax Scaling
+
+To eliminate arbitrary cut-off thresholds (floor effect where both contenders get 0 pts despite 3x performance differences), all cost and latency metrics are evaluated using the **Universal Minimax Ratio**:
+
+$$\text{Score}(X) = 100 \times \frac{\min(A, B)}{X}$$
+
+### Properties of Minimax Scoring:
+1. **Best Contender receives 100 pts**: The fastest or most token-efficient harness achieves the maximum score.
+2. **Proportional Degradation**: A contender taking $2\times$ longer receives $100 \times 1/2 = 50.00$ pts. A contender taking $3.2\times$ longer receives $100 \times 1/3.2 = 31.25$ pts.
+3. **Zero Floor Effect**: Scores never artificially collapse to 0 on complex enterprise tasks.
+4. **Scale Invariance**: Works identically for a 30-second toy task and a 1500-second multi-agent architecture.
 
 ---
 
-## Metric 4: Creation Time (100 pts)
-$$\text{Score} = \max\left(0, \min\left(100, 100 - \frac{\text{Duration (seconds)} - 15}{1.65}\right)\right)$$
-- Tracks wall-clock time from prompt receipt to verified deployment.
+## 📊 Physical Operational Telemetry (Reported Raw)
 
----
-
-## Metric 5: Quality of the Workflow (100 pts)
-
-### 5.1 Initial Brief Following (25 pts)
-- Google Mail search/retrieval node: +7 pts
-- Google Calendar event retrieval node: +6 pts
-- Multi-Agent Triage architecture: +6 pts
-- HTML Dashboard of the day: +6 pts
-
-### 5.2 Nodes Correctness & Wiring (25 pts)
-- Official node types according to n8n schema: +8 pts
-- AI Language model sub-connection properly wired (`ai_languageModel`): +5 pts
-- AI Tool / Memory sub-connections wired: +4 pts
-- Node parameter syntax & expression correctness (`{{ $json... }}`): +8 pts
-
-### 5.3 Wow Effect & Aesthetics (25 pts)
-- Multi-agent hierarchy (Triage + Executive Synthesis): +10 pts
-- Responsive, modern HTML dashboard (dark theme, badges, cards, timeline): +15 pts
-
-### 5.4 Workflow Execution & Dry-Run (25 pts)
-- Valid, parseable workflow JSON: +10 pts
-- Complete end-to-end executable pipeline without disconnected nodes: +8 pts
-- Live push & deployment confirmation on target instance: +7 pts
+The following operational metrics are recorded and presented as factual engineering telemetry without arbitrary composite grading:
+- **Setup Commands ($N_{\text{cmd}}$)**: Number of CLI commands required to install and authenticate.
+- **Interaction Turns ($N_{\text{turns}}$)**: Number of conversational turns required to reach completion.
+- **Error Recovery Events ($N_{\text{errors}}$)**: Number of command failures or self-recovery events during execution.

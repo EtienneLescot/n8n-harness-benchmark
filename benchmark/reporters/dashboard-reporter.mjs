@@ -2,16 +2,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Generates an interactive, visually stunning HTML Dashboard (Generative UI)
- * showcasing the benchmark comparison results with side-by-side charts, scores, and node breakdowns.
+ * Generates an interactive HTML Dashboard showcasing benchmark results
+ * based on Option B: Ground-Truth n8n API Validation + Universal Minimax Scoring.
  */
 export class DashboardReporter {
   static generateHtml(results) {
-    const { n8nac, nativeMcp, metadata = {} } = results;
-    const n8nacScore = n8nac?.scores || {};
-    const mcpScore = nativeMcp?.scores || {};
+    const { n8nac = {}, nativeMcp = {}, metadata = {} } = results;
+    const nScore = n8nac.scores || {};
+    const mScore = nativeMcp.scores || {};
+    const nAudit = n8nac.qualityAudit || {};
+    const mAudit = nativeMcp.qualityAudit || {};
+    const nTel = n8nac.rawMetrics || {};
+    const mTel = nativeMcp.rawMetrics || {};
 
-    const winner = (n8nacScore.composite || 0) >= (mcpScore.composite || 0)
+    const winner = (nScore.composite || 0) >= (mScore.composite || 0)
       ? 'n8n-as-code'
       : 'n8n Native MCP';
 
@@ -20,7 +24,7 @@ export class DashboardReporter {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Benchmark: n8n-as-code vs. n8n Native MCP</title>
+  <title>Benchmark Dashboard: n8n-as-code vs. n8n Native MCP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -79,150 +83,123 @@ export class DashboardReporter {
       border-radius: 6px;
       margin: 20px auto;
       max-width: 800px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.88rem;
-      color: #cbd5e1;
       text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: #cbd5e1;
     }
-    .grid-2 {
+    .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
     }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card.highlight {
+      border-color: var(--accent-win);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, var(--card-bg) 100%);
+    }
+    .kpi-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .kpi-value { font-size: 2rem; font-weight: 800; }
+    .kpi-value.n8nac { color: var(--accent-n8nac); }
+    .kpi-value.mcp { color: var(--accent-mcp); }
+    .kpi-value.winner { color: var(--accent-win); }
+    .kpi-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 36px;
+    }
+    @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 24px;
-      position: relative;
-      overflow: hidden;
     }
-    .card-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 12px;
-    }
-    .score-display {
-      font-size: 2.75rem;
-      font-weight: 800;
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-    .score-n8nac { color: var(--accent-n8nac); }
-    .score-mcp { color: var(--accent-mcp); }
-    .score-max { font-size: 1rem; color: var(--text-muted); }
-    .table-container {
-      overflow-x: auto;
-      margin-top: 16px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-    th, td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--card-border);
-    }
-    th {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      background: #0f172a;
-    }
-    td { font-size: 0.9rem; }
+    .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+    .chart-container { position: relative; height: 320px; width: 100%; }
+    .table-container { overflow-x: auto; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 12px 16px; border-bottom: 1px solid var(--card-border); }
+    th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; font-weight: 600; }
+    td { font-size: 0.95rem; }
     .winner-tag {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-win);
-      border: 1px solid var(--accent-win);
+      display: inline-block;
       padding: 2px 8px;
       border-radius: 4px;
-      font-weight: 600;
       font-size: 0.75rem;
-    }
-    .chart-container {
-      height: 320px;
-      position: relative;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-win);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div class="badge">Standardized Benchmark Harness</div>
+      <div class="badge">Antigravity Benchmark Suite • Option B Minimax & API Ground Truth</div>
       <h1>n8n-as-code vs. n8n Native MCP</h1>
-      <p style="color: var(--text-muted);">Standardized Double-Blind Evaluation</p>
+      <p style="color: var(--text-muted);">Scientific evaluation on live instance <a href="${metadata.environment?.n8nInstance}" target="_blank" style="color: #60a5fa;">${metadata.environment?.n8nInstance}</a></p>
       <div class="prompt-box">
-        <strong>Tested Prompt:</strong> "build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"
-      </div>
-      <div style="background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 14px 18px; margin: 16px auto; max-width: 800px; text-align: left; font-size: 0.85rem;">
-        <div style="font-weight: 700; color: #93c5fd; margin-bottom: 8px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">⚙️ Execution Environment & Manifest</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-          <div><span style="color: #64748b;">Harness:</span> <strong style="color: #f8fafc;">${metadata.harness || 'Antigravity'}</strong></div>
-          <div><span style="color: #64748b;">Primary Agent:</span> <strong style="color: #f8fafc;">${metadata.primaryAgent || 'Antigravity Orchestrator'}</strong></div>
-          <div><span style="color: #64748b;">Subagent Model:</span> <strong style="color: #38bdf8;">${metadata.model || 'Gemini 3.8 Flash High'}</strong></div>
-          <div><span style="color: #64748b;">Temperature:</span> <strong style="color: #f8fafc;">${metadata.temperature ?? 0.2}</strong></div>
-          <div><span style="color: #64748b;">Runtime:</span> <strong style="color: #f8fafc;">${metadata.subagentRuntime || 'invoke_subagent'}</strong></div>
-          <div><span style="color: #64748b;">Judges:</span> <strong style="color: #10b981;">Double-Blind Symmetrical</strong></div>
-        </div>
+        <strong>Prompt:</strong> "Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."
       </div>
     </header>
 
-    <!-- Top Score Overview -->
-    <div class="grid-2">
-      <div class="card" style="border-top: 4px solid var(--accent-n8nac);">
-        <div class="card-title">n8n-as-code Composite</div>
-        <div class="score-display">
-          <span class="score-n8nac">${n8nacScore.composite ?? 0}</span>
-          <span class="score-max">/ 100</span>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
-          Local GitOps authoring, grounded schema linter, instant offline feedback
-        </p>
+    <div class="kpi-grid">
+      <div class="kpi-card highlight">
+        <div class="kpi-title">Overall Winner</div>
+        <div class="kpi-value winner">${winner}</div>
+        <div class="kpi-sub">Composite Score Delta: ${Math.abs((nScore.composite || 0) - (mScore.composite || 0)).toFixed(2)} pts</div>
       </div>
-
-      <div class="card" style="border-top: 4px solid var(--accent-mcp);">
-        <div class="card-title">n8n Native MCP Composite</div>
-        <div class="score-display">
-          <span class="score-mcp">${mcpScore.composite ?? 0}</span>
-          <span class="score-max">/ 100</span>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
-          Remote instance-level JSON-RPC protocol, direct live mutation
-        </p>
+      <div class="kpi-card">
+        <div class="kpi-title">n8n-as-code Score</div>
+        <div class="kpi-value n8nac">${nScore.composite ?? 0} <span style="font-size: 1rem; color: var(--text-muted);">/ 100</span></div>
+        <div class="kpi-sub">Speed: ${nTel.totalDurationSec}s • Tokens: ${nTel.tokenUsage?.totalTokens}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Native MCP Score</div>
+        <div class="kpi-value mcp">${mScore.composite ?? 0} <span style="font-size: 1rem; color: var(--text-muted);">/ 100</span></div>
+        <div class="kpi-sub">Speed: ${mTel.totalDurationSec}s • Tokens: ${mTel.tokenUsage?.totalTokens}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Evaluation Model</div>
+        <div class="kpi-value" style="font-size: 1.2rem; color: #a855f7; margin-top: 8px;">Deterministic</div>
+        <div class="kpi-sub">Server validate_node_config + Minimax</div>
       </div>
     </div>
 
-    <!-- Charts Grid -->
-    <div class="grid-2">
+    <div class="charts-grid">
       <div class="card">
-        <div class="card-title">Metric Breakdown Radar</div>
+        <div class="card-title">Multi-Dimensional Minimax Comparison</div>
         <div class="chart-container">
           <canvas id="radarChart"></canvas>
         </div>
       </div>
-
       <div class="card">
-        <div class="card-title">Resource Consumption Comparison</div>
+        <div class="card-title">Normalized Dimension Scores (0 - 100)</div>
         <div class="chart-container">
           <canvas id="barChart"></canvas>
         </div>
       </div>
     </div>
 
-    <!-- Metrics Table -->
-    <div class="card" style="margin-bottom: 24px;">
-      <div class="card-title">Detailed Metric Comparison</div>
+    <div class="card" style="margin-bottom: 32px;">
+      <div class="card-title">Detailed Dimension & Ground-Truth API Breakdown</div>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Metric</th>
+              <th>Dimension</th>
               <th>Weight</th>
               <th>n8n-as-code</th>
               <th>n8n Native MCP</th>
@@ -231,39 +208,39 @@ export class DashboardReporter {
           </thead>
           <tbody>
             <tr>
-              <td><strong>1. Ease of Installation</strong></td>
+              <td><strong>1. Workflow Quality (API Ground Truth)</strong></td>
+              <td>35%</td>
+              <td>${nScore.workflowQuality ?? 0}/100 (${nAudit.scores?.nodeSchemaValidity ?? 0}% valid nodes)</td>
+              <td>${mScore.workflowQuality ?? 0}/100 (${mAudit.scores?.nodeSchemaValidity ?? 0}% valid nodes)</td>
+              <td><span class="winner-tag">${(nScore.workflowQuality || 0) >= (mScore.workflowQuality || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>2. Creation Time (Minimax)</strong></td>
+              <td>25%</td>
+              <td>${nScore.creationTime ?? 0}/100 (${nTel.totalDurationSec ?? 0}s)</td>
+              <td>${mScore.creationTime ?? 0}/100 (${mTel.totalDurationSec ?? 0}s)</td>
+              <td><span class="winner-tag">${(nScore.creationTime || 0) >= (mScore.creationTime || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            </tr>
+            <tr>
+              <td><strong>3. Token Efficiency (Minimax)</strong></td>
               <td>20%</td>
-              <td>${n8nacScore.easeOfInstallation ?? 0}/100</td>
-              <td>${mcpScore.easeOfInstallation ?? 0}/100</td>
-              <td><span class="winner-tag">${(n8nacScore.easeOfInstallation || 0) >= (mcpScore.easeOfInstallation || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+              <td>${nScore.tokenConsumption ?? 0}/100 (${nTel.tokenUsage?.totalTokens ?? 0} tokens)</td>
+              <td>${mScore.tokenConsumption ?? 0}/100 (${mTel.tokenUsage?.totalTokens ?? 0} tokens)</td>
+              <td><span class="winner-tag">${(nScore.tokenConsumption || 0) >= (mScore.tokenConsumption || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
             </tr>
             <tr>
-              <td><strong>2. Ease of Use</strong></td>
+              <td><strong>4. Setup Time (Minimax)</strong></td>
               <td>20%</td>
-              <td>${n8nacScore.easeOfUse ?? 0}/100</td>
-              <td>${mcpScore.easeOfUse ?? 0}/100</td>
-              <td><span class="winner-tag">${(n8nacScore.easeOfUse || 0) >= (mcpScore.easeOfUse || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+              <td>${nScore.setupTime ?? 0}/100 (${nTel.setupTimeSec ?? 0}s)</td>
+              <td>${mScore.setupTime ?? 0}/100 (${mTel.setupTimeSec ?? 0}s)</td>
+              <td><span class="winner-tag">${(nScore.setupTime || 0) >= (mScore.setupTime || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
             </tr>
-            <tr>
-              <td><strong>3. Token Consumption</strong></td>
-              <td>15%</td>
-              <td>${n8nacScore.tokenConsumption ?? 0}/100 (${n8nac?.rawMetrics?.tokenUsage?.totalTokens ?? 0} tokens)</td>
-              <td>${mcpScore.tokenConsumption ?? 0}/100 (${nativeMcp?.rawMetrics?.tokenUsage?.totalTokens ?? 0} tokens)</td>
-              <td><span class="winner-tag">${(n8nacScore.tokenConsumption || 0) >= (mcpScore.tokenConsumption || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
-            </tr>
-            <tr>
-              <td><strong>4. Creation Time</strong></td>
-              <td>15%</td>
-              <td>${n8nacScore.creationTime ?? 0}/100 (${n8nac?.rawMetrics?.totalDurationSec ?? 0}s)</td>
-              <td>${mcpScore.creationTime ?? 0}/100 (${nativeMcp?.rawMetrics?.totalDurationSec ?? 0}s)</td>
-              <td><span class="winner-tag">${(n8nacScore.creationTime || 0) >= (mcpScore.creationTime || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
-            </tr>
-            <tr>
-              <td><strong>5. Workflow Quality</strong></td>
-              <td>30%</td>
-              <td>${n8nacScore.workflowQuality ?? 0}/100</td>
-              <td>${mcpScore.workflowQuality ?? 0}/100</td>
-              <td><span class="winner-tag">${(n8nacScore.workflowQuality || 0) >= (mcpScore.workflowQuality || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
+            <tr style="background: rgba(255, 255, 255, 0.03); font-weight: 700;">
+              <td>Overall Composite Score</td>
+              <td>100%</td>
+              <td>${nScore.composite ?? 0} / 100</td>
+              <td>${mScore.composite ?? 0} / 100</td>
+              <td><span class="winner-tag">${winner}</span></td>
             </tr>
           </tbody>
         </table>
@@ -277,16 +254,16 @@ export class DashboardReporter {
     new Chart(radarCtx, {
       type: 'radar',
       data: {
-        labels: ['Ease of Install', 'Ease of Use', 'Tokens', 'Creation Time', 'Workflow Quality'],
+        labels: ['Setup Time', 'Creation Time', 'Tokens', 'Node Validity', 'Workflow Quality'],
         datasets: [
           {
             label: 'n8n-as-code',
             data: [
-              ${n8nacScore.easeOfInstallation ?? 0},
-              ${n8nacScore.easeOfUse ?? 0},
-              ${n8nacScore.tokenConsumption ?? 0},
-              ${n8nacScore.creationTime ?? 0},
-              ${n8nacScore.workflowQuality ?? 0}
+              ${nScore.setupTime ?? 0},
+              ${nScore.creationTime ?? 0},
+              ${nScore.tokenConsumption ?? 0},
+              ${nAudit.scores?.nodeSchemaValidity ?? 0},
+              ${nScore.workflowQuality ?? 0}
             ],
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.2)',
@@ -295,11 +272,11 @@ export class DashboardReporter {
           {
             label: 'n8n Native MCP',
             data: [
-              ${mcpScore.easeOfInstallation ?? 0},
-              ${mcpScore.easeOfUse ?? 0},
-              ${mcpScore.tokenConsumption ?? 0},
-              ${mcpScore.creationTime ?? 0},
-              ${mcpScore.workflowQuality ?? 0}
+              ${mScore.setupTime ?? 0},
+              ${mScore.creationTime ?? 0},
+              ${mScore.tokenConsumption ?? 0},
+              ${mAudit.scores?.nodeSchemaValidity ?? 0},
+              ${mScore.workflowQuality ?? 0}
             ],
             borderColor: '#ec4899',
             backgroundColor: 'rgba(236, 72, 153, 0.2)',
@@ -318,9 +295,6 @@ export class DashboardReporter {
             grid: { color: '#1f2937' },
             pointLabels: { color: '#cbd5e1', font: { size: 11, family: 'Inter' } }
           }
-        },
-        plugins: {
-          legend: { labels: { color: '#f9fafb' } }
         }
       }
     });
@@ -330,21 +304,27 @@ export class DashboardReporter {
     new Chart(barCtx, {
       type: 'bar',
       data: {
-        labels: ['Total Tokens (/100)', 'Total Duration (s)'],
+        labels: ['Setup Time', 'Creation Time', 'Token Efficiency', 'Workflow Quality', 'Composite Score'],
         datasets: [
           {
             label: 'n8n-as-code',
             data: [
-              Math.round((${n8nac?.rawMetrics?.tokenUsage?.totalTokens ?? 0}) / 100),
-              ${n8nac?.rawMetrics?.totalDurationSec ?? 0}
+              ${nScore.setupTime ?? 0},
+              ${nScore.creationTime ?? 0},
+              ${nScore.tokenConsumption ?? 0},
+              ${nScore.workflowQuality ?? 0},
+              ${nScore.composite ?? 0}
             ],
             backgroundColor: '#3b82f6',
           },
           {
             label: 'n8n Native MCP',
             data: [
-              Math.round((${nativeMcp?.rawMetrics?.tokenUsage?.totalTokens ?? 0}) / 100),
-              ${nativeMcp?.rawMetrics?.totalDurationSec ?? 0}
+              ${mScore.setupTime ?? 0},
+              ${mScore.creationTime ?? 0},
+              ${mScore.tokenConsumption ?? 0},
+              ${mScore.workflowQuality ?? 0},
+              ${mScore.composite ?? 0}
             ],
             backgroundColor: '#ec4899',
           }
@@ -354,27 +334,33 @@ export class DashboardReporter {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af' } },
-          x: { grid: { color: '#1f2937' }, ticks: { color: '#cbd5e1' } }
-        },
-        plugins: {
-          legend: { labels: { color: '#f9fafb' } }
+          y: {
+            beginAtZero: true,
+            max: 100,
+            grid: { color: '#1f2937' },
+            ticks: { color: '#9ca3af' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9ca3af' }
+          }
         }
       }
     });
   </script>
 </body>
-</html>`;
+</html>
+`;
   }
 
   static writeReport(results, outputPath = './benchmark/reports/benchmark_dashboard.html') {
-    const content = this.generateHtml(results);
+    const html = this.generateHtml(results);
     const resolvedPath = path.resolve(outputPath);
     const parentDir = path.dirname(resolvedPath);
     if (!fs.existsSync(parentDir)) {
       fs.mkdirSync(parentDir, { recursive: true });
     }
-    fs.writeFileSync(resolvedPath, content, 'utf8');
+    fs.writeFileSync(resolvedPath, html, 'utf8');
     return resolvedPath;
   }
 }

@@ -10,7 +10,7 @@
   "scripts": {
     "verify": "node benchmark/cli.mjs verify",
     "evaluate": "node benchmark/cli.mjs evaluate",
-    "report": "node benchmark/cli.mjs report"
+    "report": "node benchmark/harness/compiler.mjs"
   },
   "keywords": [
     "n8n",
