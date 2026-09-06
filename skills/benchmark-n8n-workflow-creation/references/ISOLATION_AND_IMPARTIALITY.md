@@ -11,10 +11,12 @@ No worker agent may ever evaluate, score, or comment qualitatively on its own pe
 - **Workers (Installers & Builders)**: Execute the task and output objective, factual telemetry logs (commands, stdout/stderr, timestamps, errors, tokens, workflow artifacts).
 - **Validation**: Performed deterministically via code (`validator.mjs`) inspecting the live n8n instance API.
 
-### 🛡️ Principle 2: Zero Instance Contamination (Universal Confinement)
+### 🛡️ Principle 2: Zero Instance Contamination (Universal Confinement & Opaque Naming)
 When running on a shared n8n Cloud instance with common API credentials:
 - **Universal System Prompt Instruction**:
   > **« INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création. »**
+- **Opaque Workflow Naming Rule**:
+  > **« NOMMAGE OPAQUE : Afin d'éviter toute fuite d'information ou reconnaissance par un autre processus sur l'instance partagée, vous devez obligatoirement attribuer à votre workflow un nom opaque et générique (par exemple "benchmark-workflow-canvas"), sans jamais inclure les mots-clés de la consigne. »**
 - This instruction is strictly generic: it contains no tool-specific keywords (`n8nac`, `search_workflows`, etc.) to prevent context leakage across sandboxes.
 - Any attempt to list or inspect existing workflows on the cloud instance is audited and flagged as a toolchain isolation violation.
 

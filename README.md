@@ -28,7 +28,7 @@ To ensure 100% scientific validity and prevent context contamination:
 | **Model Parameters** | Locked identically across subagents (`Model: inherit / flash / pro`, temperature: `0.2`). |
 | **Exact Prompt** | *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."* |
 | **Hermetic Isolation** | **Concurrent Subagents** with zero cross-talk. Each subagent runs in its own pristine sandbox with partitioned `.env`. |
-| **Universal Confinement** | Strictly generic anti-leakage rule: *"INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n."* |
+| **Universal Confinement** | Strictly generic anti-leakage rule: *"INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n."* Combined with opaque workflow naming to prevent instance cross-talk. |
 
 ---
 
