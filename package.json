@@ -10,6 +10,7 @@
   "scripts": {
     "verify": "node benchmark/cli.mjs verify",
     "evaluate": "node benchmark/cli.mjs evaluate",
+    "validate": "node benchmark/harness/validator.mjs",
     "report": "node benchmark/harness/compiler.mjs"
   },
   "keywords": [

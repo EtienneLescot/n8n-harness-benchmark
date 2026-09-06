@@ -8,6 +8,7 @@ import { WorkflowEvaluator } from './harness/evaluator.mjs';
 import { MarkdownReporter } from './reporters/markdown-reporter.mjs';
 import { DashboardReporter } from './reporters/dashboard-reporter.mjs';
 import { JsonReporter } from './reporters/json-reporter.mjs';
+import { validateWorkflowOnInstance } from './harness/validator.mjs';
 
 // Lightweight zero-dependency .env loader
 function loadEnv() {
@@ -47,7 +48,8 @@ Usage:
 
 Commands:
   verify              Verify .env credentials and connectivity to n8n instance & MCP server
-  evaluate <file>     Evaluate a workflow JSON file against the standardized 5-dimension rubric
+  evaluate <file>     Evaluate a local workflow JSON file against standard rubric
+  validate <id>       Validate live workflow on instance using n8n server RPC & execution check
   report              Regenerate HTML dashboard and Markdown reports from benchmark_results.json
   help, -h, --help    Show this help message
 
@@ -126,9 +128,29 @@ async function handleEvaluate(filePath) {
 
 import { compileBenchmarkResults } from './harness/compiler.mjs';
 
+async function handleValidate(workflowId) {
+  if (!workflowId) {
+    console.error('Error: Please provide a workflow ID. Example: node benchmark/cli.mjs validate y7SWIwjXjL8x3mwU');
+    process.exit(1);
+  }
+
+  console.log(`\n🔍 Auditing Workflow ${workflowId} on live n8n Cloud instance (Zero LLM)...\n`);
+  const result = await validateWorkflowOnInstance(workflowId);
+
+  console.log('═══════════════════════════════════════════════════════');
+  console.log(`🏆 DETERMINISTIC QUALITY SCORE: ${result.scores.compositeQuality} / 100`);
+  console.log('═══════════════════════════════════════════════════════');
+  console.log(`  • Workflow Name:         ${result.workflowName}`);
+  console.log(`  • Total Nodes:           ${result.metrics.nodeCount}`);
+  console.log(`  • Valid Nodes (RPC):     ${result.metrics.validNodeCount} / ${result.metrics.nodeCount} (${result.scores.nodeSchemaValidity}%)`);
+  console.log(`  • Graph Integrity:       ${result.scores.graphIntegrity}% (${result.metrics.orphanedNodeCount} orphans)`);
+  console.log(`  • Live Execution:        ${result.liveExecution.executed ? result.liveExecution.status + ' (' + result.liveExecution.executedNodesCount + ' nodes)' : 'None'} (${result.scores.liveExecution} pts)`);
+  console.log('═══════════════════════════════════════════════════════\n');
+}
+
 async function handleReport() {
-  console.log('\n📄 Deterministically Compiling Benchmark Reports from Raw Judge Scorecards...\n');
-  const compiled = compileBenchmarkResults();
+  console.log('\n📄 Deterministically Compiling Benchmark Reports (Option B Minimax)...\n');
+  const compiled = await compileBenchmarkResults();
 
   console.log(`  ✔ Markdown Report:   ${compiled.artifacts.mdFile}`);
   console.log(`  ✔ HTML Dashboard:    ${compiled.artifacts.htmlFile}`);
@@ -146,6 +168,9 @@ async function main() {
       break;
     case 'evaluate':
       await handleEvaluate(args[1]);
+      break;
+    case 'validate':
+      await handleValidate(args[1]);
       break;
     case 'report':
       await handleReport();

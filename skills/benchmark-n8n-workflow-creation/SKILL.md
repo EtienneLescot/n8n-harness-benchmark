@@ -9,16 +9,14 @@ Use this skill when asked to benchmark, compare, or scientifically evaluate **n8
 
 ---
 
-## 🎯 Hermetic Symmetrical Architecture: One Judge per Branch
+## 🎯 Hermetic Symmetrical Architecture: 2-Tier Execution + Deterministic Validation
 
-To achieve absolute scientific neutrality:
+To achieve absolute scientific neutrality and eliminate subjective LLM evaluation:
 1. **Zero Self-Evaluation**: No worker (Installer or Builder) grades or evaluates its own work. They produce only factual, raw execution traces.
-2. **Zero Judge Contrast Bias (One Judge per Branch)**:
-   - If a single judge evaluates both tools, the evaluation of the second tool is inevitably contaminated by anchoring, recency, or contrast bias against the first.
-   - Therefore, **each branch has its own dedicated Judge Subagent** (`Judge A` for n8n-as-code, `Judge B` for Native MCP).
-   - `Judge A` evaluates **only** Branch A against the absolute rubric, having **never seen** Branch B.
-   - `Judge B` evaluates **only** Branch B against the exact same absolute rubric, having **never seen** Branch A.
-3. **Total Pipeline Isolation**: The two branches run in complete hermetic silos from installation to final scoring. The Primary Orchestrator merely aggregates the two independent scorecards.
+2. **Zero Subjective LLM Judges**: Replaced entirely by server-side ground truth via n8n's official `validate_node_config` RPC tool, graph topology inspection, and live cloud execution audits.
+3. **Universal Confinement**: A strictly generic system prompt prevents agents from querying or listing existing workflows on the target instance:
+   > *« INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création. »*
+4. **Universal Minimax Scaling**: Quantitative latencies and token counts are scaled symmetrically via $\text{Score} = 100 \times \frac{\min(A, B)}{X}$, eliminating floor effects.
 
 ```
                       ┌───────────────────────────────┐
@@ -47,22 +45,21 @@ To achieve absolute scientific neutrality:
             - Conçoit & déploie wf     - Conçoit & déploie wf
             - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
                      │                         │
-     3. JUDGE        ▼                         ▼
-            [Sous-Agent Juge A]        [Sous-Agent Juge B]
-            - Évalue UNIQUEMENT A      - Évalue UNIQUEMENT B
-            - Ne voit JAMAIS B         - Ne voit JAMAIS A
-            - Barème absolu 0-100      - Barème absolu 0-100
-                     │                         │
                      └───────────┬─────────────┘
                                  │
-                   Transmission des Notations
-                   - Évaluation A (indépendante)
-                   - Évaluation B (indépendante)
-                                 │
-                                 ▼
+     3. VALIDATE & AUDIT         ▼
                       ┌───────────────────────────────┐
-                      │   Agrégation & Dashboard      │
-                      │   (Agent Principal / Rapports)│
+                      │   validator.mjs (Zero LLM)    │
+                      │   - GET /api/v1/workflows/:id │
+                      │   - validate_node_config RPC  │
+                      │   - GET /api/v1/executions    │
+                      └──────────────┬────────────────┘
+                                     │
+     4. REPORT & MINIMAX             ▼
+                      ┌───────────────────────────────┐
+                      │   compiler.mjs (Minimax)      │
+                      │   - Minimax Speed & Tokens    │
+                      │   - Markdown & HTML Dashboard │
                       └───────────────────────────────┘
 ```
 
@@ -102,11 +99,10 @@ To guarantee scientific parity and strict sandbox confinement:
 - Lock the model parameter for **all 6 subagents** (`Model: 'inherit'`, `'flash'`, or `'pro'`).
 - The chosen model is recorded in the benchmark telemetry and shown in the final reports.
 
-#### Register Subagent Personas with Universal Confinement
-Before spawning workers or judges, the orchestrator registers two hermetic subagent types via `define_subagent` (or harness configuration):
+#### Register Subagent Persona with Universal Confinement
+Before spawning workers, the orchestrator registers the hermetic worker persona via `define_subagent` (or harness configuration):
 
 ```javascript
-// 1. Worker Persona (Installers & Builders)
 define_subagent({
   name: "hermetic_worker",
   description: "Autonomous engineering subagent confined strictly to its local sandbox.",
@@ -117,28 +113,10 @@ CONFINEMENT & SECURITY RULES (CRITICAL):
 - You must operate exclusively within your current working directory.
 - NEVER list, inspect, read, or execute commands in parent directories ('..') or sibling workspaces.
 - Discover and utilize the tools, CLI binaries, libraries, or environment variables present in your local workspace.
+- INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création.
 - Do not make assumptions: verify your work locally before reporting completion.`,
   enable_write_tools: true,
   enable_mcp_tools: true,
-  enable_subagent_tools: false
-});
-
-// 2. Double-Blind Judge Persona (Evaluators)
-define_subagent({
-  name: "blind_judge",
-  description: "Double-blind evaluation agent confined strictly to its evaluation sandbox.",
-  system_prompt: `You are an independent, double-blind benchmark evaluator.
-
-EVALUATION PRINCIPLES & CONFINEMENT RULES (CRITICAL):
-- Your dedicated workspace is your current working directory ('.').
-- You must operate exclusively within your current working directory. NEVER explore parent directories ('..') or other sandboxes.
-- You are double-blind: you have NO knowledge of competitor branches, other tools, or parallel runs. You evaluate solely the artifacts in this environment against the absolute rubric.
-- Strictly adhere to the standardized evaluation rubric found in 'references/EVALUATION_RUBRIC.md'.
-- Every score must be strictly grounded in observable facts from 'logs/' (telemetry, turns, command history) and live API queries. Never invent or assume metrics.
-- Verify toolchain adherence: if the worker circumvented its designated tools or violated sandbox isolation, apply the mandatory -25 pts penalty on Ease of Use.
-- Output your final structured evaluation in 'logs/judge_log.json'.`,
-  enable_write_tools: true,
-  enable_mcp_tools: false,
   enable_subagent_tools: false
 });
 ```
@@ -190,28 +168,35 @@ Spawn two independent builder subagents in their respective configured sandboxes
 
 ---
 
-### Step 5: Phase 3 — Symmetrical Independent Evaluation (`Judges A & B`)
-Spawn **two separate Judge Subagents** concurrently using `TypeName: "blind_judge"` and `Workspace: "branch"`, each reviewing strictly its own sandbox in complete isolation.
+### Step 5: Phase 3 — Ground-Truth API Validation & Quality Audit (`validator.mjs`)
+Rather than relying on subjective LLM evaluator judges, quality is audited deterministically with **zero LLM inference** directly on the live n8n instance:
 
-> [!IMPORTANT]
-> **Double-Blind Independent Evaluation**:
-> The Judge does NOT know a competitor branch exists. Its system prompt enforces evidence-based grading against `references/EVALUATION_RUBRIC.md`, toolchain adherence checking (-25 pts penalty for circumvention), and live instance verification.
-> 
-> **Exact User Prompt Sent to Both Judges**:
-> ```text
-> Évalue le travail réalisé dans cet environnement selon la grille standardisée 'references/EVALUATION_RUBRIC.md'. Récupère le workflow déployé sur l'instance n8n via l'API, vérifie l'adhérence aux outils sans contournement, et enregistre ton évaluation détaillée dans 'logs/judge_log.json'.
-> ```
+```bash
+# Validate any workflow directly against n8n Cloud server schemas:
+node benchmark/harness/validator.mjs <workflowId>
+# Or via CLI:
+npm run validate <workflowId>
+```
+
+The validator performs:
+1. **Node Schema Validity (40% of Quality)**: Calls n8n server RPC `validate_node_config` for each node (parameters, required subnodes, credentials).
+2. **Graph Topology & Integrity (30% of Quality)**: Graph adjacency check verifying all functional nodes are connected with 0 orphaned nodes.
+3. **Live Execution Verification (30% of Quality)**: Queries `GET /api/v1/executions` to verify live cloud execution status and output payloads.
 
 ---
 
-### Step 6: Final Deterministic Aggregation & Reporting
-The Primary Orchestrator compiles the two scorecards deterministically with zero LLM inference using:
+### Step 6: Phase 4 — Deterministic Minimax Compilation & Reporting
+The Primary Orchestrator compiles the factual telemetry and API validation results into final reports using:
+
 ```bash
 npm run report
 ```
-This executes `benchmark/harness/compiler.mjs`, producing:
-- 📄 `benchmark/reports/benchmark_report.md`
-- 📊 `benchmark/reports/benchmark_dashboard.html`
-- 💾 `benchmark/reports/benchmark_results.json`
+
+This executes `benchmark/harness/compiler.mjs`, calculating:
+- **Universal Minimax Scaling**: $100 \times \frac{\min(A, B)}{X}$ for Creation Time (25%), Token Efficiency (20%), and Setup Time (20%).
+- Generates:
+  - 📄 `benchmark/reports/benchmark_report.md` (Markdown summary)
+  - 📊 `benchmark/reports/benchmark_dashboard.html` (Interactive Generative UI dashboard)
+  - 💾 `benchmark/reports/benchmark_results.json` (Machine-readable facts & scores)
 
 

@@ -22,25 +22,22 @@ To ensure 100% scientific validity and prevent context contamination:
 | Dimension | Standardized Condition |
 |---|---|
 | **Host Machine** | Identical local machine (Windows 11). |
-| **Network & Instance** | Identical n8n Cloud production instance. |
+| **Network & Instance** | Identical n8n Cloud production instance (`https://etiennel.app.n8n.cloud`). |
 | **LLM Engine** | **Google Antigravity** paired with **Gemini 3.8 Flash (High)**. |
-| **Judge / Evaluator** | Same Antigravity + Gemini 3.8 Flash (High) using standardized rubric. |
-| **Model Parameters** | Locked identically across both subagents (`Model: inherit / flash / pro`, temperature: `0.2`). |
-| **Exact Prompt** | *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"* |
+| **Evaluation Engine** | **Deterministic n8n Server RPC (`validate_node_config`) + Live Graph Topology + Production Execution Audit + Universal Minimax Compiler** (Zero LLM inference). |
+| **Model Parameters** | Locked identically across subagents (`Model: inherit / flash / pro`, temperature: `0.2`). |
+| **Exact Prompt** | *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."* |
 | **Hermetic Isolation** | **Concurrent Subagents** with zero cross-talk. Each subagent runs in its own pristine sandbox with partitioned `.env`. |
-| **No Sequential Carryover** | Eliminates the first-mover cognitive advantage and second-mover mimicry bias. |
+| **Universal Confinement** | Strictly generic anti-leakage rule: *"INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n."* |
 
 ---
 
-## 🏗️ Hermetic Symmetrical Architecture: One Judge per Branch
+## 🏗️ 2-Tier Hermetic Architecture: Execution & Deterministic Validation
 
-To achieve absolute scientific neutrality and eliminate both self-evaluation and contrast bias:
+To achieve absolute scientific neutrality and eliminate subjective LLM evaluation:
 - **Workers (`Installers` & `Builders`)**: Focus exclusively on execution and recording factual raw traces (commands, timestamps, errors, tokens, workflow files). Zero self-ratings.
-- **One Judge per Branch (`Judge A` & `Judge B`)**:
-  - `Judge A` evaluates **only** Branch A against the absolute rubric, having **never seen** Branch B.
-  - `Judge B` evaluates **only** Branch B against the exact same rubric, having **never seen** Branch A.
-  - This eliminates anchoring bias, contrast effect, and order-of-review bias.
-- **Primary Orchestrator**: Aggregates the two independent scorecards into the comparative reports.
+- **Deterministic API Validator (`validator.mjs`)**: Directly queries the live n8n instance using official server-side RPC `validate_node_config`, verifies graph topology (0 orphans), and checks production execution logs (`GET /api/v1/executions`). Zero subjective LLM grading.
+- **Universal Minimax Compiler (`compiler.mjs`)**: Scaled symmetrically across quantitative latencies and token consumption via $\text{Score} = 100 \times \frac{\min(A, B)}{X}$, eliminating floor collapse.
 
 ```
                       ┌───────────────────────────────┐
@@ -69,43 +66,41 @@ To achieve absolute scientific neutrality and eliminate both self-evaluation and
             - Conçoit & déploie wf     - Conçoit & déploie wf
             - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
                      │                         │
-     3. JUDGE        ▼                         ▼
-            [Sous-Agent Juge A]        [Sous-Agent Juge B]
-            - Évalue UNIQUEMENT A      - Évalue UNIQUEMENT B
-            - Ne voit JAMAIS B         - Ne voit JAMAIS A
-            - Barème absolu 0-100      - Barème absolu 0-100
-                     │                         │
                      └───────────┬─────────────┘
                                  │
-                   Transmission des Notations
-                   - Évaluation A (indépendante)
-                   - Évaluation B (indépendante)
-                                 │
-                                 ▼
+     3. VALIDATE & AUDIT         ▼
                       ┌───────────────────────────────┐
-                      │   Agrégation & Dashboard      │
-                      │   (Agent Principal / Rapports)│
+                      │   validator.mjs (Zero LLM)    │
+                      │   - GET /api/v1/workflows/:id │
+                      │   - validate_node_config RPC  │
+                      │   - GET /api/v1/executions    │
+                      └──────────────┬────────────────┘
+                                     │
+     4. REPORT & MINIMAX             ▼
+                      ┌───────────────────────────────┐
+                      │   compiler.mjs (Minimax)      │
+                      │   - Minimax Speed & Tokens    │
+                      │   - Markdown & HTML Dashboard │
                       └───────────────────────────────┘
 ```
 
 ---
 
-## 🏆 Live Hermetic Benchmark Results (Double Blind Judges)
+## 🏆 Live Benchmark Results (Option B: Deterministic API Audit & Minimax)
 
-Tested live on `https://etiennel.app.n8n.cloud` with strictly separated Installers, Builders, and independent Judges (`Judge A` and `Judge B`):
+Tested live on `https://etiennel.app.n8n.cloud` under identical conditions:
 
-| Evaluated Metric | Weight | n8n-as-code | n8n Native MCP | Advantage |
+| Evaluated Metric | Weight | n8n-as-code (@next) | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Ease of Installation** | 20% | **90 / 100** | **65 / 100** | **+25 pts n8n-as-code** *(Headless CLI vs UI tokens & headers)* |
-| **2. Ease of Use & Feedback Loop** | 20% | **75 / 100** | **65 / 100** | **+10 pts n8n-as-code** *(Local TypeScript stubs vs remote roundtrips)* |
-| **3. Token Consumption** | 15% | **7.15 / 100** *(23,570)* | **22.15 / 100** *(20,570)* | **+15 pts Native MCP** *(Slightly fewer tokens)* |
-| **4. Creation Time** | 15% | **0 / 100** *(404s)* | **100 / 100** *(0.43s)* | **+100 pts Native MCP** *(Direct RPC deploy vs local compilation)* |
-| **5. Workflow Quality** | 30% | **96 / 100** | **97 / 100** | **Tie / +1 pt Native MCP** *(Both exceptional quality)* |
-| **Overall Composite Score** | **100%** | **62.87 / 100** | **73.42 / 100** | 🏆 **Native MCP wins on raw deploy speed** |
+| **1. Workflow Quality (API Ground Truth)** | 35% | **60.59 / 100** | **100 / 100** | +39.41 pts Native MCP *(100% valid nodes & execution #16)* |
+| **2. Creation Time (Minimax Ratio)** | 25% | **100 / 100** *(474s)* | **31.08 / 100** *(1525s)* | **+68.92 pts n8n-as-code** *(3.2x faster build)* |
+| **3. Token Efficiency (Minimax Ratio)** | 20% | **100 / 100** *(72k)* | **48.00 / 100** *(150k)* | **+52.00 pts n8n-as-code** *(52% fewer tokens)* |
+| **4. Setup Time (Minimax Ratio)** | 20% | **100 / 100** *(18s)* | **81.82 / 100** *(22s)* | **+18.18 pts n8n-as-code** *(1.2x faster setup)* |
+| **Overall Composite Score** | **100%** | **86.21 / 100** | **68.73 / 100** | 🏆 **n8n-as-code wins on speed & token efficiency** |
 
 ### Live Workflows Deployed
-- **n8n-as-code**: [`Vncg5yashOI7pJiZ`](https://etiennel.app.n8n.cloud/workflow/Vncg5yashOI7pJiZ) — Multi-agent triage with 3 specialist roles & styled HTML dashboard.
-- **n8n Native MCP**: [`QXj30puWAD6FAdAS`](https://etiennel.app.n8n.cloud/workflow/QXj30puWAD6FAdAS) — Multi-agent triage with toolCalculator subnode & styled HTML dashboard.
+- **n8n-as-code**: [`y7SWIwjXjL8x3mwU`](https://etiennel.app.n8n.cloud/workflow/y7SWIwjXjL8x3mwU) — 17 nodes, multi-agent email & calendar triage, 0 orphaned nodes, styled HTML dashboard.
+- **n8n Native MCP**: [`Nr5K7Hhga1nykKT1`](https://etiennel.app.n8n.cloud/workflow/Nr5K7Hhga1nykKT1) — 14 nodes, 100% server-validated nodes, 0 orphaned nodes, live cloud execution #16 success.
 
 ---
 
@@ -156,11 +151,14 @@ The repository also includes standalone zero-dependency utilities:
 # 1. Verify credentials and connectivity to your n8n instance & Native MCP server
 npm run verify
 
-# 2. Evaluate any workflow JSON against the 5-dimension rubric
-npm run evaluate -- examples/workflow_n8n_as_code.json
-npm run evaluate -- examples/workflow_native_mcp.json
+# 2. Deterministically audit a live workflow on n8n Cloud (Zero LLM: validate_node_config RPC + execution audit)
+npm run validate y7SWIwjXjL8x3mwU
+npm run validate Nr5K7Hhga1nykKT1
 
-# 3. Regenerate HTML dashboard and Markdown reports
+# 3. Evaluate a local workflow JSON file against rubric
+npm run evaluate -- examples/workflow_n8n_as_code.json
+
+# 4. Regenerate HTML dashboard and Markdown reports (Universal Minimax compiler)
 npm run report
 ```
 

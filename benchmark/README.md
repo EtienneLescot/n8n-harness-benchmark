@@ -18,48 +18,41 @@ A standardized, rigorous benchmark harness comparing **n8n-as-code** with **n8n 
 
 ---
 
-## 📐 Evaluated Metrics
+## 📐 Evaluated Metrics (Option B: Deterministic API Audit & Universal Minimax)
 
-1. **Ease of Installation** (20%): Official documentation setup, instance prep, step count, setup time, friction points.
-2. **Ease of Use** (20%): Turns to working workflow, schema validation loop, error recovery ergonomics, human cognitive load.
-3. **Token Consumption** (15%): Prompt tokens, completion tokens, tool call overhead.
-4. **Time to Create Workflow** (15%): Total elapsed wall-clock duration.
-5. **Quality of the Workflow** (30%):
-   - Initial brief following (Gmail + Calendar + Triage Multi-Agent + HTML Dashboard)
-   - Nodes correctness & connection wiring (including AI sub-nodes)
-   - Wow effect & dashboard aesthetics
-   - Workflow execution / dry-run readiness
+1. **Workflow Quality** (**35%**):
+   - **40% Node Schema Validity**: Audited by n8n Cloud's official RPC tool `validate_node_config`.
+   - **30% Graph Topology & Integrity**: Mathematical adjacency verification (0 functional orphans).
+   - **30% Live Execution Status**: Queried from `GET /api/v1/executions` on production instance.
+2. **Time to Create Workflow** (**25%**):
+   - Evaluated via Universal Minimax Ratio: $\text{Score} = 100 \times \frac{\min(T_A, T_B)}{T_X}$.
+3. **Token Efficiency** (**20%**):
+   - Evaluated via Universal Minimax Ratio: $\text{Score} = 100 \times \frac{\min(K_A, K_B)}{K_X}$.
+4. **Setup Time** (**20%**):
+   - Evaluated via Universal Minimax Ratio: $\text{Score} = 100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 CLI Commands & Validation Tools
 
-### 1. Configure Credentials (for Auto Mode)
-Copy the example environment file:
+### 1. Verify Credentials & Connectivity
+Verify connection to n8n REST API and Native MCP server:
 ```bash
-cp benchmark/config/.env.benchmark.example .env
-```
-Populate your credentials:
-```env
-N8N_HOST=http://localhost:5678
-N8N_API_KEY=your_n8n_api_key
-N8N_NATIVE_MCP_URL=http://localhost:5678/mcp-server/http
-N8N_NATIVE_MCP_TOKEN=your_mcp_token
-GEMINI_API_KEY=your_gemini_api_key
+npm run verify
 ```
 
-### 2. Run Mode 2: Auto Mode (Autonomous)
+### 2. Audit Any Live Workflow on n8n Cloud (Zero LLM)
+Audits node schema validity via `validate_node_config`, graph topology, and live execution history:
 ```bash
-npm run benchmark:auto
-# Or directly:
-node benchmark/cli.mjs --mode=auto
+npm run validate <workflowId>
+# Example:
+npm run validate y7SWIwjXjL8x3mwU
 ```
 
-### 3. Run Mode 1: Interactive Mode (Human in the Loop)
+### 3. Compile Benchmark Reports & Dashboard
+Compiles telemetry and live API audit into Markdown, HTML, and JSON reports:
 ```bash
-npm run benchmark:interactive
-# Or directly:
-node benchmark/cli.mjs --mode=interactive
+npm run report
 ```
 
 ---
@@ -67,13 +60,13 @@ node benchmark/cli.mjs --mode=interactive
 ## 📊 Output Reports
 
 Each run automatically compiles three reporting artifacts in `benchmark/reports/`:
-1. `benchmark_report.md`: Executive summary table, delta comparisons, and qualitative takeaways.
-2. `benchmark_results.json`: Full machine-readable telemetry data (timestamps, tokens, scores).
+1. `benchmark_report.md`: Executive summary table, delta comparisons, and ground-truth audit.
+2. `benchmark_results.json`: Full machine-readable telemetry data (timestamps, tokens, scores, validator output).
 3. `benchmark_dashboard.html`: Interactive, responsive Generative UI dashboard with radar charts, bar graphs, and metrics breakdown.
 
 ---
 
-## 📚 Documentation
-- [n8n-as-code Setup Guide](docs/N8N_AS_CODE_SETUP.md)
-- [n8n Native MCP Setup Guide](docs/N8N_NATIVE_MCP_SETUP.md)
-- [Evaluation Rubric & Methodology](docs/EVALUATION_RUBRIC.md)
+## 📚 Documentation & Specifications
+- [Evaluation Rubric & Methodology (Option B)](../skills/benchmark-n8n-workflow-creation/references/EVALUATION_RUBRIC.md)
+- [Isolation & Impartiality Standards](../skills/benchmark-n8n-workflow-creation/references/ISOLATION_AND_IMPARTIALITY.md)
+- [Antigravity Benchmark Skill](../skills/benchmark-n8n-workflow-creation/SKILL.md)
