@@ -22,6 +22,17 @@ When a single evaluator reviews two artifacts sequentially:
 - Both judges are spawned with identical model configuration and temperature (`0.2`).
 - The Primary Orchestrator merely aggregates the two independent scorecards.
 
+### 📋 Principle 3: Concrete Execution Manifest (Never Inferred)
+Because benchmark results can be contributed by multiple developers and agent runtimes into a shared public leaderboard:
+- Every run **must** record the concrete identity of:
+  - `harness`: The orchestrating environment (e.g., `Antigravity`, `Claude-Code`, `Cursor`, `Windsurf`)
+  - `primaryAgent`: The orchestrator role/agent name
+  - `model`: The exact model ID running the subagents (e.g., `Gemini 3.8 Flash High`, `Claude 3.7 Sonnet`, `GPT-4.5`)
+  - `temperature`: Locked sampling temperature (`0.2`)
+  - `subagentRuntime`: How subagents are spawned (e.g., `invoke_subagent`, `process_fork`)
+- These fields must be explicit, verifiable facts—never inferred, assumed, or approximated.
+- Pull Requests submitted to the leaderboard without this verified manifest are rejected.
+
 ---
 
 ## 2. Preventing Context Contamination (Subagent Hermetic Isolation)

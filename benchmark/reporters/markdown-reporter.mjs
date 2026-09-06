@@ -17,10 +17,20 @@ export class MarkdownReporter {
 
     return `# Benchmark Report: n8n-as-code vs. n8n Native MCP
 
-**Execution Date:** ${metadata.timestamp || new Date().toISOString()}  
-**LLM Harness:** ${metadata.llmHarness || 'Antigravity (Gemini 3.8 Flash High)'}  
-**Evaluation Model:** ${metadata.evaluator || 'Gemini 3.8 Flash High'}  
-**Benchmark Mode:** \`${metadata.mode || 'auto'}\`  
+## ⚙️ Execution Environment & Manifest
+
+| Dimension | Specification |
+|---|---|
+| **Orchestrating Harness** | **${metadata.harness || 'Antigravity'}** |
+| **Primary Agent** | ${metadata.primaryAgent || 'Antigravity Orchestrator'} |
+| **Subagent Model** | **${metadata.model || 'Gemini 3.8 Flash High'}** |
+| **Temperature** | \`${metadata.temperature ?? 0.2}\` |
+| **Subagent Runtime** | \`${metadata.subagentRuntime || 'invoke_subagent'}\` |
+| **Evaluation Mode** | Double-Blind Symmetrical (One independent judge per branch) |
+| **Host Platform** | ${metadata.environment?.os || process.platform} (${metadata.environment?.arch || process.arch}) / Node ${metadata.environment?.nodeVersion || process.version} |
+| **Target n8n Instance** | \`${metadata.environment?.n8nInstance || metadata.instanceUrl || 'Cloud'}\` |
+| **Timestamp** | \`${metadata.timestamp || new Date().toISOString()}\` |
+
 **Standardized Prompt:**  
 > *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
 

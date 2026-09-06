@@ -1,12 +1,18 @@
 {
   "metadata": {
+    "harness": "Antigravity",
+    "primaryAgent": "Antigravity Orchestrator",
+    "model": "Gemini 3.8 Flash High",
+    "temperature": 0.2,
+    "subagentRuntime": "Antigravity invoke_subagent",
     "mode": "hermetic_symmetrical_subagents",
     "architecture": "3-tier (Installer -> Builder -> Independent Judge per branch)",
     "timestamp": "2026-09-06T11:20:00.000Z",
-    "llmHarness": "Antigravity (Gemini 3.8 Flash High)",
-    "evaluator": "Gemini 3.8 Flash High (Two Blind Independent Judges)",
-    "temperature": 0.2,
-    "instanceUrl": "https://etiennel.app.n8n.cloud",
+    "environment": {
+      "os": "Windows 11 (win32-x64)",
+      "nodeVersion": "v24.14.0",
+      "n8nInstance": "https://etiennel.app.n8n.cloud"
+    },
     "workflows": {
       "n8nac": {
         "id": "Vncg5yashOI7pJiZ",

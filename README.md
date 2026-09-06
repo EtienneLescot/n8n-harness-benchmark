@@ -168,5 +168,30 @@ npm run report
 
 ---
 
+## 🌐 Community Submissions & Pull Request Protocol
+
+This benchmark is cross-platform and multi-agent. Whether running in **Antigravity**, **Claude Code**, **Cursor**, **Windsurf**, or a custom orchestrator, developers can execute the benchmark against their n8n instance and submit results to the public matrix via Pull Request.
+
+### Mandatory Manifest Standards:
+To guarantee scientific validity, submissions must **explicitly declare execution facts** in `benchmark_results.json` (never inferred):
+```json
+"metadata": {
+  "harness": "Antigravity",
+  "primaryAgent": "Antigravity Orchestrator",
+  "model": "Gemini 3.8 Flash High",
+  "temperature": 0.2,
+  "subagentRuntime": "Antigravity invoke_subagent",
+  "environment": {
+    "os": "Windows 11 (win32-x64)",
+    "nodeVersion": "v24.14.0",
+    "n8nInstance": "https://your-instance.app.n8n.cloud"
+  }
+}
+```
+
+Pull Requests containing inferred or missing model/harness specifications will not be merged into the official leaderboard.
+
+---
+
 ## 📄 License
 [MIT](LICENSE) © 2026 Etienne Lescot

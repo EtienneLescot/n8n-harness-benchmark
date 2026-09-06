@@ -70,7 +70,21 @@ To achieve absolute scientific neutrality:
 
 ## 📋 Execution Protocol (Step-by-Step)
 
-### Step 1: Credentials Gate
+### Step 1: Environment & Execution Manifest Gate (Explicit, Never Inferred)
+Because this benchmark is portable across diverse agent environments (Antigravity, Claude Code, Cursor, Windsurf, custom harnesses) and results will be contributed via Pull Requests for a community leaderboard, **the execution environment must be captured explicitly as concrete facts, never inferred**:
+
+1. Read or verify the following parameters in `.env` (or environment variables):
+   - `BENCHMARK_HARNESS`: Name of the orchestrating platform (e.g., `Antigravity`, `Claude-Code`, `Cursor`, `Windsurf`, `Custom-CLI`)
+   - `BENCHMARK_PRIMARY_AGENT`: Identity of the primary orchestrator (e.g., `Antigravity Orchestrator`)
+   - `BENCHMARK_MODEL`: Exact model ID powering the subagents (e.g., `Gemini 3.8 Flash High`, `Claude 3.7 Sonnet`, `GPT-4.5`)
+   - `BENCHMARK_TEMPERATURE`: Model sampling temperature (locked at `0.2`)
+   - `BENCHMARK_SUBAGENT_RUNTIME`: Subagent execution runtime (e.g., `Antigravity invoke_subagent`, `Process Fork`, `Docker Sandbox`)
+2. Automatically record system hardware / OS (`process.platform`, `process.arch`, `process.version`).
+3. Include these exact parameters in `metadata` of `benchmark_results.json`. Any Pull Request submitted to the benchmark repository without these explicit fields is considered unverified.
+
+---
+
+### Step 2: Credentials Gate
 Check `.env` for the 4 essential n8n parameters:
 - `N8N_HOST`: URL of the n8n instance
 - `N8N_API_KEY`: n8n REST API key
