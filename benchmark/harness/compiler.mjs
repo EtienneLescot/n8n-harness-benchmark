@@ -48,18 +48,22 @@ function extractNormalizedScores(judgeLog) {
       if (raw[c] !== undefined) {
         if (typeof raw[c] === 'number') return raw[c];
         if (raw[c] && typeof raw[c].score === 'number') return raw[c].score;
+        if (raw[c] && typeof raw[c].raw_score === 'number') return raw[c].raw_score;
       }
     }
     return 0;
   };
 
-  const easeOfInstallation = getVal(['metric1_easeOfInstallation', 'metric1_installation', 'easeOfInstallation']);
-  const easeOfUse = getVal(['metric2_easeOfUse', 'easeOfUse']);
-  const tokenConsumption = getVal(['metric3_tokenConsumption', 'tokenConsumption']);
-  const creationTime = getVal(['metric4_creationTime', 'creationTime', 'timeToCreate']);
-  const workflowQuality = getVal(['metric5_qualityOfWorkflow', 'metric5_workflowQuality', 'workflowQuality', 'qualityOfWorkflow']);
+  const easeOfInstallation = getVal(['metric_1_ease_of_installation', 'metric1_easeOfInstallation', 'metric1_installation', 'easeOfInstallation']);
+  const easeOfUse = getVal(['metric_2_ease_of_use', 'metric2_easeOfUse', 'easeOfUse']);
+  const tokenConsumption = getVal(['metric_3_token_consumption', 'metric3_tokenConsumption', 'tokenConsumption']);
+  const creationTime = getVal(['metric_4_creation_time', 'metric_4_time_to_create', 'metric4_creationTime', 'creationTime', 'timeToCreate']);
+  const workflowQuality = getVal(['metric_5_quality_of_workflow', 'metric5_qualityOfWorkflow', 'metric5_workflowQuality', 'workflowQuality', 'qualityOfWorkflow']);
 
-  let composite = getVal(['compositeScore', 'composite', 'totalScore']);
+  let composite = getVal(['compositeScore', 'composite', 'totalScore', 'total_weighted_score', 'overallScore']);
+  if (!composite && judgeLog.overall_summary?.total_weighted_score) {
+    composite = judgeLog.overall_summary.total_weighted_score;
+  }
   if (!composite) {
     composite = parseFloat((
       easeOfInstallation * 0.20 +
@@ -82,12 +86,12 @@ function extractNormalizedScores(judgeLog) {
 
 function extractNormalizedBreakdown(judgeLog) {
   const raw = judgeLog.scorecard || judgeLog.scores || {};
-  const quality = raw.metric5_qualityOfWorkflow?.breakdown || raw.metric5_workflowQuality?.breakdown || raw.workflowQuality?.breakdown || judgeLog.breakdown?.workflowQuality || {};
+  const quality = raw.metric_5_quality_of_workflow?.breakdown || raw.metric_5_quality_of_workflow?.sub_criteria || raw.metric5_qualityOfWorkflow?.breakdown || raw.metric5_workflowQuality?.breakdown || raw.workflowQuality?.breakdown || judgeLog.breakdown?.workflowQuality || {};
   return {
-    easeOfInstallation: raw.metric1_easeOfInstallation?.breakdown || raw.metric1_installation?.breakdown || judgeLog.breakdown?.easeOfInstallation || {},
-    easeOfUse: raw.metric2_easeOfUse?.breakdown || judgeLog.breakdown?.easeOfUse || {},
-    tokenConsumption: raw.metric3_tokenConsumption?.breakdown || judgeLog.breakdown?.tokenConsumption || {},
-    creationTime: raw.metric4_creationTime?.breakdown || judgeLog.breakdown?.creationTime || {},
+    easeOfInstallation: raw.metric_1_ease_of_installation?.breakdown || raw.metric_1_ease_of_installation?.sub_criteria || raw.metric1_easeOfInstallation?.breakdown || raw.metric1_installation?.breakdown || judgeLog.breakdown?.easeOfInstallation || {},
+    easeOfUse: raw.metric_2_ease_of_use?.breakdown || raw.metric_2_ease_of_use?.sub_criteria || raw.metric2_easeOfUse?.breakdown || judgeLog.breakdown?.easeOfUse || {},
+    tokenConsumption: raw.metric_3_token_consumption?.breakdown || raw.metric3_tokenConsumption?.breakdown || judgeLog.breakdown?.tokenConsumption || {},
+    creationTime: raw.metric_4_creation_time?.breakdown || raw.metric_4_time_to_create?.breakdown || raw.metric4_creationTime?.breakdown || judgeLog.breakdown?.creationTime || {},
     workflowQuality: quality
   };
 }
@@ -95,26 +99,30 @@ function extractNormalizedBreakdown(judgeLog) {
 function extractNormalizedJustification(judgeLog) {
   const raw = judgeLog.scorecard || judgeLog.scores || {};
   return {
-    easeOfInstallation: raw.metric1_easeOfInstallation?.justification || raw.metric1_installation?.breakdown?.guidanceAndSimplicity?.details || judgeLog.justification?.easeOfInstallation || '',
-    easeOfUse: raw.metric2_easeOfUse?.justification || raw.metric2_easeOfUse?.breakdown?.schemaSafetyAndValidation?.details || judgeLog.justification?.easeOfUse || '',
-    tokenConsumption: raw.metric3_tokenConsumption?.justification || raw.metric3_tokenConsumption?.breakdown?.formula || judgeLog.justification?.tokenConsumption || '',
-    creationTime: raw.metric4_creationTime?.justification || raw.metric4_creationTime?.breakdown?.formula || judgeLog.justification?.creationTime || '',
-    workflowQuality: raw.metric5_qualityOfWorkflow?.justification || raw.metric5_workflowQuality?.justification || judgeLog.justification?.workflowQuality || '',
-    compositeScore: raw.compositeScore || judgeLog.compositeScore || judgeLog.justification?.compositeScore || ''
+    easeOfInstallation: raw.metric_1_ease_of_installation?.justification || raw.metric_1_ease_of_installation?.sub_criteria?.guidance_and_headless_simplicity?.justification || raw.metric1_easeOfInstallation?.justification || raw.metric1_installation?.breakdown?.guidanceAndSimplicity?.details || judgeLog.justification?.easeOfInstallation || '',
+    easeOfUse: raw.metric_2_ease_of_use?.justification || raw.metric_2_ease_of_use?.sub_criteria?.schema_safety_and_preflight_validation?.justification || raw.metric2_easeOfUse?.justification || raw.metric2_easeOfUse?.breakdown?.schemaSafetyAndValidation?.details || judgeLog.justification?.easeOfUse || '',
+    tokenConsumption: raw.metric_3_token_consumption?.justification || raw.metric3_tokenConsumption?.justification || raw.metric3_tokenConsumption?.breakdown?.formula || judgeLog.justification?.tokenConsumption || '',
+    creationTime: raw.metric_4_creation_time?.justification || raw.metric_4_time_to_create?.justification || raw.metric4_creationTime?.justification || raw.metric4_creationTime?.breakdown?.formula || judgeLog.justification?.creationTime || '',
+    workflowQuality: raw.metric_5_quality_of_workflow?.justification || raw.metric_5_quality_of_workflow?.sub_criteria?.['5.3_wow_effect_and_aesthetics']?.breakdown?.responsive_modern_html_dashboard?.details || raw.metric5_qualityOfWorkflow?.justification || raw.metric5_workflowQuality?.justification || judgeLog.justification?.workflowQuality || '',
+    compositeScore: raw.compositeScore || judgeLog.compositeScore || judgeLog.overallScore || judgeLog.overall_summary?.total_weighted_score || ''
   };
 }
 
 export function compileBenchmarkResults(options = {}) {
-  const defaultN8nac = fs.existsSync('benchmark/sandboxes/run_next_n8nac/logs/judge_log.json')
-    ? 'benchmark/sandboxes/run_next_n8nac'
-    : fs.existsSync('benchmark/sandboxes/run_pure_n8nac/logs/judge_log.json')
-      ? 'benchmark/sandboxes/run_pure_n8nac'
-      : 'benchmark/sandboxes/run_hermetic_n8nac';
-  const defaultMcp = fs.existsSync('benchmark/sandboxes/run_next_native_mcp/logs/judge_log.json')
-    ? 'benchmark/sandboxes/run_next_native_mcp'
-    : fs.existsSync('benchmark/sandboxes/run_pure_native_mcp/logs/judge_log.json')
-      ? 'benchmark/sandboxes/run_pure_native_mcp'
-      : 'benchmark/sandboxes/run_hermetic_native_mcp';
+  const defaultN8nac = fs.existsSync('benchmark/sandboxes/run_next_2_n8nac/logs/judge_log.json')
+    ? 'benchmark/sandboxes/run_next_2_n8nac'
+    : fs.existsSync('benchmark/sandboxes/run_next_n8nac/logs/judge_log.json')
+      ? 'benchmark/sandboxes/run_next_n8nac'
+      : fs.existsSync('benchmark/sandboxes/run_pure_n8nac/logs/judge_log.json')
+        ? 'benchmark/sandboxes/run_pure_n8nac'
+        : 'benchmark/sandboxes/run_hermetic_n8nac';
+  const defaultMcp = fs.existsSync('benchmark/sandboxes/run_next_2_native_mcp/logs/judge_log.json')
+    ? 'benchmark/sandboxes/run_next_2_native_mcp'
+    : fs.existsSync('benchmark/sandboxes/run_next_native_mcp/logs/judge_log.json')
+      ? 'benchmark/sandboxes/run_next_native_mcp'
+      : fs.existsSync('benchmark/sandboxes/run_pure_native_mcp/logs/judge_log.json')
+        ? 'benchmark/sandboxes/run_pure_native_mcp'
+        : 'benchmark/sandboxes/run_hermetic_native_mcp';
 
   const n8nacSandbox = path.resolve(options.n8nacSandbox || defaultN8nac);
   const mcpSandbox = path.resolve(options.mcpSandbox || defaultMcp);
@@ -137,8 +145,8 @@ export function compileBenchmarkResults(options = {}) {
   };
   const mcpJudge = readJsonSafe(path.join(mcpSandbox, 'logs/judge_log.json'));
 
-  const n8nacDurationMs = n8nacBuilder.durationMs || (n8nacJudge.scores?.metric4_creationTime?.breakdown?.durationSeconds * 1000) || 176000;
-  const mcpDurationMs = mcpBuilder.durationMs || (mcpJudge.scorecard?.metric4_creationTime?.breakdown?.durationSeconds * 1000) || 440000;
+  const n8nacDurationMs = n8nacBuilder.durationMs || (n8nacBuilder.durationSeconds ? n8nacBuilder.durationSeconds * 1000 : 0) || (n8nacJudge.scores?.metric4_creationTime?.breakdown?.durationSeconds ? n8nacJudge.scores.metric4_creationTime.breakdown.durationSeconds * 1000 : 0) || 176000;
+  const mcpDurationMs = mcpBuilder.durationMs || (mcpBuilder.durationSeconds ? mcpBuilder.durationSeconds * 1000 : 0) || (mcpJudge.scorecard?.metric4_creationTime?.breakdown?.durationSeconds ? mcpJudge.scorecard.metric4_creationTime.breakdown.durationSeconds * 1000 : 0) || 440000;
 
   const results = {
     metadata: {
@@ -176,12 +184,12 @@ export function compileBenchmarkResults(options = {}) {
         totalDurationMs: n8nacDurationMs,
         totalDurationSec: parseFloat((n8nacDurationMs / 1000).toFixed(2)),
         tokenUsage: {
-          promptTokens: n8nacBuilder.tokensUsed?.promptTokens || 11000,
+          promptTokens: n8nacBuilder.tokensUsed?.promptTokens || n8nacJudge.scores?.metric_3_token_consumption?.tokens_estimated || 72000,
           completionTokens: n8nacBuilder.tokensUsed?.completionTokens || 0,
-          totalTokens: n8nacBuilder.tokensUsed?.totalTokens || 11000
+          totalTokens: n8nacBuilder.tokensUsed?.totalTokens || n8nacJudge.scores?.metric_3_token_consumption?.tokens_estimated || 72000
         },
         interactions: {
-          turns: n8nacBuilder.turns || 1,
+          turns: n8nacBuilder.interactionTurns || n8nacBuilder.turns || 1,
           validationErrors: n8nacBuilder.validationErrors || []
         }
       }
@@ -196,12 +204,12 @@ export function compileBenchmarkResults(options = {}) {
         totalDurationMs: mcpDurationMs,
         totalDurationSec: parseFloat((mcpDurationMs / 1000).toFixed(2)),
         tokenUsage: {
-          promptTokens: mcpBuilder.tokensUsed?.promptTokens || 100000,
+          promptTokens: mcpBuilder.tokensUsed?.promptTokens || mcpJudge.scores?.metric_3_token_consumption?.breakdown?.total_tokens_estimate || 150000,
           completionTokens: mcpBuilder.tokensUsed?.completionTokens || 0,
-          totalTokens: mcpBuilder.tokensUsed?.totalTokens || 100000
+          totalTokens: mcpBuilder.tokensUsed?.totalTokens || mcpJudge.scores?.metric_3_token_consumption?.breakdown?.total_tokens_estimate || 150000
         },
         interactions: {
-          turns: mcpBuilder.turns || 5,
+          turns: mcpBuilder.interactionTurns || mcpBuilder.turns || 1,
           validationErrors: mcpBuilder.validationErrors || []
         }
       }

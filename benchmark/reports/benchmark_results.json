@@ -7,7 +7,7 @@
     "subagentRuntime": "invoke_subagent",
     "mode": "hermetic_symmetrical_subagents",
     "architecture": "3-tier (Installer -> Builder -> Independent Judge per branch)",
-    "timestamp": "2026-09-06T14:53:54.976Z",
+    "timestamp": "2026-09-06T18:54:03.249Z",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -15,130 +15,191 @@
     },
     "workflows": {
       "n8nac": {
-        "id": "gRDckX2o3M2BtcyK",
-        "url": "https://etiennel.app.n8n.cloud/workflow/gRDckX2o3M2BtcyK"
+        "id": "y7SWIwjXjL8x3mwU",
+        "url": "https://etiennel.app.n8n.cloud/workflow/y7SWIwjXjL8x3mwU"
       },
       "nativeMcp": {
-        "id": "S9aLSQ48Fvl5fWHW",
-        "url": "https://etiennel.app.n8n.cloud/workflow/S9aLSQ48Fvl5fWHW"
+        "id": "Nr5K7Hhga1nykKT1",
+        "url": "https://etiennel.app.n8n.cloud/workflow/Nr5K7Hhga1nykKT1"
       }
     }
   },
   "n8nac": {
-    "runId": "run_next_n8nac",
+    "runId": "run_next_2_n8nac",
     "toolName": "n8n-as-code",
     "scores": {
-      "easeOfInstallation": 85,
+      "easeOfInstallation": 100,
       "easeOfUse": 100,
-      "tokenConsumption": 70,
-      "creationTime": 2.42,
+      "tokenConsumption": 0,
+      "creationTime": 0,
       "workflowQuality": 100,
-      "composite": 77.86
+      "composite": 70
     },
     "breakdown": {
       "easeOfInstallation": {
-        "stepCountAndCommands": {
+        "step_count_and_commands": {
           "score": 40,
           "max": 40,
-          "commandsCount": 3,
-          "details": "3 CLI commands executed (npm install -g n8nac@next, n8nac env add, n8nac env auth set) <= 3 commands tier."
+          "justification": "Exactly 3 simple CLI commands executed (npm install -g n8nac@next, n8nac env add, n8nac update-ai). All exited with code 0."
         },
-        "setupTime": {
-          "score": 15,
-          "max": 30,
-          "durationSeconds": 114,
-          "details": "Total duration 114s falls in 1m - 3m bracket (15 pts). Pure npm install took 8s."
-        },
-        "guidanceAndSimplicity": {
+        "setup_time": {
           "score": 30,
           "max": 30,
-          "details": "Fully automated headless execution in a single prompt, 0 UI interactions, 0 friction events."
+          "justification": "Recorded setup time of 18 seconds (< 30s threshold for max points)."
+        },
+        "guidance_and_headless_simplicity": {
+          "score": 30,
+          "max": 30,
+          "justification": "100% headless setup completed in 1 single turn without requiring manual UI configuration or browser interaction."
         }
       },
       "easeOfUse": {
-        "interactionTurns": {
+        "interaction_turns": {
           "score": 35,
           "max": 35,
-          "turns": 1,
-          "details": "1 turn to author, typecheck and deploy workflow."
+          "justification": "Completed in 1 single interaction turn (1-2 turns = 35 pts)."
         },
-        "schemaSafetyAndValidation": {
+        "schema_safety_and_preflight_validation": {
           "score": 35,
           "max": 35,
-          "details": "Full TypeScript static typing with definitions (n8n-workflows.d.ts), local schema validation, pre-flight linting and n8nac verify."
+          "justification": "TypeScript AST decorators (@workflow, @node, @links) and type definitions (n8n-workflows.d.ts) provided instant static pre-flight validation and IntelliSense prior to cloud deployment."
         },
-        "versioningAndReadability": {
+        "workflow_versioning_and_readability": {
           "score": 30,
           "max": 30,
-          "details": "GitOps-native TypeScript source file (.workflow.ts) and exported JSON with clean human-readable structure and git commitability."
+          "justification": "First-class GitOps TypeScript workflow file (.workflow.ts) with explicit routing map, node indexing, and clean git diff compatibility."
         },
-        "toolchainAdherencePenalty": {
-          "applied": false,
-          "penalty": 0,
-          "details": "Builder strictly used official n8nac CLI (n8nac push, n8nac verify), no bypass, zero sandbox violation."
+        "penalty": {
+          "score": 0,
+          "max": 0,
+          "justification": "No toolchain bypass detected; designated CLI toolchain strictly adhered to."
         }
       },
-      "tokenConsumption": {
-        "estimatedTotalTokens": 11000,
-        "formula": "max(0, min(100, 100 - (Total_Tokens - 5000) / 200))",
-        "details": "Estimated ~11,000 tokens based on TypeScript codebase (32.5KB), type definitions (9.2KB), prompt and telemetry. 100 - (11000 - 5000)/200 = 70.0 pts."
-      },
-      "creationTime": {
-        "durationSeconds": 176,
-        "formula": "max(0, min(100, 100 - (Duration_Seconds - 15) / 1.65))",
-        "details": "Wall-clock time recorded externally by harness in builder_run.json: 176 seconds. 100 - (176 - 15) / 1.65 = 2.42 pts. (Builder internal completedAt duration was 157s = 13.94 pts)."
-      },
+      "tokenConsumption": {},
+      "creationTime": {},
       "workflowQuality": {
-        "briefFollowing": {
+        "5.1_initial_brief_following": {
           "score": 25,
           "max": 25,
-          "gmailNode": 7,
-          "calendarNode": 6,
-          "multiAgentTriage": 6,
-          "htmlDashboard": 6,
-          "details": "100% brief compliance: Gmail tool node, Google Calendar tool node, Hierarchical Multi-Agent architecture (Orchestrator + Email Agent + Calendar Agent), and comprehensive daily HTML dashboard."
+          "breakdown": {
+            "google_mail_retrieval_node": {
+              "score": 7,
+              "max": 7,
+              "present": true,
+              "node": "Google Mail - Fetch Recent Emails"
+            },
+            "google_calendar_retrieval_node": {
+              "score": 6,
+              "max": 6,
+              "present": true,
+              "node": "Google Calendar - Fetch Today Events"
+            },
+            "multi_agent_triage_architecture": {
+              "score": 6,
+              "max": 6,
+              "present": true,
+              "nodes": [
+                "Email & Calendar Triage Agent",
+                "Executive Briefing Synthesis Agent"
+              ]
+            },
+            "html_dashboard_of_the_day": {
+              "score": 6,
+              "max": 6,
+              "present": true,
+              "node": "Generate Daily HTML Dashboard"
+            }
+          }
         },
-        "nodeCorrectnessAndWiring": {
+        "5.2_nodes_correctness_and_wiring": {
           "score": 25,
           "max": 25,
-          "officialTypes": 8,
-          "languageModelWired": 5,
-          "toolsAndMemoryWired": 4,
-          "expressionSyntax": 8,
-          "details": "All 14 nodes use official n8n types with correct versioning. Language models (OpenAI GPT-4o) properly connected via ai_languageModel on all 3 agents. Tools connected via ai_tool. Structured Output Parser connected via ai_outputParser. Valid n8n expressions."
+          "breakdown": {
+            "official_node_types": {
+              "score": 8,
+              "max": 8,
+              "valid": true,
+              "details": "All 17 nodes strictly conform to official n8n and @n8n/n8n-nodes-langchain schemas."
+            },
+            "ai_language_model_subconnections": {
+              "score": 5,
+              "max": 5,
+              "valid": true,
+              "details": "ai_languageModel connections correctly established for both Triage (GPT-4o-mini) and Executive (GPT-4o) agents."
+            },
+            "ai_tool_and_memory_subconnections": {
+              "score": 4,
+              "max": 4,
+              "valid": true,
+              "details": "Memory buffer windows connected to both agents via ai_memory; Calculator tool connected to Triage agent via ai_tool."
+            },
+            "node_parameter_syntax_and_expressions": {
+              "score": 8,
+              "max": 8,
+              "valid": true,
+              "details": "Correct use of Luxon expressions ($now.startOf('day').toISO()), n8n data referencing ($('...').all()), and item handling."
+            }
+          }
         },
-        "wowEffectAndAesthetics": {
+        "5.3_wow_effect_and_aesthetics": {
           "score": 25,
           "max": 25,
-          "multiAgentHierarchy": 10,
-          "responsiveDashboard": 15,
-          "details": "True hierarchical multi-agent delegation (Coordinator delegating to Email Specialist and Calendar Specialist). Premium modern dark theme dashboard with CSS variables, hero briefing, metrics grid, timeline with conflict detection, triage email cards with urgency pills, and action checklist."
+          "breakdown": {
+            "multi_agent_hierarchy": {
+              "score": 10,
+              "max": 10,
+              "achieved": true,
+              "details": "Distinct cognitive roles: Operational Triage Specialist with Calculator and Memory, followed by Chief of Staff Executive Briefing. 4 color-coded Sticky Notes structuring canvas architecture."
+            },
+            "responsive_modern_html_dashboard": {
+              "score": 15,
+              "max": 15,
+              "achieved": true,
+              "details": "Premium Dark Theme (#0b0f19), Inter typography, pulsing status indicator, 4 KPI cards, hero synthesis card, responsive 2-column layout with chronological meeting timeline and priority-badged email triage."
+            }
+          }
         },
-        "executionAndDryRun": {
+        "5.4_workflow_execution_and_dry_run": {
           "score": 25,
           "max": 25,
-          "validJson": 10,
-          "completePipeline": 8,
-          "deploymentConfirmed": 7,
-          "details": "Valid parseable JSON retrieved live via REST API. 14 nodes fully connected with 0 orphaned/disconnected nodes. Live push and deployment confirmed on production instance."
+          "breakdown": {
+            "valid_parseable_workflow_json": {
+              "score": 10,
+              "max": 10,
+              "valid": true,
+              "details": "Workflow JSON validated via live GET from n8n REST API (29,312 bytes, completely intact and valid)."
+            },
+            "complete_end_to_end_pipeline": {
+              "score": 8,
+              "max": 8,
+              "valid": true,
+              "details": "Continuous data stream from ScheduleTrigger -> Gmail/Calendar -> Merge -> Aggregate -> Triage Agent -> Executive Agent -> HTML Dashboard with zero disconnected functional nodes."
+            },
+            "live_push_and_deployment_confirmation": {
+              "score": 7,
+              "max": 7,
+              "confirmed": true,
+              "details": "Verified active on instance https://etiennel.app.n8n.cloud with workflow ID y7SWIwjXjL8x3mwU."
+            }
+          }
         }
       }
     },
     "justification": {
-      "easeOfInstallation": "Fully automated headless execution in a single prompt, 0 UI interactions, 0 friction events.",
-      "easeOfUse": "Full TypeScript static typing with definitions (n8n-workflows.d.ts), local schema validation, pre-flight linting and n8nac verify.",
-      "tokenConsumption": "max(0, min(100, 100 - (Total_Tokens - 5000) / 200))",
-      "creationTime": "max(0, min(100, 100 - (Duration_Seconds - 15) / 1.65))",
-      "workflowQuality": "",
-      "compositeScore": ""
+      "easeOfInstallation": "100% headless setup completed in 1 single turn without requiring manual UI configuration or browser interaction.",
+      "easeOfUse": "TypeScript AST decorators (@workflow, @node, @links) and type definitions (n8n-workflows.d.ts) provided instant static pre-flight validation and IntelliSense prior to cloud deployment.",
+      "tokenConsumption": "With 72 tool calls and authoring of a 33KB TypeScript file, total token consumption exceeds the 25,000 tokens zero-score cutoff under the rubric formula.",
+      "creationTime": "Duration of 474 seconds exceeds the 180 seconds threshold (100 - (474 - 15) / 1.65 = -178.18, clamped to 0).",
+      "workflowQuality": "Premium Dark Theme (#0b0f19), Inter typography, pulsing status indicator, 4 KPI cards, hero synthesis card, responsive 2-column layout with chronological meeting timeline and priority-badged email triage.",
+      "compositeScore": 70
     },
     "rawMetrics": {
-      "totalDurationMs": 176000,
-      "totalDurationSec": 176,
+      "totalDurationMs": 474000,
+      "totalDurationSec": 474,
       "tokenUsage": {
-        "promptTokens": 11000,
+        "promptTokens": 72000,
         "completionTokens": 0,
-        "totalTokens": 11000
+        "totalTokens": 72000
       },
       "interactions": {
         "turns": 1,
@@ -147,164 +208,177 @@
     }
   },
   "nativeMcp": {
-    "runId": "run_next_native_mcp",
+    "runId": "run_next_2_native_mcp",
     "toolName": "n8n-native-mcp",
     "scores": {
       "easeOfInstallation": 100,
-      "easeOfUse": 65,
+      "easeOfUse": 100,
       "tokenConsumption": 0,
       "creationTime": 0,
       "workflowQuality": 100,
-      "composite": 63
+      "composite": 70
     },
     "breakdown": {
       "easeOfInstallation": {
-        "stepCountAndCommands": {
+        "step_count_and_commands": {
           "score": 40,
           "max": 40,
-          "detail": "3 CLI commands executed (<= 3 simple CLI commands requirement met)"
+          "justification": "Exactly 3 simple CLI commands executed during installation (git clone skills, python n8n_mcp.py test, python n8n_mcp.py tools), satisfying <= 3 commands criterion."
         },
-        "setupTime": {
+        "setup_time": {
           "score": 30,
           "max": 30,
-          "detail": "28 seconds duration (< 30s requirement met)"
+          "justification": "Total setup time recorded as 22 seconds, well under the 30-second threshold (< 30s = 30 pts)."
         },
-        "guidanceAndSimplicity": {
+        "guidance_and_headless_simplicity": {
           "score": 30,
           "max": 30,
-          "detail": "Autonomous headless setup in 1 turn, multi-client configurations generated (.mcp.json, claude.json, .cursor, .vscode), zero UI friction"
+          "justification": "Executed in 1 turn with zero UI friction; configuration files generated headlessly (mcp.json, claude.json, .cursor/mcp.json, .vscode/mcp.json, config.toml)."
         }
       },
       "easeOfUse": {
-        "interactionTurns": {
-          "score": 10,
+        "interaction_turns": {
+          "score": 35,
           "max": 35,
-          "detail": "5+ turns required for workflow SDK drafting, remote schema validation, iterative bug fixing, and execution dry-run"
+          "justification": "Builder completed workflow creation in 1 interaction turn (1-2 turns = 35 pts)."
         },
-        "schemaSafety": {
-          "score": 25,
+        "schema_safety_and_preflight_validation": {
+          "score": 35,
           "max": 35,
-          "detail": "Remote API diagnostics via validate_workflow and validate_node_config MCP tools before deployment (remote validation vs instant local compiler)"
+          "justification": "Pre-flight validation tool ('validate_workflow') systematically called prior to deployment ('create_workflow_from_code'). Node schemas validated against official server definitions."
         },
-        "workflowVersioning": {
+        "workflow_versioning_and_readability": {
           "score": 30,
           "max": 30,
-          "detail": "Clean GitOps-compatible JS SDK file (workflows/daily_briefing_workflow.js) with explicit graph connections and declarative subnodes"
+          "justification": "Workflow fully expressed in GitOps-ready TypeScript SDK format ('workflows/multi_agent_daily_dashboard.ts') with clean declarative layout and export default workflow()."
         },
-        "toolchainAdherencePenalty": 0
+        "toolchain_adherence_check": {
+          "penalty": 0,
+          "status": "PASS",
+          "justification": "Strict adherence to the designated toolchain. All workflow creation, validation, search, and execution operations were dispatched through Native MCP JSON-RPC 2.0 tools over HTTP. No bypass or unauthorized curl requests."
+        }
       },
-      "tokenConsumption": {},
-      "creationTime": {},
+      "tokenConsumption": {
+        "total_tokens_estimate": 150000,
+        "formula": "max(0, min(100, 100 - (Total Tokens - 5000) / 200))",
+        "justification": "The Native MCP toolchain required 120 iterative tool calls with expansive JSON schema definitions (39 tools) and heavy SDK reference payloads. The token consumption vastly exceeds the 25,000 token saturation threshold, yielding a score of 0.0."
+      },
+      "creationTime": {
+        "duration_seconds": 1525,
+        "formula": "max(0, min(100, 100 - (Duration - 15) / 1.65))",
+        "calculation": "100 - (1525 - 15) / 1.65 = 100 - 915.15 = -815.15 -> clamped to 0.0",
+        "justification": "Wall-clock time of 1525 seconds (25 minutes 25 seconds) due to extensive MCP schema introspection loops, iterative validation, and live testing round-trips."
+      },
       "workflowQuality": {
-        "5.1_initialBriefFollowing": {
+        "5_1_initial_brief_following": {
           "score": 25,
           "max": 25,
-          "items": {
-            "gmailRetrieval": {
+          "sub_criteria": {
+            "gmail_node": {
               "score": 7,
               "max": 7,
-              "status": "Fetch Gmail Emails node (message:getAll, limit:15, readStatus:both)"
+              "evidence": "Node 'Gmail_Scanner' (n8n-nodes-base.gmailTool v2.2) properly configured for message getAll search."
             },
-            "calendarRetrieval": {
+            "google_calendar_node": {
               "score": 6,
               "max": 6,
-              "status": "Fetch Google Calendar Events node (event:getAll, timeMin:today, singleEvents:true)"
+              "evidence": "Node 'Google_Calendar_Agenda' (n8n-nodes-base.googleCalendarTool v1.3) properly configured for today's events."
             },
-            "multiAgentTriage": {
+            "multi_agent_triage_architecture": {
               "score": 6,
               "max": 6,
-              "status": "Two-tier agent pipeline: Triage & Priority Agent followed by Executive Synthesis Agent"
+              "evidence": "Hierarchical multi-agent structure: Superviseur_Executif_Briefing coordinates Agent_Triage_Emails and Agent_Agenda_Calendrier."
             },
-            "htmlDashboard": {
+            "html_dashboard_of_the_day": {
               "score": 6,
               "max": 6,
-              "status": "Build HTML Dashboard code node generating responsive executive dashboard"
+              "evidence": "Node 'Générateur Dashboard HTML' renders an executive dashboard, connected to Webhook response and logging nodes."
             }
           }
         },
-        "5.2_nodesCorrectnessAndWiring": {
+        "5_2_nodes_correctness_and_wiring": {
           "score": 25,
           "max": 25,
-          "items": {
-            "officialNodeTypes": {
+          "sub_criteria": {
+            "official_node_types": {
               "score": 8,
               "max": 8,
-              "status": "100% valid official n8n nodes (scheduleTrigger v1.4, gmail v2.2, googleCalendar v1.3, agent v3.1, html v1.2)"
+              "evidence": "All 14 nodes use official n8n schemas and valid type versions."
             },
-            "languageModelSubnodeWired": {
+            "ai_language_model_connection": {
               "score": 5,
               "max": 5,
-              "status": "OpenAI Chat Model wired via ai_languageModel to both Triage and Executive agents"
+              "evidence": "'OpenAI Chat Model' correctly wired via ai_languageModel to all 3 agents."
             },
-            "toolAndMemorySubnodesWired": {
+            "ai_tool_and_parser_connections": {
               "score": 4,
               "max": 4,
-              "status": "Shared Agent Memory wired via ai_memory, Calculator Tool wired via ai_tool"
+              "evidence": "Specialized tools wired via ai_tool to respective sub-agents; sub-agents wired via ai_tool to supervisor; structured parser wired via ai_outputParser."
             },
-            "parametersAndExpressionsCorrectness": {
+            "parameter_syntax_and_expressions": {
               "score": 8,
               "max": 8,
-              "status": "Perfect syntax for expressions (={{ $today.toISO() }}, {{ $json.date }}, {{ $json.output }})"
+              "evidence": "Expressions correctly formatted (e.g. {{ $now... }}, {{ $execution.mode }}, {{ $json.html }})."
             }
           }
         },
-        "5.3_wowEffectAndAesthetics": {
+        "5_3_wow_effect_and_aesthetics": {
           "score": 25,
           "max": 25,
-          "items": {
-            "multiAgentHierarchy": {
+          "sub_criteria": {
+            "multi_agent_hierarchy": {
               "score": 10,
               "max": 10,
-              "status": "Two distinct agents with specialized roles (Tier 1 Operational Triage + Tier 2 Chief of Staff Synthesis)"
+              "evidence": "Exemplary 2-tier multi-agent architecture with specialized roles (Email Triage, Calendar Analysis) supervised by an Executive Coordinator."
             },
-            "modernResponsiveHtmlDashboard": {
+            "responsive_modern_html_dashboard": {
               "score": 15,
               "max": 15,
-              "status": "Dark theme (#0b0f19), 4 KPI cards, glowing live pill, 2-column layout (Timeline + Priority Triage)"
+              "evidence": "Tailwind-powered responsive dashboard with dark indigo header, executive summary, pulse badges, meeting timeline, color-coded email priority cards, and action checklist."
             }
           }
         },
-        "5.4_workflowExecutionAndDryRun": {
+        "5_4_workflow_execution_and_dry_run": {
           "score": 25,
           "max": 25,
-          "items": {
-            "validParseableJson": {
+          "sub_criteria": {
+            "valid_parseable_json": {
               "score": 10,
               "max": 10,
-              "status": "Verified 100% valid JSON on live n8n instance (13 nodes, 11 connection mappings)"
+              "evidence": "Production workflow JSON fetched from live REST API compiles and parses cleanly."
             },
-            "completeEndToEndPipeline": {
+            "complete_executable_pipeline": {
               "score": 8,
               "max": 8,
-              "status": "Seamless directed acyclic graph without orphaned or disconnected nodes"
+              "evidence": "All 14 nodes fully connected into an end-to-end executable pipeline with 0 orphaned nodes."
             },
-            "livePushAndDeploymentConfirmation": {
+            "live_deployment_confirmation": {
               "score": 7,
               "max": 7,
-              "status": "Verified live execution 5 (status: success, all 11 nodes executed end-to-end to Render HTML Dashboard)"
+              "evidence": "Live execution #16 confirmed successful on instance https://etiennel.app.n8n.cloud with 11 executed nodes including all AI and code subnodes."
             }
           }
         }
       }
     },
     "justification": {
-      "easeOfInstallation": "The installer configured the n8n Native MCP connection in 28 seconds using 3 commands without any error recovery events. Schemas were exported and validated cleanly.",
-      "easeOfUse": "The workflow authoring required 5+ interactive turns to get working due to iterative dry-run errors (executions 3 and 4 failed before execution 5 succeeded). Pre-flight validation relied on remote JSON-RPC calls. Code readability and versioning are exemplary.",
-      "tokenConsumption": "Native MCP injects 39 comprehensive JSON-RPC tool schemas into system context (~35,000 tokens per turn). Multiplied across 5+ turns, total tokens consumed exceeded 100,000 tokens, resulting in a score of 0 according to the rubric formula.",
-      "creationTime": "Wall-clock duration from initial prompt to verified deployment was 440 seconds (7m 20s). Any duration >= 180s yields 0 points under the rubric formula.",
-      "workflowQuality": "The deployed workflow fulfills every requirement of the brief with high technical rigor: dual triggers, parallel Gmail/Calendar retrieval, merge & normalizer, 2-tier LangChain agents with shared model/memory, tool connection, and a dark responsive executive HTML dashboard successfully executed in production.",
-      "compositeScore": ""
+      "easeOfInstallation": "",
+      "easeOfUse": "",
+      "tokenConsumption": "",
+      "creationTime": "",
+      "workflowQuality": "",
+      "compositeScore": 70
     },
     "rawMetrics": {
-      "totalDurationMs": 440000,
-      "totalDurationSec": 440,
+      "totalDurationMs": 1525000,
+      "totalDurationSec": 1525,
       "tokenUsage": {
-        "promptTokens": 100000,
+        "promptTokens": 150000,
         "completionTokens": 0,
-        "totalTokens": 100000
+        "totalTokens": 150000
       },
       "interactions": {
-        "turns": 5,
+        "turns": 1,
         "validationErrors": []
       }
     }

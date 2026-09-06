@@ -1,0 +1,457 @@
+{
+  "id": "Nr5K7Hhga1nykKT1",
+  "name": "Assistant Quotidien Multi-Agents : Triage Emails, Calendrier & Dashboard",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T18:49:15.484Z",
+  "updatedAt": "2026-09-06T18:49:15.484Z",
+  "isArchived": false,
+  "versionId": "707f6237-3b92-4919-ad52-1414f36d13fb",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "722959ff-611e-4eab-8c09-60140aa9fe92",
+      "name": "Déclencheur Quotidien (Matin 07h30)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        16
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7bb722b0-fa6e-4e58-be75-016bdd222b60",
+      "name": "Superviseur_Executif_Briefing",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        208
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Nous sommes le {{ $now.setZone(\"Europe/Paris\").toFormat(\"cccc d MMMM yyyy\", { locale: \"fr\" }) }}. Coordonne l Agent_Triage_Emails et l Agent_Agenda_Calendrier. Interroge les emails récents et le calendrier du jour. Trie toutes les informations par ordre de priorité et produis la structure JSON complète pour le dashboard de la journée.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es le Superviseur Exécutif IA. Tu coordonnes deux agents spécialisés : Agent_Triage_Emails et Agent_Agenda_Calendrier. Tu croises les réunions du jour avec les messages urgents reçus, définis le Top 3 des priorités et fournis une analyse stratégique pour optimiser la journée de l utilisateur. Tu retournes toujours un objet JSON valide conforme au schéma du parser."
+        }
+      }
+    },
+    {
+      "id": "25e163f0-6936-4e83-93ac-21702cf9a9ca",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        640
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-5-mini"
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "4602c49a-a446-4953-8cc7-b0423c2a15f3",
+      "name": "Agent_Triage_Emails",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        336,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Agent spécialisé dans l analyse, le filtrage et la priorisation des emails Gmail récents (dernières 24h). Détecte les urgences, classe par catégorie (Urgent, Action Requise, Pour Information, Newsletter) et extrait les actions attendues.",
+        "text": "Examine les emails récents via Gmail_Scanner. Trie-les par niveau d urgence et résume chaque message avec l action concrète à mener."
+      }
+    },
+    {
+      "id": "dd549065-9897-4724-852e-0166e4e6af99",
+      "name": "Gmail_Scanner",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        640
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "simple": true,
+        "filters": {
+          "readStatus": "both"
+        }
+      },
+      "webhookId": "4d991f27-c891-4c26-aaef-244d75e4cd28"
+    },
+    {
+      "id": "90bcf66b-45b0-49e2-9ff3-d0822276e154",
+      "name": "Agent_Agenda_Calendrier",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        464,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Agent expert en gestion d agenda Google Calendar. Analyse les réunions du jour, ordonne la timeline, détecte les chevauchements ou conflits, identifie les temps de préparation requis et calcule les plages de travail concentré (Deep Work).",
+        "text": "Examine les événements du jour via Google_Calendar_Agenda. Analyse les horaires, les participants, les liens de visio et identifie les réunions critiques ainsi que les créneaux libres."
+      }
+    },
+    {
+      "id": "2eed4b48-7a6f-4b72-b675-a7b1c757b798",
+      "name": "Google_Calendar_Agenda",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        640
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "timeMin": "={{ $today }}",
+        "timeMax": "={{ $today.plus({ days: 1 }) }}"
+      }
+    },
+    {
+      "id": "bc9d56b3-07f3-43e7-8a4f-83be40552913",
+      "name": "Dashboard_Data_Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        432
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"dateFormatted\":\"Lundi 7 Septembre 2026\",\"dayStatus\":\"Journée Équilibrée\",\"statusColor\":\"emerald\",\"executiveSummary\":\"Une matinée concentrée sur le stratégique avec 2 réunions clés, suivie d une après-midi disponible pour le travail de fond.\",\"topPriorities\":[\"Valider le devis pour le client ACME avant 12h00\",\"Préparer la réunion de cadrage équipe de 14h00\",\"Finaliser la revue budgétaire Q3\"],\"metrics\":{\"meetingCount\":3,\"totalMeetingDuration\":\"2h30\",\"deepWorkHours\":\"4h00\",\"urgentEmailCount\":2,\"actionCount\":5},\"agendaEvents\":[{\"time\":\"09:30 - 10:15\",\"title\":\"Point d Équipe Hebdomadaire\",\"type\":\"Équipe\",\"attendees\":\"Alice, Bob, Claire\",\"locationOrLink\":\"https://meet.google.com/abc-defg-hij\",\"prepNotes\":\"Revoir le rapport d avancement transmis par Alice.\",\"priority\":\"Haute\"},{\"time\":\"11:00 - 11:45\",\"title\":\"Revue Projet Client ACME\",\"type\":\"Client\",\"attendees\":\"Marc (Directeur ACME), Etienne\",\"locationOrLink\":\"https://meet.google.com/klm-nopq-rst\",\"prepNotes\":\"Avoir les chiffres du devis sous la main.\",\"priority\":\"Critique\"},{\"time\":\"16:00 - 16:30\",\"title\":\"1-on-1 Synchronisation\",\"type\":\"Interne\",\"attendees\":\"Thomas\",\"locationOrLink\":\"Google Meet\",\"prepNotes\":\"Point de suivi sur les livrables de la semaine.\",\"priority\":\"Normale\"}],\"triagedEmails\":[{\"from\":\"Marc Lefebvre <marc@acme-corp.com>\",\"subject\":\"Validation finale du contrat & planning\",\"category\":\"Urgent\",\"badgeClass\":\"bg-rose-100 text-rose-800 border-rose-200\",\"summary\":\"Demande la signature électronique du contrat avant midi pour enclencher la facturation.\",\"suggestedAction\":\"Ouvrir le lien DocuSign et signer avant la réunion de 11h.\",\"deadline\":\"Aujourd hui 12h00\"},{\"from\":\"Sophie Martin <sophie@partenaire.fr>\",\"subject\":\"Retour sur les maquettes UI\",\"category\":\"Action Requise\",\"badgeClass\":\"bg-amber-100 text-amber-800 border-amber-200\",\"summary\":\"Commentaires reçus sur le prototype v2, attend notre validation pour démarrer l intégration.\",\"suggestedAction\":\"Consulter Figma et envoyer un email de validation.\",\"deadline\":\"Aujourd hui 17h00\"},{\"from\":\"GitHub Notifications\",\"subject\":\"[Repository] New security advisory published\",\"category\":\"Pour Information\",\"badgeClass\":\"bg-blue-100 text-blue-800 border-blue-200\",\"summary\":\"Mise à jour de dépendance mineure disponible.\",\"suggestedAction\":\"À traiter lors de la prochaine maintenance.\",\"deadline\":\"Fin de semaine\"}],\"actionChecklist\":[{\"task\":\"Signer et retourner le contrat ACME\",\"dueTime\":\"11h00\",\"priority\":\"Critique\"},{\"task\":\"Envoyer les slides de cadrage à Thomas\",\"dueTime\":\"13h30\",\"priority\":\"Haute\"},{\"task\":\"Répondre à Sophie Martin sur les maquettes\",\"dueTime\":\"15h00\",\"priority\":\"Moyenne\"},{\"task\":\"Planifier la session de tests Q4\",\"dueTime\":\"17h30\",\"priority\":\"Basse\"}],\"strategicAdvice\":\"Votre après-midi de 13h30 à 16h00 est dégagée de toute réunion : réservez ce bloc de 2h30 en mode Ne Pas Déranger pour boucler vos livrables de fond.\"}"
+      }
+    },
+    {
+      "id": "8fa4490b-e84b-4d54-bd57-f0a5f5f5ee79",
+      "name": "Test Manuel Canvas",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "a3bdd517-a217-4c3e-80ad-fb443b50e939",
+      "name": "GET Webhook Dashboard",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dashboard-journee",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "7ceb3c32-ef89-4182-96ef-c9eb23510ea2"
+    },
+    {
+      "id": "168aed4a-3589-44f9-b699-199abdcf56df",
+      "name": "Générateur Dashboard HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        208
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst inputItem = $input.all()[0]?.json || {};\nlet data = inputItem.output || inputItem;\n\nif (typeof data === 'string') {\n  try {\n    data = JSON.parse(data);\n  } catch (e) {\n    const match = data.match(/\\{([\\s\\S]*)\\}/);\n    if (match) {\n      try { data = JSON.parse(match[0]); } catch(err) {}\n    }\n  }\n}\n\nconst now = new Date();\nconst dateStr = data.dateFormatted || now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\nconst dayStatus = data.dayStatus || 'Journée Organisée';\nconst executiveSummary = data.executiveSummary || 'Voici votre briefing quotidien préparé par vos agents IA. Vos priorités et votre agenda sont synchronisés.';\nconst topPriorities = Array.isArray(data.topPriorities) ? data.topPriorities : ['Traiter les urgences du matin', 'Assister aux réunions planifiées', 'Avancer sur les projets prioritaires'];\nconst metrics = data.metrics || { meetingCount: 3, totalMeetingDuration: '2h30', deepWorkHours: '3h30', urgentEmailCount: 2, actionCount: 4 };\nconst agendaEvents = Array.isArray(data.agendaEvents) ? data.agendaEvents : [];\nconst triagedEmails = Array.isArray(data.triagedEmails) ? data.triagedEmails : [];\nconst actionChecklist = Array.isArray(data.actionChecklist) ? data.actionChecklist : [];\nconst strategicAdvice = data.strategicAdvice || 'Optimisez vos plages de concentration l après-midi et traitez vos emails par blocs.';\n\nconst prioritiesHtml = topPriorities.map((p, idx) => `\n  <li class=\"flex items-start gap-3 bg-white/70 p-3 rounded-xl border border-indigo-100 shadow-sm\">\n    <span class=\"flex-shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center\">${idx + 1}</span>\n    <span class=\"text-sm font-medium text-slate-800\">${p}</span>\n  </li>\n`).join('');\n\nconst agendaHtml = agendaEvents.map(evt => {\n  const prioColor = evt.priority === 'Critique' ? 'bg-rose-500' : (evt.priority === 'Haute' ? 'bg-amber-500' : 'bg-indigo-500');\n  return `\n    <div class=\"relative pl-6 pb-6 border-l-2 border-indigo-200 last:border-l-0 last:pb-0\">\n      <div class=\"absolute -left-[9px] top-0 w-4 h-4 rounded-full ${prioColor} ring-4 ring-white\"></div>\n      <div class=\"bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition\">\n        <div class=\"flex flex-wrap items-center justify-between gap-2 mb-1\">\n          <span class=\"text-xs font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700\">${evt.time || ''}</span>\n          <span class=\"text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold\">${evt.type || 'Réunion'}</span>\n        </div>\n        <h4 class=\"text-base font-bold text-slate-900 mb-1\">${evt.title || 'Sans titre'}</h4>\n        <p class=\"text-xs text-slate-500 mb-2\">👥 Participants : ${evt.attendees || 'Non spécifiés'}</p>\n        ${evt.prepNotes ? `<div class=\"text-xs bg-amber-50/70 border border-amber-200/60 rounded-lg p-2 text-amber-900 mb-2\">💡 <strong>Préparation :</strong> ${evt.prepNotes}</div>` : ''}\n        ${evt.locationOrLink ? `<a href=\"${evt.locationOrLink}\" target=\"_blank\" class=\"inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition\"><span>📹 Rejoindre la visio</span></a>` : ''}\n      </div>\n    </div>\n  `;\n}).join('');\n\nconst emailsHtml = triagedEmails.map(em => {\n  const isUrgent = (em.category || '').toLowerCase().includes('urgent');\n  const cardBorder = isUrgent ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200 bg-white';\n  const badgeClass = em.badgeClass || (isUrgent ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-800');\n  return `\n    <div class=\"rounded-xl p-4 border ${cardBorder} shadow-sm hover:shadow transition\">\n      <div class=\"flex items-center justify-between gap-2 mb-2\">\n        <span class=\"text-xs font-bold px-2.5 py-0.5 rounded-full ${badgeClass}\">${em.category || 'Email'}</span>\n        <span class=\"text-xs text-slate-400 font-medium\">${em.deadline ? '⏱ ' + em.deadline : ''}</span>\n      </div>\n      <h4 class=\"text-sm font-bold text-slate-900 mb-1 line-clamp-1\">${em.subject || 'Sans objet'}</h4>\n      <p class=\"text-xs text-slate-500 mb-2\">De : ${em.from || 'Inconnu'}</p>\n      <p class=\"text-xs text-slate-700 mb-3 leading-relaxed\">${em.summary || ''}</p>\n      ${em.suggestedAction ? `<div class=\"text-xs bg-slate-100/80 rounded-lg p-2 font-medium text-slate-800\">⚡ <strong>Action :</strong> ${em.suggestedAction}</div>` : ''}\n    </div>\n  `;\n}).join('');\n\nconst tasksHtml = actionChecklist.map((t, idx) => `\n  <label class=\"flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition cursor-pointer select-none\">\n    <div class=\"flex items-center gap-3\">\n      <input type=\"checkbox\" id=\"task-${idx}\" class=\"w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer\" onchange=\"this.nextElementSibling.classList.toggle('line-through'); this.nextElementSibling.classList.toggle('text-slate-400');\">\n      <span class=\"text-sm font-medium text-slate-800\">${t.task}</span>\n    </div>\n    <span class=\"text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600\">${t.dueTime || ''}</span>\n  </label>\n`).join('');\n\nconst fullHtml = `<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Dashboard du Jour | Assistant Exécutif IA</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n  <link href=\"https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n  <style>\n    body { font-family: 'Plus Jakarta Sans', sans-serif; }\n  </style>\n</head>\n<body class=\"bg-slate-50 text-slate-800 antialiased min-h-screen\">\n  <!-- Header / Navigation Bar -->\n  <header class=\"bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-lg sticky top-0 z-50\">\n    <div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-4\">\n      <div class=\"flex items-center gap-3\">\n        <div class=\"w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-xl shadow-inner\">🌅</div>\n        <div>\n          <h1 class=\"text-lg font-extrabold tracking-tight\">Executive Morning Dashboard</h1>\n          <p class=\"text-xs text-indigo-200 capitalize\">${dateStr}</p>\n        </div>\n      </div>\n      <div class=\"flex items-center gap-3\">\n        <span class=\"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30\">\n          <span class=\"w-2 h-2 rounded-full bg-emerald-400 animate-pulse\"></span>\n          ${dayStatus}\n        </span>\n        <button onclick=\"window.location.reload();\" class=\"px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold backdrop-blur border border-white/10 transition flex items-center gap-1.5\">\n          <span>🔄 Actualiser</span>\n        </button>\n        <button onclick=\"window.print();\" class=\"px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold shadow-md transition\">\n          <span>🖨 Imprimer</span>\n        </button>\n      </div>\n    </div>\n  </header>\n\n  <main class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8\">\n    <!-- Top Executive Summary Card -->\n    <div class=\"relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 text-white p-6 sm:p-8 shadow-xl\">\n      <div class=\"relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-6 items-center\">\n        <div class=\"lg:col-span-2 space-y-3\">\n          <div class=\"inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-500/30 border border-indigo-400/20 text-xs font-bold uppercase tracking-wider text-indigo-200\">\n            🤖 Briefing Superviseur Exécutif\n          </div>\n          <h2 class=\"text-2xl sm:text-3xl font-extrabold text-white leading-tight\">Vision Stratégique de Votre Journée</h2>\n          <p class=\"text-sm sm:text-base text-indigo-100/90 leading-relaxed\">${executiveSummary}</p>\n          <div class=\"pt-2\">\n            <div class=\"text-xs font-semibold text-indigo-200 uppercase tracking-wider mb-2\">🎯 Top 3 des Priorités Absolues</div>\n            <ul class=\"space-y-2\">\n              ${prioritiesHtml}\n            </ul>\n          </div>\n        </div>\n\n        <div class=\"bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/10 space-y-4\">\n          <div class=\"flex items-center gap-2 text-indigo-200 text-xs font-bold uppercase tracking-wider\">\n            <span>💡 Conseil Focus & Deep Work</span>\n          </div>\n          <p class=\"text-xs text-indigo-100 leading-relaxed\">${strategicAdvice}</p>\n          <div class=\"pt-2 border-t border-white/10 text-[11px] text-indigo-200 flex items-center justify-between\">\n            <span>Système Multi-Agents n8n</span>\n            <span>Gmail + Calendar</span>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- 4 Metrics KPIs -->\n    <div class=\"grid grid-cols-2 lg:grid-cols-4 gap-4\">\n      <div class=\"bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-indigo-200 transition\">\n        <div class=\"flex items-center justify-between mb-2\">\n          <span class=\"text-xs font-bold text-slate-500 uppercase\">Réunions Prévues</span>\n          <span class=\"p-2 rounded-xl bg-indigo-50 text-indigo-600 text-lg\">📅</span>\n        </div>\n        <div class=\"text-2xl font-black text-slate-900\">${metrics.meetingCount || 0}</div>\n        <div class=\"text-xs text-slate-500 mt-1\">Durée cumulée : ${metrics.totalMeetingDuration || '0h'}</div>\n      </div>\n\n      <div class=\"bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-indigo-200 transition\">\n        <div class=\"flex items-center justify-between mb-2\">\n          <span class=\"text-xs font-bold text-slate-500 uppercase\">Plage Deep Work</span>\n          <span class=\"p-2 rounded-xl bg-emerald-50 text-emerald-600 text-lg\">⚡</span>\n        </div>\n        <div class=\"text-2xl font-black text-emerald-700\">${metrics.deepWorkHours || '0h'}</div>\n        <div class=\"text-xs text-slate-500 mt-1\">Temps sans interruption</div>\n      </div>\n\n      <div class=\"bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-indigo-200 transition\">\n        <div class=\"flex items-center justify-between mb-2\">\n          <span class=\"text-xs font-bold text-slate-500 uppercase\">Emails Prioritaires</span>\n          <span class=\"p-2 rounded-xl bg-rose-50 text-rose-600 text-lg\">📬</span>\n        </div>\n        <div class=\"text-2xl font-black text-rose-600\">${metrics.urgentEmailCount || 0}</div>\n        <div class=\"text-xs text-slate-500 mt-1\">Requérant une réponse rapide</div>\n      </div>\n\n      <div class=\"bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-indigo-200 transition\">\n        <div class=\"flex items-center justify-between mb-2\">\n          <span class=\"text-xs font-bold text-slate-500 uppercase\">Actions à Clôturer</span>\n          <span class=\"p-2 rounded-xl bg-amber-50 text-amber-600 text-lg\">✅</span>\n        </div>\n        <div class=\"text-2xl font-black text-amber-600\">${metrics.actionCount || 0}</div>\n        <div class=\"text-xs text-slate-500 mt-1\">Tâches inscrites au plan</div>\n      </div>\n    </div>\n\n    <!-- Main Content 2-Column Grid -->\n    <div class=\"grid grid-cols-1 lg:grid-cols-12 gap-8\">\n      <!-- Left Column: Agenda Timeline -->\n      <div class=\"lg:col-span-7 space-y-4\">\n        <div class=\"flex items-center justify-between\">\n          <div class=\"flex items-center gap-2\">\n            <span class=\"w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm\">📅</span>\n            <h3 class=\"text-lg font-black text-slate-900\">Agenda & Timeline de la Journée</h3>\n          </div>\n          <span class=\"text-xs text-slate-500 font-medium\">Google Calendar</span>\n        </div>\n        \n        <div class=\"bg-slate-100/50 p-6 rounded-2xl border border-slate-200/70 space-y-4\">\n          ${agendaHtml || '<p class=\"text-sm text-slate-500 italic\">Aucune réunion programmée pour aujourd hui. Journée 100% libre pour le travail de fond.</p>'}\n        </div>\n      </div>\n\n      <!-- Right Column: Emails Triage & Tasks Checklist -->\n      <div class=\"lg:col-span-5 space-y-8\">\n        <!-- Emails Triage -->\n        <div class=\"space-y-4\">\n          <div class=\"flex items-center justify-between\">\n            <div class=\"flex items-center gap-2\">\n              <span class=\"w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-sm\">📬</span>\n              <h3 class=\"text-lg font-black text-slate-900\">Triage Intelligent Gmail</h3>\n            </div>\n            <span class=\"text-xs text-slate-500 font-medium\">Agent Spécialisé</span>\n          </div>\n\n          <div class=\"space-y-3\">\n            ${emailsHtml || '<p class=\"text-sm text-slate-500 italic\">Boîte de réception à jour. Aucun email urgent.</p>'}\n          </div>\n        </div>\n\n        <!-- Action Items Checklist -->\n        <div class=\"space-y-4\">\n          <div class=\"flex items-center justify-between\">\n            <div class=\"flex items-center gap-2\">\n              <span class=\"w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm\">✅</span>\n              <h3 class=\"text-lg font-black text-slate-900\">Plan d Action & To-Do</h3>\n            </div>\n            <span class=\"text-xs text-slate-500 font-medium\">Interactif</span>\n          </div>\n\n          <div class=\"space-y-2\">\n            ${tasksHtml || '<p class=\"text-sm text-slate-500 italic\">Toutes les actions du jour sont terminées.</p>'}\n          </div>\n        </div>\n      </div>\n    </div>\n  </main>\n\n  <footer class=\"border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-400\">\n    <p>Workflow Multi-Agents n8n • Orchestration IA (Agent Gmail + Agent Calendar + Superviseur Exécutif) • Généré en temps réel</p>\n  </footer>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    html: fullHtml,\n    executiveSummary: executiveSummary,\n    dayStatus: dayStatus,\n    dateFormatted: dateStr,\n    metrics: metrics\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "e9c4ac61-229b-4e48-9136-b9a5d4595bc6",
+      "name": "Est-ce un appel Webhook ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1024,
+        208
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond_webhook",
+              "leftValue": "={{ $execution.mode }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "webhook"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e7abf4de-9e22-4b33-a681-0b86f52690b6",
+      "name": "Réponse Webhook (Page HTML)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        112
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "81100850-442d-4ddc-9484-106204490f96",
+      "name": "Journal Briefing du Jour",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        304
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst item = $input.all()[0]?.json || {};\nreturn [{\n  json: {\n    status: 'success',\n    executedAt: new Date().toISOString(),\n    dayStatus: item.dayStatus,\n    date: item.dateFormatted,\n    summary: item.executiveSummary,\n    metrics: item.metrics,\n    htmlPreviewLength: (item.html || '').length\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Déclencheur Quotidien (Matin 07h30)": {
+      "main": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Superviseur_Executif_Briefing": {
+      "main": [
+        [
+          {
+            "node": "Générateur Dashboard HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agent_Triage_Emails",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Agent_Agenda_Calendrier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent_Triage_Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail_Scanner": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent_Triage_Emails",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent_Agenda_Calendrier": {
+      "ai_tool": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google_Calendar_Agenda": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent_Agenda_Calendrier",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard_Data_Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test Manuel Canvas": {
+      "main": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Webhook Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Superviseur_Executif_Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générateur Dashboard HTML": {
+      "main": [
+        [
+          {
+            "node": "Est-ce un appel Webhook ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Est-ce un appel Webhook ?": {
+      "main": [
+        [
+          {
+            "node": "Réponse Webhook (Page HTML)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Journal Briefing du Jour",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Nr5K7Hhga1nykKT1",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-06T18:49:15.486Z",
+      "updatedAt": "2026-09-06T18:49:15.486Z"
+    }
+  ],
+  "activeVersion": null
+}

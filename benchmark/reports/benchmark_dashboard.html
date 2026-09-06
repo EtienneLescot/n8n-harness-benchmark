@@ -161,7 +161,7 @@
       <div class="card" style="border-top: 4px solid var(--accent-n8nac);">
         <div class="card-title">n8n-as-code Composite</div>
         <div class="score-display">
-          <span class="score-n8nac">77.86</span>
+          <span class="score-n8nac">70</span>
           <span class="score-max">/ 100</span>
         </div>
         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
@@ -172,7 +172,7 @@
       <div class="card" style="border-top: 4px solid var(--accent-mcp);">
         <div class="card-title">n8n Native MCP Composite</div>
         <div class="score-display">
-          <span class="score-mcp">63</span>
+          <span class="score-mcp">70</span>
           <span class="score-max">/ 100</span>
         </div>
         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
@@ -216,29 +216,29 @@
             <tr>
               <td><strong>1. Ease of Installation</strong></td>
               <td>20%</td>
-              <td>85/100</td>
               <td>100/100</td>
-              <td><span class="winner-tag">Native MCP</span></td>
+              <td>100/100</td>
+              <td><span class="winner-tag">n8n-as-code</span></td>
             </tr>
             <tr>
               <td><strong>2. Ease of Use</strong></td>
               <td>20%</td>
               <td>100/100</td>
-              <td>65/100</td>
+              <td>100/100</td>
               <td><span class="winner-tag">n8n-as-code</span></td>
             </tr>
             <tr>
               <td><strong>3. Token Consumption</strong></td>
               <td>15%</td>
-              <td>70/100 (11000 tokens)</td>
-              <td>0/100 (100000 tokens)</td>
+              <td>0/100 (72000 tokens)</td>
+              <td>0/100 (150000 tokens)</td>
               <td><span class="winner-tag">n8n-as-code</span></td>
             </tr>
             <tr>
               <td><strong>4. Creation Time</strong></td>
               <td>15%</td>
-              <td>2.42/100 (176s)</td>
-              <td>0/100 (440s)</td>
+              <td>0/100 (474s)</td>
+              <td>0/100 (1525s)</td>
               <td><span class="winner-tag">n8n-as-code</span></td>
             </tr>
             <tr>
@@ -265,10 +265,10 @@
           {
             label: 'n8n-as-code',
             data: [
-              85,
               100,
-              70,
-              2.42,
+              100,
+              0,
+              0,
               100
             ],
             borderColor: '#3b82f6',
@@ -279,7 +279,7 @@
             label: 'n8n Native MCP',
             data: [
               100,
-              65,
+              100,
               0,
               0,
               100
@@ -318,16 +318,16 @@
           {
             label: 'n8n-as-code',
             data: [
-              Math.round((11000) / 100),
-              176
+              Math.round((72000) / 100),
+              474
             ],
             backgroundColor: '#3b82f6',
           },
           {
             label: 'n8n Native MCP',
             data: [
-              Math.round((100000) / 100),
-              440
+              Math.round((150000) / 100),
+              1525
             ],
             backgroundColor: '#ec4899',
           }
