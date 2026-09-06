@@ -9,6 +9,34 @@
 
 ## 🚀 Run it
 
+This benchmark is designed to be executed by an **AI Coding Agent** (Orchestrator) — such as **Google Antigravity**, **Claude Code**, **Cursor**, **Windsurf**, or a custom CLI runner. The agent sets up hermetic sandboxes, dispatches subagents, and triggers deterministic server audits.
+
+### 1. The Ideal Prompt for your Coding Agent
+
+Simply paste this prompt into your coding agent:
+
+```text
+Clone le repo https://github.com/EtienneLescot/n8n-harness-benchmark.git, lis les instructions du benchmark et lance l'évaluation comparative entre n8n-as-code et n8n Native MCP sur mon instance n8n.
+```
+
+*(English version)*:
+```text
+Clone https://github.com/EtienneLescot/n8n-harness-benchmark.git, read the benchmark instructions, and run the comparative evaluation between n8n-as-code and n8n Native MCP on my n8n instance.
+```
+
+**What the Orchestrator will do automatically:**
+1. **Credentials Gate**: Reads `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, and `N8N_NATIVE_MCP_TOKEN` (prompting you in chat if anything is missing).
+2. **Lock Parameters**: Standardizes model IDs (`Gemini 3.8 Flash High`, `Claude 3.7 Sonnet`, etc.) and temperature (`0.2`).
+3. **Partition Sandboxes**: Spawns isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`) with universal confinement and opaque naming (`workflow-<timestamp>`).
+4. **Deploy & Time**: Dispatches subagents to install dependencies and author the multi-agent workflow under external stopwatch timing.
+5. **Deterministic API Audit**: Queries the n8n Cloud server's official `validate_node_config` RPC, calculates universal minimax scores, and updates `results/` and `docs/`.
+
+---
+
+### 2. Manual CLI Utilities (Inspection & Diagnostics)
+
+Developers can also run standalone verification and compilation utilities directly from the terminal:
+
 ```bash
 git clone https://github.com/EtienneLescot/n8n-harness-benchmark.git
 cd n8n-harness-benchmark && npm install
@@ -22,19 +50,9 @@ npm run validate <workflowId>
 # 3. Evaluate a local workflow JSON file against the rubric
 npm run evaluate -- results/history/run_3/workflow_n8n_as_code.json
 
-# 4. Compile reports, update dashboard, and export results
+# 4. Compile reports, update aggregate.json, and refresh dashboard
 npm run report
 ```
-
-### In Google Antigravity (Automated Multi-Agent Harness)
-Simply invoke the embedded skill in chat:
-> *"Exécute le benchmark n8n workflow creation sur mon instance."*
-
-The Orchestrator will automatically:
-1. Check credentials in `.env` (`N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, `N8N_NATIVE_MCP_TOKEN`).
-2. Lock model parameters identically for subagents (`Model: inherit / flash / pro`, temperature `0.2`).
-3. Spawn hermetic worker sandboxes for installation and building.
-4. Deterministically audit the deployed workflows via n8n Cloud server RPC and output reports to `results/` and `docs/`.
 
 ---
 
