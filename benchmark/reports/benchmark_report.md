@@ -8,11 +8,11 @@
 | **Primary Agent** | Antigravity Orchestrator |
 | **Subagent Model** | **Gemini 3.8 Flash High** |
 | **Temperature** | `0.2` |
-| **Subagent Runtime** | `Antigravity invoke_subagent` |
+| **Subagent Runtime** | `invoke_subagent` |
 | **Evaluation Mode** | Double-Blind Symmetrical (One independent judge per branch) |
-| **Host Platform** | Windows 11 (win32-x64) (x64) / Node v24.14.0 |
+| **Host Platform** | win32 (x64) (x64) / Node v24.14.0 |
 | **Target n8n Instance** | `https://etiennel.app.n8n.cloud` |
-| **Timestamp** | `2026-09-06T11:20:00.000Z` |
+| **Timestamp** | `2026-09-06T11:29:00.506Z` |
 
 **Standardized Prompt:**  
 > *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*

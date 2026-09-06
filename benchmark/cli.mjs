@@ -124,24 +124,16 @@ async function handleEvaluate(filePath) {
   console.log('═══════════════════════════════════════════════════════\n');
 }
 
+import { compileBenchmarkResults } from './harness/compiler.mjs';
+
 async function handleReport() {
-  const resultsPath = path.resolve('benchmark/reports/benchmark_results.json');
-  if (!fs.existsSync(resultsPath)) {
-    console.error(`Error: Results file not found at ${resultsPath}`);
-    process.exit(1);
-  }
+  console.log('\n📄 Deterministically Compiling Benchmark Reports from Raw Judge Scorecards...\n');
+  const compiled = compileBenchmarkResults();
 
-  console.log('\n📄 Regenerating Benchmark Reports...\n');
-  const data = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
-
-  const mdFile = MarkdownReporter.writeReport(data, 'benchmark/reports/benchmark_report.md');
-  const htmlFile = DashboardReporter.writeReport(data, 'benchmark/reports/benchmark_dashboard.html');
-  const jsonFile = JsonReporter.writeReport(data, 'benchmark/reports/benchmark_results.json');
-
-  console.log(`  ✔ Markdown Report:   ${mdFile}`);
-  console.log(`  ✔ HTML Dashboard:    ${htmlFile}`);
-  console.log(`  ✔ Results JSON:      ${jsonFile}`);
-  console.log('\n🎉 Reports generated successfully!\n');
+  console.log(`  ✔ Markdown Report:   ${compiled.artifacts.mdFile}`);
+  console.log(`  ✔ HTML Dashboard:    ${compiled.artifacts.htmlFile}`);
+  console.log(`  ✔ Results JSON:      ${compiled.artifacts.jsonFile}`);
+  console.log('\n🎉 Reports compiled deterministically with zero LLM inference!\n');
 }
 
 async function main() {

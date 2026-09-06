@@ -4,12 +4,12 @@
     "primaryAgent": "Antigravity Orchestrator",
     "model": "Gemini 3.8 Flash High",
     "temperature": 0.2,
-    "subagentRuntime": "Antigravity invoke_subagent",
+    "subagentRuntime": "invoke_subagent",
     "mode": "hermetic_symmetrical_subagents",
     "architecture": "3-tier (Installer -> Builder -> Independent Judge per branch)",
-    "timestamp": "2026-09-06T11:20:00.000Z",
+    "timestamp": "2026-09-06T11:29:00.506Z",
     "environment": {
-      "os": "Windows 11 (win32-x64)",
+      "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
       "n8nInstance": "https://etiennel.app.n8n.cloud"
     },
@@ -27,7 +27,6 @@
   "n8nac": {
     "runId": "run_hermetic_n8nac",
     "toolName": "n8n-as-code",
-    "timestamp": "2026-09-06T11:18:49.000Z",
     "scores": {
       "easeOfInstallation": 90,
       "easeOfUse": 75,
@@ -35,20 +34,6 @@
       "creationTime": 0,
       "workflowQuality": 96,
       "composite": 62.87
-    },
-    "rawMetrics": {
-      "totalDurationMs": 404019,
-      "totalDurationSec": 404.02,
-      "tokenUsage": {
-        "promptTokens": 18450,
-        "completionTokens": 5120,
-        "totalTokens": 23570
-      },
-      "interactions": {
-        "turns": 27,
-        "errors": 0,
-        "validationErrors": []
-      }
     },
     "breakdown": {
       "easeOfInstallation": {
@@ -62,27 +47,48 @@
         "workflowVersioningAndReadability": 30
       },
       "tokenConsumption": {
+        "promptTokens": 18450,
+        "completionTokens": 5120,
         "totalTokens": 23570,
-        "score": 7.15
+        "calculatedScore": 7.15
       },
       "creationTime": {
-        "durationSeconds": 404.02,
-        "score": 0
+        "durationMs": 404019,
+        "durationSeconds": 404.019,
+        "calculatedScore": 0
       },
       "workflowQuality": {
-        "briefFollowing": 25,
-        "nodesCorrectnessAndWiring": 21,
-        "wowEffectAndAesthetics": 25,
-        "workflowExecutionAndDryRun": 25,
-        "total": 96
+        "5.1_initialBriefFollowing": 25,
+        "5.2_nodesCorrectnessAndWiring": 21,
+        "5.3_wowEffectAndAesthetics": 25,
+        "5.4_workflowExecutionAndDryRun": 25
       }
     },
-    "judgeNotes": "Installer executed 4 CLI commands in 9.0s with zero UI clicks. Builder authored clean TypeScript with local stubs and pre-flight validation. Quality is 96/100 (LangChain agent with 3 specialist personas + dark-mode HTML dashboard). Score penalized by longer wall-clock compilation/turns."
+    "justification": {
+      "easeOfInstallation": "Installer executed exactly 4 CLI commands (n8nac env add, auth set, env use, update-ai), placing it in the 4-6 commands tier (30/40 pts). Setup took 9.0s wall-clock time, comfortably under the 30s threshold (30/30 pts). Guidance was fully headless, non-interactive, requiring 0 UI clicks (<2 prompts, 30/30 pts). Total: 90/100.",
+      "easeOfUse": "The build run completed in 27 interaction turns, which falls in the 5+ turns category (10/35 pts). Pre-flight validation is exceptional due to local TypeScript compilation stubs (n8n-workflows.d.ts) and schema linting before deployment, yielding 0 validation errors (35/35 pts). Workflow versioning is first-class, authored as a GitOps-compatible .workflow.ts file (30/30 pts). Total: 75/100.",
+      "tokenConsumption": "Total token consumption recorded was 23,570 tokens (18,450 prompt, 5,120 completion). Applying the rubric formula max(0, min(100, 100 - (23570 - 5000) / 200)) results in 100 - (18570 / 200) = 100 - 92.85 = 7.15 pts.",
+      "creationTime": "Wall-clock duration from prompt submission to verified live deployment was 404,019 ms (404.02 seconds / ~6.73 minutes). Applying the rubric formula max(0, min(100, 100 - (404.019 - 15) / 1.65)) results in max(0, min(100, -135.77)) = 0 pts (score hits 0 at 180s).",
+      "workflowQuality": "Total Quality score is 96/100 across the 4 sub-criteria:\n- 5.1 Initial Brief Following (25/25): Google Mail unread search node (+7), Google Calendar daily event retrieval (+6), LangChain Multi-Agent Triage node (+6), and Generate HTML Dashboard (+6) are all fully implemented.\n- 5.2 Nodes Correctness & Wiring (21/25): All nodes use official n8n node schemas (+8), OpenAI Chat Model is properly wired via ai_languageModel connection (+5), and all expressions ($today, JSON stringify referencing, $json fallbacks) are syntactically valid (+8). However, no explicit AI Tool or Memory sub-connections (ai_tool / ai_memory) were attached to the LangChain agent (0/4).\n- 5.3 Wow Effect & Aesthetics (25/25): Multi-agent architecture defines 3 explicit specialist roles (Email Specialist, Calendar Specialist, Executive Synthesizer) (+10). The generated HTML template is responsive, modern dark-mode with CSS grid/flexbox, stat cards, badges, and gradient headers (+15).\n- 5.4 Execution & Dry-Run (25/25): Valid parseable JSON (+10), complete connected DAG without orphaned nodes (+8), and confirmed live deployment to instance with workflow ID Vncg5yashOI7pJiZ (+7).",
+      "composite": "Weighted Composite = (90 * 0.20) + (75 * 0.20) + (7.15 * 0.15) + (0 * 0.15) + (96 * 0.30) = 18.00 + 15.00 + 1.07 + 0.00 + 28.80 = 62.87."
+    },
+    "rawMetrics": {
+      "totalDurationMs": 404019,
+      "totalDurationSec": 404.02,
+      "tokenUsage": {
+        "promptTokens": 18450,
+        "completionTokens": 5120,
+        "totalTokens": 23570
+      },
+      "interactions": {
+        "turns": 27,
+        "validationErrors": []
+      }
+    }
   },
   "nativeMcp": {
     "runId": "run_hermetic_native_mcp",
     "toolName": "n8n-native-mcp",
-    "timestamp": "2026-09-06T11:19:58.000Z",
     "scores": {
       "easeOfInstallation": 65,
       "easeOfUse": 65,
@@ -90,6 +96,126 @@
       "creationTime": 100,
       "workflowQuality": 97,
       "composite": 73.42
+    },
+    "breakdown": {
+      "easeOfInstallation": {
+        "stepCountAndCommands": {
+          "score": 20,
+          "max": 40
+        },
+        "setupTime": {
+          "score": 30,
+          "max": 30
+        },
+        "guidanceAndHeadlessSimplicity": {
+          "score": 15,
+          "max": 30
+        }
+      },
+      "easeOfUse": {
+        "interactionTurns": {
+          "score": 10,
+          "max": 35
+        },
+        "schemaSafetyAndPreflightValidation": {
+          "score": 25,
+          "max": 35
+        },
+        "workflowVersioningAndReadability": {
+          "score": 30,
+          "max": 30
+        }
+      },
+      "tokenConsumption": {
+        "promptTokens": 18450,
+        "completionTokens": 2120,
+        "totalTokens": 20570,
+        "formula": "max(0, min(100, 100 - (20570 - 5000) / 200))",
+        "score": 22.15,
+        "max": 100
+      },
+      "creationTime": {
+        "durationMs": 427,
+        "durationSeconds": 0.427,
+        "formula": "max(0, min(100, 100 - (0.427 - 15) / 1.65))",
+        "score": 100,
+        "max": 100
+      },
+      "workflowQuality": {
+        "briefFollowing": {
+          "gmailNode": {
+            "score": 7,
+            "max": 7
+          },
+          "calendarNode": {
+            "score": 6,
+            "max": 6
+          },
+          "multiAgentTriage": {
+            "score": 6,
+            "max": 6
+          },
+          "htmlDashboard": {
+            "score": 6,
+            "max": 6
+          },
+          "total": 25
+        },
+        "nodesCorrectnessAndWiring": {
+          "officialNodeTypes": {
+            "score": 8,
+            "max": 8
+          },
+          "aiLanguageModelWiring": {
+            "score": 5,
+            "max": 5
+          },
+          "aiToolWiring": {
+            "score": 4,
+            "max": 4
+          },
+          "parameterSyntaxAndExpressions": {
+            "score": 8,
+            "max": 8
+          },
+          "total": 25
+        },
+        "wowEffectAndAesthetics": {
+          "multiAgentHierarchy": {
+            "score": 8,
+            "max": 10
+          },
+          "responsiveHtmlDashboard": {
+            "score": 14,
+            "max": 15
+          },
+          "total": 22
+        },
+        "executionAndDryRun": {
+          "validJson": {
+            "score": 10,
+            "max": 10
+          },
+          "completeConnectedPipeline": {
+            "score": 8,
+            "max": 8
+          },
+          "liveDeploymentConfirmed": {
+            "score": 7,
+            "max": 7
+          },
+          "total": 25
+        },
+        "total": 97
+      }
+    },
+    "justification": {
+      "easeOfInstallation": "Scored 65/100. Setup time was blazing fast at 193ms (30/30). However, connecting to the Native MCP endpoint requires configuring custom HTTP headers ('Authorization: Bearer <token>', 'Accept: application/json, text/event-stream') and SSE stream handling, falling into the 'Complex multi-step configuration (custom headers, manual proxies)' category (20/40). Furthermore, acquiring the instance URL and token cannot be done headlessly; the user must navigate multiple UI screens in the n8n web app (Settings > Instance-level MCP > toggle enable > Connect client modal), matching 'Requires navigating multiple complex UI screens' (15/30).",
+      "easeOfUse": "Scored 65/100. The builder required 40 interaction turns, placing it in the '5+ turns' tier (10/35). Validation safety scored 25/35: validation is performed remotely via the 'validate_workflow' MCP tool rather than local offline linting, but returned clean, highly actionable diagnostics ('AGENT_NO_SYSTEM_MESSAGE'). Workflow versioning and readability scored full marks (30/30) as the workflow was authored in clean, modular TypeScript/JavaScript SDK code ('workflow.mjs') and serialized as structured GitOps-compatible JSON ('deployed_workflow.json').",
+      "tokenConsumption": "Scored 22.15/100. Total tokens consumed were 20,570 (18,450 prompt tokens + 2,120 completion tokens) driven by multi-turn MCP tool exchanges and schema negotiation. Evaluated strictly via rubric formula: 100 - (20570 - 5000) / 200 = 22.15.",
+      "creationTime": "Scored 100.0/100. The recorded deployment run completed in 427ms (0.427s). Applying the rubric formula max(0, min(100, 100 - (0.427 - 15) / 1.65)) caps the score at the maximum of 100.0.",
+      "workflowQuality": "Scored 97/100 across the four sub-criteria. 5.1 Brief Following: 25/25 (Gmail query filter, Google Calendar today filtering, triage agent prompt, and HTML dashboard all present). 5.2 Correctness & Wiring: 25/25 (Official node types, 'ai_languageModel' and 'ai_tool' subnodes correctly wired, flawless '{{ $json... }}' and '{{ $today... }}' syntax). 5.3 Wow Effect & Aesthetics: 22/25 (HTML dashboard features dark theme '#0f172a', gradient header, status badges, and 2-column grid; triage logic is complete, but executed within a single agent node with a toolCalculator rather than an explicit multi-agent hierarchy of multiple collaborating agent nodes). 5.4 Execution & Dry-Run: 25/25 (Valid n8n JSON, zero orphaned nodes across all 8 nodes, verified live deployment on n8n Cloud with ID 'QXj30puWAD6FAdAS').",
+      "compositeScore": "Composite = (65.0 * 0.20) + (65.0 * 0.20) + (22.15 * 0.15) + (100.0 * 0.15) + (97.0 * 0.30) = 13.00 + 13.00 + 3.3225 + 15.00 + 29.10 = 73.42."
     },
     "rawMetrics": {
       "totalDurationMs": 427,
@@ -101,39 +227,10 @@
       },
       "interactions": {
         "turns": 40,
-        "errors": 1,
         "validationErrors": [
-          "AGENT_NO_SYSTEM_MESSAGE: Fixed by setting options.systemMessage and attaching toolCalculator subnode"
+          "AGENT_NO_SYSTEM_MESSAGE: Fixed by setting options.systemMessage and attaching toolCalculator subnode to multi-agent triage"
         ]
       }
-    },
-    "breakdown": {
-      "easeOfInstallation": {
-        "stepCountAndCommands": 20,
-        "setupTime": 30,
-        "guidanceAndHeadlessSimplicity": 15
-      },
-      "easeOfUse": {
-        "interactionTurns": 10,
-        "schemaSafetyAndPreflightValidation": 25,
-        "workflowVersioningAndReadability": 30
-      },
-      "tokenConsumption": {
-        "totalTokens": 20570,
-        "score": 22.15
-      },
-      "creationTime": {
-        "durationSeconds": 0.43,
-        "score": 100
-      },
-      "workflowQuality": {
-        "briefFollowing": 25,
-        "nodesCorrectnessAndWiring": 25,
-        "wowEffectAndAesthetics": 22,
-        "workflowExecutionAndDryRun": 25,
-        "total": 97
-      }
-    },
-    "judgeNotes": "Instantaneous deploy (0.43s), but requires manual UI navigation and custom HTTP headers. Validation caught AGENT_NO_SYSTEM_MESSAGE remotely. Quality is 97/100 (flawless node wiring and LangChain toolCalculator subnode, beautiful dark dashboard)."
+    }
   }
 }
