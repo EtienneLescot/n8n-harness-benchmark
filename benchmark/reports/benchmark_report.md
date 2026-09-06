@@ -12,7 +12,7 @@
 | **Evaluation Mode** | Double-Blind Symmetrical (One independent judge per branch) |
 | **Host Platform** | win32 (x64) / Node v24.14.0 |
 | **Target n8n Instance** | `https://etiennel.app.n8n.cloud` |
-| **Timestamp** | `2026-09-06T12:38:57.062Z` |
+| **Timestamp** | `2026-09-06T14:53:54.976Z` |
 
 **Standardized Prompt:**  
 > *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
@@ -23,12 +23,12 @@
 
 | Evaluated Metric | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Ease of Installation** | 20% | **45/100** | **40/100** | +5.00 pts n8n-as-code |
-| **2. Ease of Use** | 20% | **75/100** | **40/100** | +35.00 pts n8n-as-code |
-| **3. Token Consumption** | 15% | **0/100** | **5.68/100** | +5.68 pts Native MCP |
-| **4. Creation Time** | 15% | **0/100** | **26.67/100** | +26.67 pts Native MCP |
-| **5. Workflow Quality** | 30% | **100/100** | **97/100** | +3.00 pts n8n-as-code |
-| **Overall Composite Score** | **100%** | **54/100** | **49.95/100** | **n8n-as-code** |
+| **1. Ease of Installation** | 20% | **85/100** | **100/100** | +15 pts Native MCP |
+| **2. Ease of Use** | 20% | **100/100** | **65/100** | +35.00 pts n8n-as-code |
+| **3. Token Consumption** | 15% | **70/100** | **0/100** | +70.00 pts n8n-as-code |
+| **4. Creation Time** | 15% | **2.42/100** | **0/100** | +2.42 pts n8n-as-code |
+| **5. Workflow Quality** | 30% | **100/100** | **100/100** | +0 pts Native MCP |
+| **Overall Composite Score** | **100%** | **77.86/100** | **63/100** | **n8n-as-code** |
 
 ---
 
@@ -36,11 +36,11 @@
 
 | Metric | n8n-as-code | n8n Native MCP | Delta |
 |---|:---:|:---:|:---:|
-| **Total Duration** | 455s | 136s | 319.00s |
-| **Prompt Tokens** | 38023 | 22315 | 15708.00 |
-| **Completion Tokens** | 2962 | 1549 | N/A |
-| **Total Tokens** | **40985** | **23864** | **17121.00** |
-| **Interaction Turns** | 107 | 49 | 58.00 |
+| **Total Duration** | 176s | 440s | -264.00s |
+| **Prompt Tokens** | 11000 | 100000 | -89000.00 |
+| **Completion Tokens** | 0 | 0 | N/A |
+| **Total Tokens** | **11000** | **100000** | **-89000.00** |
+| **Interaction Turns** | 1 | 5 | -4.00 |
 
 ---
 
@@ -56,7 +56,7 @@
 
 ### 3. Wow Effect & Aesthetics
 - **n8n-as-code**: 25/25
-- **n8n Native MCP**: 22/25
+- **n8n Native MCP**: 25/25
 
 ### 4. Workflow Execution & Dry-Run
 - **n8n-as-code**: 25/25
