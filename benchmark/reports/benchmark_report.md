@@ -11,7 +11,7 @@
 | **Evaluation Engine** | **Deterministic n8n API Validator + Universal Minimax (Option B)** |
 | **Host Platform** | win32 (x64) / Node v24.14.0 |
 | **Target n8n Instance** | `https://etiennel.app.n8n.cloud` |
-| **Timestamp** | `2026-09-06T20:22:34.676Z` |
+| **Timestamp** | `2026-09-06T20:32:11.892Z` |
 
 **Standardized Prompt:**  
 > *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
@@ -22,11 +22,11 @@
 
 | Evaluated Dimension | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Workflow Quality (API Ground Truth)** | 35% | **80 / 100** | **100 / 100** | +20.00 pts Native MCP |
+| **1. Workflow Quality (API Ground Truth)** | 40% | **80 / 100** | **100 / 100** | +20.00 pts Native MCP |
 | **2. Creation Time (Minimax Ratio)** | 25% | **72.58 / 100** | **100 / 100** | +27.42 pts Native MCP |
-| **3. Token Efficiency (Minimax Ratio)** | 20% | **100 / 100** | **80.88 / 100** | +19.12 pts n8n-as-code |
-| **4. Setup Time (Minimax Ratio)** | 20% | **100 / 100** | **81.82 / 100** | +18.18 pts n8n-as-code |
-| **Overall Composite Score** | **100%** | **86.14 / 100** | **92.54 / 100** | 🏆 **n8n Native MCP** |
+| **3. Token Efficiency (Minimax Ratio)** | 25% | **100 / 100** | **80.88 / 100** | +19.12 pts n8n-as-code |
+| **4. Setup Time (Minimax Ratio)** | 10% | **100 / 100** | **81.82 / 100** | +18.18 pts n8n-as-code |
+| **Overall Composite Score** | **100%** | **85.14 / 100** | **93.4 / 100** | 🏆 **n8n Native MCP** |
 
 ---
 

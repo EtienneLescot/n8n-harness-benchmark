@@ -8,15 +8,15 @@ This rubric establishes a 100% deterministic, reproducible evaluation model. It 
 
 | Dimension | Weight | Measurement Source | Scoring Formula |
 |---|:---:|---|---|
-| **1. Workflow Quality** | **35%** | Live n8n Cloud API + `validate_node_config` | $0.60 \times \text{NodeValidity} + 0.40 \times \text{GraphIntegrity}$ |
+| **1. Workflow Quality** | **40%** | Live n8n Cloud API + `validate_node_config` | $0.60 \times \text{NodeValidity} + 0.40 \times \text{GraphIntegrity}$ |
 | **2. Creation Time** | **25%** | External stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
-| **3. Token Efficiency** | **20%** | Total prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
-| **4. Setup Time** | **20%** | External stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
+| **3. Token Efficiency** | **25%** | Total prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
+| **4. Setup Time** | **10%** | External stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
 | **Composite Score** | **100%** | Weighted combination of 4 dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
 
 ---
 
-## 🔬 Dimension 1: Workflow Quality (35% Weight — Ground-Truth API Audit)
+## 🔬 Dimension 1: Workflow Quality (40% Weight — Ground-Truth API Audit)
 
 Workflow Quality is evaluated with ZERO LLM inference directly on the live n8n instance via `GET /api/v1/workflows/:id` and `validate_node_config`:
 

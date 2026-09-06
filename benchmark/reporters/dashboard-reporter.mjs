@@ -209,7 +209,7 @@ export class DashboardReporter {
           <tbody>
             <tr>
               <td><strong>1. Workflow Quality (API Ground Truth)</strong></td>
-              <td>35%</td>
+              <td>40%</td>
               <td>${nScore.workflowQuality ?? 0}/100 (${nAudit.scores?.nodeSchemaValidity ?? 0}% valid nodes)</td>
               <td>${mScore.workflowQuality ?? 0}/100 (${mAudit.scores?.nodeSchemaValidity ?? 0}% valid nodes)</td>
               <td><span class="winner-tag">${(nScore.workflowQuality || 0) >= (mScore.workflowQuality || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
@@ -223,14 +223,14 @@ export class DashboardReporter {
             </tr>
             <tr>
               <td><strong>3. Token Efficiency (Minimax)</strong></td>
-              <td>20%</td>
+              <td>25%</td>
               <td>${nScore.tokenConsumption ?? 0}/100 (${nTel.tokenUsage?.totalTokens ?? 0} tokens)</td>
               <td>${mScore.tokenConsumption ?? 0}/100 (${mTel.tokenUsage?.totalTokens ?? 0} tokens)</td>
               <td><span class="winner-tag">${(nScore.tokenConsumption || 0) >= (mScore.tokenConsumption || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>
             </tr>
             <tr>
               <td><strong>4. Setup Time (Minimax)</strong></td>
-              <td>20%</td>
+              <td>10%</td>
               <td>${nScore.setupTime ?? 0}/100 (${nTel.setupTimeSec ?? 0}s)</td>
               <td>${mScore.setupTime ?? 0}/100 (${mTel.setupTimeSec ?? 0}s)</td>
               <td><span class="winner-tag">${(nScore.setupTime || 0) >= (mScore.setupTime || 0) ? 'n8n-as-code' : 'Native MCP'}</span></td>

@@ -92,11 +92,11 @@ Tested live on `https://etiennel.app.n8n.cloud` under identical conditions:
 
 | Evaluated Metric | Weight | n8n-as-code (@next) | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Workflow Quality (API Ground Truth)** | 35% | **80.00 / 100** | **100 / 100** | +20.00 pts Native MCP *(23/23 valid nodes vs 8/12)* |
+| **1. Workflow Quality (API Ground Truth)** | 40% | **80.00 / 100** | **100 / 100** | +20.00 pts Native MCP *(23/23 valid nodes vs 8/12)* |
 | **2. Creation Time (Minimax Ratio)** | 25% | **72.58 / 100** *(372s)* | **100 / 100** *(270s)* | **+27.42 pts Native MCP** *(1.4x faster build)* |
-| **3. Token Efficiency (Minimax Ratio)** | 20% | **100 / 100** *(55k)* | **80.88 / 100** *(68k)* | **+19.12 pts n8n-as-code** *(19% fewer tokens)* |
-| **4. Setup Time (Minimax Ratio)** | 20% | **100 / 100** *(18s)* | **81.82 / 100** *(22s)* | **+18.18 pts n8n-as-code** *(1.2x faster setup)* |
-| **Overall Composite Score** | **100%** | **86.14 / 100** | **92.54 / 100** | 🏆 **n8n Native MCP wins on build speed & schema compliance** |
+| **3. Token Efficiency (Minimax Ratio)** | 25% | **100 / 100** *(55k)* | **80.88 / 100** *(68k)* | **+19.12 pts n8n-as-code** *(19% fewer tokens)* |
+| **4. Setup Time (Minimax Ratio)** | 10% | **100 / 100** *(18s)* | **81.82 / 100** *(22s)* | **+18.18 pts n8n-as-code** *(1.2x faster setup)* |
+| **Overall Composite Score** | **100%** | **85.14 / 100** | **93.40 / 100** | 🏆 **n8n Native MCP wins on build speed & schema compliance** |
 
 ### Live Workflows Deployed (Run 3)
 - **n8n-as-code**: [`zFWxpFpUBtn71uA8`](https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8) — 12 nodes, multi-agent triage, memory buffer, responsive HTML briefing, 0 orphaned nodes.

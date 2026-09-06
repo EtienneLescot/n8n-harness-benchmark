@@ -41,10 +41,10 @@ export class MarkdownReporter {
 
 | Evaluated Dimension | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Workflow Quality (API Ground Truth)** | 35% | **${nScore.workflowQuality ?? 0} / 100** | **${mScore.workflowQuality ?? 0} / 100** | ${nScore.workflowQuality >= mScore.workflowQuality ? `+${diff(nScore.workflowQuality, mScore.workflowQuality)} pts n8n-as-code` : `+${diff(mScore.workflowQuality, nScore.workflowQuality)} pts Native MCP`} |
+| **1. Workflow Quality (API Ground Truth)** | 40% | **${nScore.workflowQuality ?? 0} / 100** | **${mScore.workflowQuality ?? 0} / 100** | ${nScore.workflowQuality >= mScore.workflowQuality ? `+${diff(nScore.workflowQuality, mScore.workflowQuality)} pts n8n-as-code` : `+${diff(mScore.workflowQuality, nScore.workflowQuality)} pts Native MCP`} |
 | **2. Creation Time (Minimax Ratio)** | 25% | **${nScore.creationTime ?? 0} / 100** | **${mScore.creationTime ?? 0} / 100** | ${nScore.creationTime >= mScore.creationTime ? `+${diff(nScore.creationTime, mScore.creationTime)} pts n8n-as-code` : `+${diff(mScore.creationTime, nScore.creationTime)} pts Native MCP`} |
-| **3. Token Efficiency (Minimax Ratio)** | 20% | **${nScore.tokenConsumption ?? 0} / 100** | **${mScore.tokenConsumption ?? 0} / 100** | ${nScore.tokenConsumption >= mScore.tokenConsumption ? `+${diff(nScore.tokenConsumption, mScore.tokenConsumption)} pts n8n-as-code` : `+${diff(mScore.tokenConsumption, nScore.tokenConsumption)} pts Native MCP`} |
-| **4. Setup Time (Minimax Ratio)** | 20% | **${nScore.setupTime ?? 0} / 100** | **${mScore.setupTime ?? 0} / 100** | ${nScore.setupTime >= mScore.setupTime ? `+${diff(nScore.setupTime, mScore.setupTime)} pts n8n-as-code` : `+${diff(mScore.setupTime, nScore.setupTime)} pts Native MCP`} |
+| **3. Token Efficiency (Minimax Ratio)** | 25% | **${nScore.tokenConsumption ?? 0} / 100** | **${mScore.tokenConsumption ?? 0} / 100** | ${nScore.tokenConsumption >= mScore.tokenConsumption ? `+${diff(nScore.tokenConsumption, mScore.tokenConsumption)} pts n8n-as-code` : `+${diff(mScore.tokenConsumption, nScore.tokenConsumption)} pts Native MCP`} |
+| **4. Setup Time (Minimax Ratio)** | 10% | **${nScore.setupTime ?? 0} / 100** | **${mScore.setupTime ?? 0} / 100** | ${nScore.setupTime >= mScore.setupTime ? `+${diff(nScore.setupTime, mScore.setupTime)} pts n8n-as-code` : `+${diff(mScore.setupTime, nScore.setupTime)} pts Native MCP`} |
 | **Overall Composite Score** | **100%** | **${nScore.composite ?? 0} / 100** | **${mScore.composite ?? 0} / 100** | 🏆 **${(nScore.composite || 0) >= (mScore.composite || 0) ? 'n8n-as-code' : 'n8n Native MCP'}** |
 
 ---

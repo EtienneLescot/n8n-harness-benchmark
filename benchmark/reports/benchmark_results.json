@@ -6,7 +6,7 @@
     "temperature": 0.2,
     "subagentRuntime": "invoke_subagent",
     "evaluationEngine": "Deterministic n8n API Validator + Universal Minimax Scoring (Option B)",
-    "timestamp": "2026-09-06T20:22:34.676Z",
+    "timestamp": "2026-09-06T20:32:11.892Z",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -24,10 +24,10 @@
     }
   },
   "weights": {
-    "workflowQuality": 0.35,
+    "workflowQuality": 0.4,
     "buildTime": 0.25,
-    "tokenEfficiency": 0.2,
-    "setupTime": 0.2
+    "tokenEfficiency": 0.25,
+    "setupTime": 0.1
   },
   "n8nac": {
     "runId": "run_next_3_n8nac",
@@ -37,7 +37,7 @@
       "creationTime": 72.58,
       "tokenConsumption": 100,
       "workflowQuality": 80,
-      "composite": 86.14
+      "composite": 85.14
     },
     "qualityAudit": {
       "workflowId": "zFWxpFpUBtn71uA8",
@@ -67,6 +67,16 @@
       },
       "invalidNodes": [
         {
+          "name": "OpenAI Chat Model",
+          "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+          "errors": [
+            {
+              "path": "parameters.builtInTools",
+              "message": "Field \"parameters.builtInTools\": This field is only allowed when: /responsesApiEnabled=true"
+            }
+          ]
+        },
+        {
           "name": "Simple Memory",
           "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
           "errors": [
@@ -95,19 +105,9 @@
               "message": "Field \"parameters.text\": This field is only allowed when: promptType=\"define\""
             }
           ]
-        },
-        {
-          "name": "Generate HTML Dashboard",
-          "type": "n8n-nodes-base.html",
-          "errors": [
-            {
-              "path": "parameters.dataPropertyName",
-              "message": "Field \"parameters.dataPropertyName\": This field is only allowed when one of: (operation=\"extractHtmlContent\", sourceData=\"binary\") or (operation=\"extractHtmlContent\", sourceData=\"json\")"
-            }
-          ]
         }
       ],
-      "timestamp": "2026-09-06T20:22:34.474Z"
+      "timestamp": "2026-09-06T20:32:11.648Z"
     },
     "rawMetrics": {
       "setupTimeSec": 18,
@@ -130,7 +130,7 @@
       "creationTime": 100,
       "tokenConsumption": 80.88,
       "workflowQuality": 100,
-      "composite": 92.54
+      "composite": 93.4
     },
     "qualityAudit": {
       "workflowId": "vopZrnULIAAWt7Yh",
@@ -159,7 +159,7 @@
         "durationMs": 0
       },
       "invalidNodes": [],
-      "timestamp": "2026-09-06T20:22:34.676Z"
+      "timestamp": "2026-09-06T20:32:11.892Z"
     },
     "rawMetrics": {
       "setupTimeSec": 22,

@@ -115,13 +115,13 @@ export async function compileBenchmarkResults(options = {}) {
   const mcpQualityAudit = await validateWorkflowOnInstance(mcpWfId);
 
   // 6. Calculate Composite Overall Scores
-  // Standardized weights: Quality (35%), Build Time (25%), Token Efficiency (20%), Setup Time (20%)
+  // Standardized weights: Quality (40%), Build Time (25%), Token Efficiency (25%), Setup Time (10%)
   const computeComposite = (qualityScore, buildScore, tokenScore, setupScore) => {
     return parseFloat((
-      qualityScore * 0.35 +
+      qualityScore * 0.40 +
       buildScore * 0.25 +
-      tokenScore * 0.20 +
-      setupScore * 0.20
+      tokenScore * 0.25 +
+      setupScore * 0.10
     ).toFixed(2));
   };
 
@@ -165,10 +165,10 @@ export async function compileBenchmarkResults(options = {}) {
       }
     },
     weights: {
-      workflowQuality: 0.35,
+      workflowQuality: 0.40,
       buildTime: 0.25,
-      tokenEfficiency: 0.20,
-      setupTime: 0.20
+      tokenEfficiency: 0.25,
+      setupTime: 0.10
     },
     n8nac: {
       runId: path.basename(n8nacSandbox),
