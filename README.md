@@ -16,11 +16,6 @@ This benchmark is designed to be executed by an **AI Coding Agent** (Orchestrato
 Simply paste this prompt into your coding agent:
 
 ```text
-Clone le repo https://github.com/EtienneLescot/n8n-harness-benchmark.git, lis les instructions du benchmark et lance l'évaluation comparative entre n8n-as-code et n8n Native MCP sur mon instance n8n.
-```
-
-*(English version)*:
-```text
 Clone https://github.com/EtienneLescot/n8n-harness-benchmark.git, read the benchmark instructions, and run the comparative evaluation between n8n-as-code and n8n Native MCP on my n8n instance.
 ```
 
@@ -60,7 +55,7 @@ npm run report
 
 Both toolchains receive **strictly and exclusively** the authentic user prompt with zero system preamble or filesystem paths:
 
-> *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
+> *"Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard."*
 
 ### Architecture Tested:
 - **Triggers**: Schedule trigger (daily run) and/or Webhook entrypoint.
@@ -98,9 +93,9 @@ $$\text{Score}(X) = 100 \times \frac{\min(A, B)}{X}$$
 ### 3. Anti-Contamination & Sandboxing
 - **Hermetic Workspaces**: Builders run concurrently in separate directories with isolated `.env` files.
 - **Universal Confinement**: Builders operate under a strict rule:
-  > *« INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création. »*
+  > *"STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation."*
 - **Opaque Workflow Naming**: Workflows must be named with a generic timestamp:
-  > *« Nommez obligatoirement votre workflow sous la forme : workflow-<timestamp> (ex: workflow-1741300000). »*
+  > *"Mandatory naming format: workflow-<timestamp> (e.g., workflow-1741300000). Never include task keywords in the title."*
 
 ---
 
