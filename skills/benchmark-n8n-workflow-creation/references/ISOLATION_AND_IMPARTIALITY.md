@@ -4,19 +4,26 @@ This document establishes the mandatory isolation barriers, context protection r
 
 ---
 
-## 1. Core Principle of Impartiality
+## 1. Core Principle: Separation of Execution and Evaluation
 
-To guarantee valid, scientific, and uncompromised comparison:
-1. **Identical Machine & Network**: Both branches must run on the exact same host machine, utilizing the same network conditions and accessing the same n8n instance (or twin instances).
-2. **Identical LLM Engine & Locked Parameters**: Both subagents **must** be spawned with the exact same model configuration (`Model: 'inherit'`, `'flash'`, or `'pro'`) and identical temperature (`0.2` or deterministic default). The model parameter must be explicitly logged in the benchmark telemetry and dashboard.
-3. **Identical Benchmark Prompt**:
-   > *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
-   No hints, extra instructions, or pre-crafted node IDs may be given to either branch.
-4. **Independent Evaluation**: Evaluation must follow the standardized rubric ([`EVALUATION_RUBRIC.md`](EVALUATION_RUBRIC.md)) without bias toward code-first or remote-first approaches.
+### ⚖️ The Zero Self-Evaluation Rule
+In scientific benchmarking, **no actor may grade its own work**:
+- **Worker Agents (Installers & Builders)**:
+  - Role: Strict execution and factual trace recording.
+  - Workers must never issue qualitative ratings, self-assessments, or scores on their own tasks.
+  - They produce raw artifacts: command logs, stdout/stderr streams, validation outputs, timestamps, token counts, and workflow files.
+- **Judge Agent (Impartial LLM Judge)**:
+  - Role: Independent, objective evaluator.
+  - The Judge has zero involvement in installation or code creation.
+  - It receives the raw execution traces from both branches and scores:
+    1. **Installation (20%)**: Evaluates installation logs for complexity, error rates, and command counts.
+    2. **Ease of Use / DX (20%)**: Evaluates builder logs for debugging loops, friction points, and ergonomics.
+    3. **Quality of Workflow (30%)**: Evaluates workflow JSON files against the rubric criteria.
+    4. **Tokens (15%) & Time (15%)**: Computes quantitative scores directly from telemetry data.
 
 ---
 
-## 2. Preventing Context Contamination (The Subagent Imperative)
+## 2. Preventing Context Contamination (Subagent Hermetic Isolation)
 
 ### ⚠️ The Danger of Sequential In-Chat Execution
 When an agent creates Workflow A (e.g. via `n8n-as-code`), and then creates Workflow B (e.g. via `Native MCP`) **within the same conversation thread**:
@@ -32,18 +39,18 @@ To eliminate context contamination:
 
 ---
 
-## 3. Sandbox & Filesystem Isolation Barriers
+## 3. Sandboxes & Filesystem Isolation Barriers
 
-Each subagent runs in a dedicated sandbox directory:
+Each worker runs in a dedicated sandbox directory:
 - `benchmark/sandboxes/run_<timestamp>_n8nac/`
 - `benchmark/sandboxes/run_<timestamp>_native_mcp/`
 
 ### Rules of Isolation:
-- **No Shared Filesystem State**: Neither subagent is allowed to read from or write to the other subagent's sandbox.
+- **No Shared Filesystem State**: Neither worker is allowed to read from or write to the other worker's sandbox.
 - **Pristine Environment**: Each sandbox starts without pre-existing `n8nac-config.json`, generated `.workflow.ts` files, or cached schemas.
 - **Clean Configuration**:
-  - `n8n-as-code` subagent runs `n8nac env add` inside its own sandbox.
-  - `n8n Native MCP` subagent establishes its own session (`initialize` handshake) without sharing MCP session tokens or memory.
+  - `n8n-as-code` worker runs `n8nac env add` inside its own sandbox.
+  - `n8n Native MCP` worker establishes its own session (`initialize` handshake) without sharing MCP session tokens or memory.
 - **Artifact Preservation**: All generated files (`workflow.json`, `workflow.ts`, logs, transcripts) are preserved in their respective sandboxes for auditability.
 
 ---

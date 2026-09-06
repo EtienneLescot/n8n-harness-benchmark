@@ -1,6 +1,6 @@
 ---
 name: benchmark-n8n-workflow-creation
-description: Standardized, scientifically impartial benchmark harness comparing n8n-as-code with n8n Native MCP for AI-driven workflow creation using hermetic subagents and zero context contamination.
+description: Standardized, scientifically impartial benchmark harness comparing n8n-as-code with n8n Native MCP using strictly separated Worker Subagents (Installers, Builders) and an external Impartial Judge Subagent (zero self-evaluation).
 ---
 
 # Skill: Benchmark n8n-as-code vs. n8n Native MCP
@@ -9,47 +9,72 @@ Use this skill when asked to benchmark, compare, or scientifically evaluate **n8
 
 ---
 
-## 🎯 Unified Architecture: Orchestrator & Hermetic Subagents
+## 🎯 Separation of Execution & Evaluation: The Zero Self-Evaluation Rule
 
-Rather than running sequential tests in a single conversation (which causes **context contamination** and bias), this benchmark uses a **Unified Orchestration Protocol**:
-1. **The Primary Agent (You)** acts as the **Benchmark Orchestrator & Impartial Judge**.
-2. **The User** provides the prompt / trigger and answers any missing credential prompts.
-3. **Two Isolated Subagents** are spawned concurrently via `invoke_subagent` to act as independent workflow builders. Each subagent has zero access to the other's conversation, files, or thought process.
+In this benchmark, **no agent ever judges itself**:
+1. **Worker Subagents (`Installers` & `Builders`)**:
+   - Focus exclusively on execution.
+   - Record factual raw traces (commands executed, error messages, timestamps, token counts, deployed workflows).
+   - **Never grade, score, or evaluate their own performance.**
+2. **Judge Subagent (`Impartial LLM Judge`)**:
+   - Independent subagent that wrote zero code and executed zero installations.
+   - Receives the raw installation logs, build logs, telemetry, and deployed workflow JSONs.
+   - Evaluates all dimensions objectively:
+     - **Ease of Installation (20%)** based on raw installer traces.
+     - **Ease of Use / DX (20%)** based on raw builder iteration logs and friction events.
+     - **Quality of Workflow (30%)** based on the deployed workflow JSON against the rubric.
+     - **Tokens (15%) & Time (15%)** computed mathematically from raw telemetry.
 
 ```
-                  ┌───────────────────────────────┐
-                  │    User (Etienne Lescot)      │
-                  └──────────────┬────────────────┘
-                                 │ "Lance le benchmark"
-                                 ▼
-                  ┌───────────────────────────────┐
-                  │   Primary Agent / Orchestrator│
-                  │   - Step 1: Credentials Gate  │
-                  │   - Step 2: Model Locking     │
-                  │   - Step 3: Sandbox Prep      │
-                  │   - Step 4: Subagents Spawn   │
-                  │   - Step 5: Impartial Judge   │
-                  └──────┬─────────────────┬──────┘
-                         │                 │
-           invoke_subagent                 invoke_subagent
-     (Isolated Sandbox 1)                 (Isolated Sandbox 2)
-     (Model: locked)                      (Model: locked)
-                         │                 │
-                         ▼                 ▼
-          ┌──────────────────────┐  ┌──────────────────────┐
-          │  Subagent A (n8nac)  │  │ Subagent B (Native)  │
-          │  - Own isolated .env │  │ - Own isolated .env │
-          │  - n8n-as-code docs  │  │ - Native MCP docs   │
-          │  - Builds & Deploys  │  │ - Builds & Deploys  │
-          └──────────┬───────────┘  └──────────┬───────────┘
+                      ┌───────────────────────────────┐
+                      │    User (Etienne Lescot)      │
+                      └──────────────┬────────────────┘
+                                     │ "Lance le benchmark"
+                                     ▼
+                      ┌───────────────────────────────┐
+                      │   Primary Agent / Orchestrator│
+                      │   1. Credentials Gate (.env)  │
+                      │   2. Locks Subagent Model     │
+                      │   3. Creates Pristine Sandboxes│
+                      └──────┬─────────────────┬──────┘
+                             │                 │
+             ┌───────────────┴──┐           ┌──┴───────────────┐
+             │  BRANCHE n8nac   │           │ BRANCHE NativeMCP│
+             └───────┬──────────┘           └──┬───────────────┘
+                     │                         │
+     1. INSTALL      ▼                         ▼
+            [Sous-Agent Installer A]   [Sous-Agent Installer B]
+            - Exécute l'installation   - Exécute l'installation
+            - Produit: Raw Install Log - Produit: Raw Install Log
+            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
+                     │                         │
+     2. BUILD        ▼                         ▼
+            [Sous-Agent Builder A]     [Sous-Agent Builder B]
+            - Conçoit & déploie wf     - Conçoit & déploie wf
+            - Produit: Raw Build Log   - Produit: Raw Build Log
+            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
                      │                         │
                      └───────────┬─────────────┘
-                                 │ Telemetry & Workflows
+                                 │
+                   Transmission des Traces Brutes
+                   - Raw Install Logs (A & B)
+                   - Raw Build Logs & Telemetry (A & B)
+                   - Workflows JSON Déployés (A & B)
+                                 │
                                  ▼
-                  ┌───────────────────────────────┐
-                  │     Evaluator & Dashboard     │
-                  │   (Reports & Visualizations)  │
-                  └───────────────────────────────┘
+     3. JUDGE        ┌───────────────────────────────┐
+                     │   [Sous-Agent Juge LLM]       │
+                     │   (Totalement neutre & externe)│
+                     │   - Juge l'Installation (20%) │
+                     │   - Juge l'Utilisation / DX   │
+                     │   - Juge la Qualité wf (30%)  │
+                     │   - Calcule Tokens & Temps    │
+                     └──────────────┬────────────────┘
+                                    │
+                                    ▼
+                     ┌───────────────────────────────┐
+                     │  Rapport & Dashboard Final    │
+                     └───────────────────────────────┘
 ```
 
 ---
@@ -57,112 +82,100 @@ Rather than running sequential tests in a single conversation (which causes **co
 ## 📋 Execution Protocol (Step-by-Step)
 
 ### Step 1: Credentials Gate
-Before launching any subagents, check if the required n8n credentials exist:
-1. Check `.env` (or local environment):
-   - `N8N_HOST`: URL of the n8n instance (e.g., `https://etiennel.app.n8n.cloud` or `http://localhost:5678`)
-   - `N8N_API_KEY`: n8n REST API key
-   - `N8N_NATIVE_MCP_URL`: MCP endpoint (e.g., `https://etiennel.app.n8n.cloud/mcp-server/http`)
-   - `N8N_NATIVE_MCP_TOKEN`: MCP bearer token (with `"aud": "mcp-server-api"`)
-2. **Interactive Fallback**:
-   If any credentials are missing:
-   - Ask the user directly in the chat for the missing information.
-   - Provide exact instructions on how to generate them:
-     - **API Key**: `Settings > n8n API > Create API Key`.
-     - **MCP Token**: `Settings > Instance-level MCP > Connect a client > Copy JSON configuration`.
-   - Save or stage the credentials into `.env`.
+Check `.env` for the 4 essential n8n parameters:
+- `N8N_HOST`: URL of the n8n instance
+- `N8N_API_KEY`: n8n REST API key
+- `N8N_NATIVE_MCP_URL`: Native MCP server URL
+- `N8N_NATIVE_MCP_TOKEN`: Native MCP bearer token
+
+If any are missing:
+- Prompt the user directly in chat with instructions on where to find them in the n8n UI (`Settings > n8n API` and `Settings > Instance-level MCP`).
+- Save them to `.env`.
 
 ---
 
-### Step 2: LLM Model Alignment & Locking
-To ensure total scientific fairness:
-- Both subagents **MUST** be launched with the exact same LLM configuration (`Model: 'inherit'`, `'flash'`, or `'pro'`).
-- The model configuration is recorded in the benchmark telemetry and displayed on the final dashboard.
-- Default: `inherit` (uses the active agent model).
+### Step 2: LLM Model Locking
+To guarantee scientific parity:
+- Lock the model parameter for **all subagents** (`Model: 'inherit'`, `'flash'`, or `'pro'`).
+- The chosen model is recorded in the benchmark telemetry and shown in the final reports.
 
 ---
 
-### Step 3: Sandboxes & Isolated `.env` Preparation
-Generate two distinct timestamped sandbox directories:
-- `benchmark/sandboxes/run_<timestamp>_n8nac/`
-- `benchmark/sandboxes/run_<timestamp>_native_mcp/`
+### Step 3: Phase 1 — Installation Execution (`Installers`)
+Spawn two independent installer subagents via `invoke_subagent`:
 
-In each directory, write an isolated `.env` containing only what the specific tool requires:
-- For **n8n-as-code**:
-  ```env
-  N8N_HOST=...
-  N8N_API_KEY=...
-  ```
-- For **n8n Native MCP**:
-  ```env
-  N8N_NATIVE_MCP_URL=...
-  N8N_NATIVE_MCP_TOKEN=...
+#### Installer A (`n8n-as-code Installer`)
+- **Workspace**: `benchmark/sandboxes/run_<id>_n8nac/`
+- **Task**: Install and link n8n-as-code to the target instance using credentials from `.env`.
+- **Output**: Return a factual execution log:
+  ```json
+  {
+    "tool": "n8n-as-code",
+    "commandsExecuted": ["n8nac env add...", "n8nac env auth..."],
+    "durationMs": 18000,
+    "stdout": "...",
+    "stderr": "...",
+    "frictionEvents": [],
+    "status": "ready"
+  }
   ```
 
+#### Installer B (`Native MCP Installer`)
+- **Workspace**: `benchmark/sandboxes/run_<id>_native_mcp/`
+- **Task**: Establish connection to the Native MCP server via credentials from `.env` and query available tools.
+- **Output**: Return a factual execution log:
+  ```json
+  {
+    "tool": "n8n-native-mcp",
+    "headersUsed": ["Accept: application/json, text/event-stream", ...],
+    "durationMs": 24000,
+    "toolsDiscovered": 39,
+    "frictionEvents": [],
+    "status": "ready"
+  }
+  ```
+
 ---
 
-### Step 4: Spawning Hermetic Subagents (`invoke_subagent`)
-Spawn both subagents concurrently using `invoke_subagent`.
+### Step 4: Phase 2 — Workflow Building Execution (`Builders`)
+Spawn two independent builder subagents in their respective configured sandboxes:
 
-#### Subagent 1: `n8n-as-code Builder`
-- **Role**: `n8n-as-code Builder`
+- **Standardized Prompt**:
+  > *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
+
+#### Builder A (`n8n-as-code Builder`)
+- Authors the workflow, validates locally via `n8nac skills validate`, pushes to instance via `n8nac push`.
+- Returns raw facts: workflow ID, deployed JSON, turns taken, validation errors encountered, wall-clock time, tokens used.
+
+#### Builder B (`Native MCP Builder`)
+- Authors the workflow using `@n8n/workflow-sdk`, deploys via `create_workflow_from_code` (or `create_workflow`).
+- Returns raw facts: workflow ID, deployed JSON, turns taken, validation errors encountered, wall-clock time, tokens used.
+
+---
+
+### Step 5: Phase 3 — Impartial Evaluation (`Judge Subagent`)
+Spawn an **independent Judge Subagent** with zero prior context:
+- **Role**: `Impartial Benchmark Judge`
 - **Model**: Same locked model
-- **Workspace**: `benchmark/sandboxes/run_<timestamp>_n8nac/`
-- **Prompt**:
-  ```
-  You are an expert n8n developer evaluated in a benchmark.
-  Your task is to build and deploy a workflow using n8n-as-code.
-  Standardized prompt: "build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"
-  
-  Instructions:
-  1. Read credentials from .env in your current working directory.
-  2. Configure n8n-as-code:
-     npx --yes n8nac env add Cloud --base-url <url> --workflows-path workflows
-     echo "<api_key>" | npx --yes n8nac env auth set Cloud --api-key-stdin
-     npx --yes n8nac env use Cloud
-     npx --yes n8nac update-ai
-  3. Author the workflow, validate it with `npx --yes n8nac skills validate`, and push with `npx --yes n8nac push <file>`.
-  4. Return a JSON summary with: workflowId, workflowUrl, executionTimeMs, tokensUsed, errorsEncountered, and the complete workflow JSON.
-  ```
-
-#### Subagent 2: `n8n Native MCP Builder`
-- **Role**: `n8n Native MCP Builder`
-- **Model**: Same locked model
-- **Workspace**: `benchmark/sandboxes/run_<timestamp>_native_mcp/`
-- **Prompt**:
-  ```
-  You are an expert n8n developer evaluated in a benchmark.
-  Your task is to build and deploy a workflow using n8n Native MCP.
-  Standardized prompt: "build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"
-  
-  Instructions:
-  1. Read MCP credentials from .env in your current working directory.
-  2. Interact with the n8n Native MCP server via Streamable HTTP (headers: Content-Type: application/json, Accept: application/json, text/event-stream, Authorization: Bearer <token>).
-  3. Consult tools (`get_workflow_sdk_reference`, `search_nodes`).
-  4. Author the workflow using @n8n/workflow-sdk and deploy using `create_workflow_from_code` (or JSON via `create_workflow`).
-  5. Return a JSON summary with: workflowId, workflowUrl, executionTimeMs, tokensUsed, errorsEncountered, and the complete workflow JSON.
-  ```
+- **Inputs**:
+  - Raw Installer Logs (A & B)
+  - Raw Builder Logs (A & B)
+  - Raw Telemetry (duration, tokens)
+  - Deployed Workflow JSONs (A & B)
+  - Standardized Rubric ([`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md))
+- **Judge Responsibilities**:
+  1. **Scores Installation (20%)** based on command count, errors, and onboarding complexity.
+  2. **Scores Ease of Use / DX (20%)** based on iteration loops, linting safety, and friction.
+  3. **Scores Workflow Quality (30%)** across Brief (25), Nodes & Wiring (25), Wow/Style (25), and Execution (25).
+  4. **Computes Tokens (15%) & Time (15%)** using mathematical normalization formulas.
+  5. Produces detailed justifications for every score without bias.
 
 ---
 
-### Step 5: Evaluation & Reporting
-Upon receiving responses from both subagents:
-1. Run the objective scoring rubric ([`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)) across the 5 dimensions:
-   - **Ease of Installation (20%)**
-   - **Ease of Use (20%)**
-   - **Token Consumption (15%)**
-   - **Creation Time (15%)**
-   - **Workflow Quality (30%)**
-2. Explicitly note the LLM model and operating conditions.
-3. Generate reports in `benchmark/reports/`:
-   - `live_benchmark_report.md`
-   - `live_benchmark_results.json`
-   - `live_benchmark_dashboard.html`
-4. Present the summary and clickable workflow URLs to the user.
+### Step 6: Final Reporting & Dashboard
+The Primary Agent aggregates the Judge's evaluations into:
+- 📄 `benchmark/reports/benchmark_report.md`
+- 📊 `benchmark/reports/benchmark_dashboard.html`
+- 💾 `benchmark/reports/benchmark_results.json`
 
----
-
-## 📚 References
-- [Isolation & Impartiality Protocol](references/ISOLATION_AND_IMPARTIALITY.md)
-- [Standardized Evaluation Rubric](references/EVALUATION_RUBRIC.md)
-- [n8n-as-code Authoring Guide](references/N8N_AS_CODE_GUIDE.md)
-- [n8n Native MCP Authoring Guide](references/N8N_NATIVE_MCP_GUIDE.md)
+And presents the final scores and deployed workflow links to the user.

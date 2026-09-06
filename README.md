@@ -32,46 +32,62 @@ To ensure 100% scientific validity and prevent context contamination:
 
 ---
 
-## 🏗️ Unified Orchestration Architecture
+## 🏗️ 3-Tier Agentic Architecture: The Zero Self-Evaluation Rule
 
-Rather than separating into rigid interactive vs. non-interactive modes, the benchmark operates through a **Unified Agentic Orchestrator**:
+In this benchmark, **no agent ever judges its own work**:
+- **Workers (`Installers` & `Builders`)**: Focus exclusively on execution and recording factual raw traces (commands, timestamps, errors, tokens, workflow files). They issue zero self-ratings.
+- **Judge Subagent (`Impartial LLM Judge`)**: An independent external subagent that receives raw logs and workflow JSONs, and evaluates all qualitative dimensions (Installation, Ease of Use / DX, Workflow Quality).
 
 ```
-                  ┌───────────────────────────────┐
-                  │    User (Etienne Lescot)      │
-                  └──────────────┬────────────────┘
-                                 │ "Lance le benchmark"
-                                 ▼
-                  ┌───────────────────────────────┐
-                  │   Primary Agent / Orchestrator│
-                  │   1. Credentials Gate         │
-                  │      - Reads .env             │
-                  │      - Prompts user if absent │
-                  │   2. Locks Subagent Model     │
-                  │   3. Creates Pristine Sandboxes│
-                  │   4. Spawns Hermetic Subagents│
-                  │   5. Evaluates & Compiles     │
-                  └──────┬─────────────────┬──────┘
-                         │                 │
-           invoke_subagent                 invoke_subagent
-     (Isolated Sandbox 1)                 (Isolated Sandbox 2)
-     (Model: locked)                      (Model: locked)
-                         │                 │
-                         ▼                 ▼
-          ┌──────────────────────┐  ┌──────────────────────┐
-          │  Subagent A (n8nac)  │  │ Subagent B (Native)  │
-          │  - Own isolated .env │  │ - Own isolated .env │
-          │  - n8n-as-code docs  │  │ - Native MCP docs   │
-          │  - Builds & Deploys  │  │ - Builds & Deploys  │
-          └──────────┬───────────┘  └──────────┬───────────┘
+                      ┌───────────────────────────────┐
+                      │    User (Etienne Lescot)      │
+                      └──────────────┬────────────────┘
+                                     │ "Lance le benchmark"
+                                     ▼
+                      ┌───────────────────────────────┐
+                      │   Primary Agent / Orchestrator│
+                      │   1. Credentials Gate (.env)  │
+                      │   2. Locks Subagent Model     │
+                      │   3. Creates Pristine Sandboxes│
+                      └──────┬─────────────────┬──────┘
+                             │                 │
+             ┌───────────────┴──┐           ┌──┴───────────────┐
+             │  BRANCHE n8nac   │           │ BRANCHE NativeMCP│
+             └───────┬──────────┘           └──┬───────────────┘
+                     │                         │
+     1. INSTALL      ▼                         ▼
+            [Sous-Agent Installer A]   [Sous-Agent Installer B]
+            - Exécute l'installation   - Exécute l'installation
+            - Produit: Raw Install Log - Produit: Raw Install Log
+            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
+                     │                         │
+     2. BUILD        ▼                         ▼
+            [Sous-Agent Builder A]     [Sous-Agent Builder B]
+            - Conçoit & déploie wf     - Conçoit & déploie wf
+            - Produit: Raw Build Log   - Produit: Raw Build Log
+            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
                      │                         │
                      └───────────┬─────────────┘
-                                 │ Telemetry & Workflows
+                                 │
+                   Transmission des Traces Brutes
+                   - Raw Install Logs (A & B)
+                   - Raw Build Logs & Telemetry (A & B)
+                   - Workflows JSON Déployés (A & B)
+                                 │
                                  ▼
-                  ┌───────────────────────────────┐
-                  │     Evaluator & Dashboard     │
-                  │   (Reports & Visualizations)  │
-                  └───────────────────────────────┘
+     3. JUDGE        ┌───────────────────────────────┐
+                     │   [Sous-Agent Juge LLM]       │
+                     │   (Totalement neutre & externe)│
+                     │   - Juge l'Installation (20%) │
+                     │   - Juge l'Utilisation / DX   │
+                     │   - Juge la Qualité wf (30%)  │
+                     │   - Calcule Tokens & Temps    │
+                     └──────────────┬────────────────┘
+                                    │
+                                    ▼
+                     ┌───────────────────────────────┐
+                     │  Rapport & Dashboard Final    │
+                     └───────────────────────────────┘
 ```
 
 ---
