@@ -32,11 +32,15 @@ To ensure 100% scientific validity and prevent context contamination:
 
 ---
 
-## 🏗️ 3-Tier Agentic Architecture: The Zero Self-Evaluation Rule
+## 🏗️ Hermetic Symmetrical Architecture: One Judge per Branch
 
-In this benchmark, **no agent ever judges its own work**:
-- **Workers (`Installers` & `Builders`)**: Focus exclusively on execution and recording factual raw traces (commands, timestamps, errors, tokens, workflow files). They issue zero self-ratings.
-- **Judge Subagent (`Impartial LLM Judge`)**: An independent external subagent that receives raw logs and workflow JSONs, and evaluates all qualitative dimensions (Installation, Ease of Use / DX, Workflow Quality).
+To achieve absolute scientific neutrality and eliminate both self-evaluation and contrast bias:
+- **Workers (`Installers` & `Builders`)**: Focus exclusively on execution and recording factual raw traces (commands, timestamps, errors, tokens, workflow files). Zero self-ratings.
+- **One Judge per Branch (`Judge A` & `Judge B`)**:
+  - `Judge A` evaluates **only** Branch A against the absolute rubric, having **never seen** Branch B.
+  - `Judge B` evaluates **only** Branch B against the exact same rubric, having **never seen** Branch A.
+  - This eliminates anchoring bias, contrast effect, and order-of-review bias.
+- **Primary Orchestrator**: Aggregates the two independent scorecards into the comparative reports.
 
 ```
                       ┌───────────────────────────────┐
@@ -58,36 +62,30 @@ In this benchmark, **no agent ever judges its own work**:
      1. INSTALL      ▼                         ▼
             [Sous-Agent Installer A]   [Sous-Agent Installer B]
             - Exécute l'installation   - Exécute l'installation
-            - Produit: Raw Install Log - Produit: Raw Install Log
-            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
+            - Sort: Raw Install Log    - Sort: Raw Install Log
                      │                         │
      2. BUILD        ▼                         ▼
             [Sous-Agent Builder A]     [Sous-Agent Builder B]
             - Conçoit & déploie wf     - Conçoit & déploie wf
-            - Produit: Raw Build Log   - Produit: Raw Build Log
-            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
+            - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
+                     │                         │
+     3. JUDGE        ▼                         ▼
+            [Sous-Agent Juge A]        [Sous-Agent Juge B]
+            - Évalue UNIQUEMENT A      - Évalue UNIQUEMENT B
+            - Ne voit JAMAIS B         - Ne voit JAMAIS A
+            - Barème absolu 0-100      - Barème absolu 0-100
                      │                         │
                      └───────────┬─────────────┘
                                  │
-                   Transmission des Traces Brutes
-                   - Raw Install Logs (A & B)
-                   - Raw Build Logs & Telemetry (A & B)
-                   - Workflows JSON Déployés (A & B)
+                   Transmission des Notations
+                   - Évaluation A (indépendante)
+                   - Évaluation B (indépendante)
                                  │
                                  ▼
-     3. JUDGE        ┌───────────────────────────────┐
-                     │   [Sous-Agent Juge LLM]       │
-                     │   (Totalement neutre & externe)│
-                     │   - Juge l'Installation (20%) │
-                     │   - Juge l'Utilisation / DX   │
-                     │   - Juge la Qualité wf (30%)  │
-                     │   - Calcule Tokens & Temps    │
-                     └──────────────┬────────────────┘
-                                    │
-                                    ▼
-                     ┌───────────────────────────────┐
-                     │  Rapport & Dashboard Final    │
-                     └───────────────────────────────┘
+                      ┌───────────────────────────────┐
+                      │   Agrégation & Dashboard      │
+                      │   (Agent Principal / Rapports)│
+                      └───────────────────────────────┘
 ```
 
 ---

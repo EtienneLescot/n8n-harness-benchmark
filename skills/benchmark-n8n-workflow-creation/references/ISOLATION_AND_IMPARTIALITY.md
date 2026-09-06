@@ -4,38 +4,40 @@ This document establishes the mandatory isolation barriers, context protection r
 
 ---
 
-## 1. Core Principle: Separation of Execution and Evaluation
+## 1. Core Principles of Scientific Impartiality
 
-### ⚖️ The Zero Self-Evaluation Rule
-In scientific benchmarking, **no actor may grade its own work**:
-- **Worker Agents (Installers & Builders)**:
-  - Role: Strict execution and factual trace recording.
-  - Workers must never issue qualitative ratings, self-assessments, or scores on their own tasks.
-  - They produce raw artifacts: command logs, stdout/stderr streams, validation outputs, timestamps, token counts, and workflow files.
-- **Judge Agent (Impartial LLM Judge)**:
-  - Role: Independent, objective evaluator.
-  - The Judge has zero involvement in installation or code creation.
-  - It receives the raw execution traces from both branches and scores:
-    1. **Installation (20%)**: Evaluates installation logs for complexity, error rates, and command counts.
-    2. **Ease of Use / DX (20%)**: Evaluates builder logs for debugging loops, friction points, and ergonomics.
-    3. **Quality of Workflow (30%)**: Evaluates workflow JSON files against the rubric criteria.
-    4. **Tokens (15%) & Time (15%)**: Computes quantitative scores directly from telemetry data.
+### ⚖️ Principle 1: Zero Self-Evaluation
+No worker agent may ever evaluate, score, or comment qualitatively on its own performance.
+- **Workers (Installers & Builders)**: Execute the task and output objective, factual telemetry logs (commands, stdout/stderr, timestamps, errors, tokens, workflow artifacts).
+- **Judges**: External subagents that have not executed any installation or authored any workflows.
+
+### 🛡️ Principle 2: One Judge per Branch (Zero Contrast / Anchoring Bias)
+When a single evaluator reviews two artifacts sequentially:
+- **Anchoring & Order Bias**: Whichever artifact is reviewed second is judged relative to the first rather than measured against the absolute rubric.
+- **Cognitive Carryover**: Thoughts, critiques, and preferences formulated during the first evaluation leak into the scoring of the second.
+
+**The Solution**:
+- **Judge A** evaluates **only** Branch A (`n8n-as-code`), using the absolute rubric, without any knowledge of Branch B.
+- **Judge B** evaluates **only** Branch B (`Native MCP`), using the exact same absolute rubric, without any knowledge of Branch A.
+- Both judges are spawned with identical model configuration and temperature (`0.2`).
+- The Primary Orchestrator merely aggregates the two independent scorecards.
 
 ---
 
 ## 2. Preventing Context Contamination (Subagent Hermetic Isolation)
 
 ### ⚠️ The Danger of Sequential In-Chat Execution
-When an agent creates Workflow A (e.g. via `n8n-as-code`), and then creates Workflow B (e.g. via `Native MCP`) **within the same conversation thread**:
+When an agent creates Workflow A, and then creates Workflow B **within the same conversation thread**:
 - **Cognitive Leakage**: All design decisions (node names, cron schedules, query parameters, HTML templates, layout coordinates) remain present in the model's active attention window.
 - **First-Mover Penalty / Second-Mover Free Ride**: The second tool avoids the cognitive effort of architectural planning and simply translates the existing structure from JSON to SDK code.
 - **Spurious Structural Correlation**: Both workflows end up having identical node names, pins, and canvas positions, invalidating any genuine comparison of how each tool naturally guides the agent.
 
-### 🛡️ The Hermetic Subagent Solution
-To eliminate context contamination:
-- **Zero Shared Context**: Workflow A and Workflow B must be built by **two independent subagents** spawned via `invoke_subagent`.
-- **Clean Memory**: Subagent B is instantiated in a clean conversation with zero access to Subagent A's memory, files, tool calls, or reasoning tokens.
-- **Isolated `.env`**: Each subagent receives an isolated working directory with an isolated `.env` file containing only the credentials relevant to its assigned tool.
+### 🛡️ The Hermetic Symmetrical Subagent Solution
+To eliminate context contamination at every single stage:
+- **Phase 1 (Install)**: `Installer A` runs isolated from `Installer B`.
+- **Phase 2 (Build)**: `Builder A` runs isolated from `Builder B`.
+- **Phase 3 (Judge)**: `Judge A` runs isolated from `Judge B`.
+- **Zero Shared Context**: Neither branch ever communicates with or references the other branch.
 
 ---
 

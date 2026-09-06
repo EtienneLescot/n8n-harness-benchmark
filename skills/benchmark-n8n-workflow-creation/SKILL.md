@@ -1,6 +1,6 @@
 ---
 name: benchmark-n8n-workflow-creation
-description: Standardized, scientifically impartial benchmark harness comparing n8n-as-code with n8n Native MCP using strictly separated Worker Subagents (Installers, Builders) and an external Impartial Judge Subagent (zero self-evaluation).
+description: Standardized, scientifically impartial benchmark harness comparing n8n-as-code with n8n Native MCP using strictly symmetrical, hermetic pipelines (Installer -> Builder -> Judge per branch) with zero cross-talk, zero self-evaluation, and zero judge contrast bias.
 ---
 
 # Skill: Benchmark n8n-as-code vs. n8n Native MCP
@@ -9,21 +9,16 @@ Use this skill when asked to benchmark, compare, or scientifically evaluate **n8
 
 ---
 
-## 🎯 Separation of Execution & Evaluation: The Zero Self-Evaluation Rule
+## 🎯 Hermetic Symmetrical Architecture: One Judge per Branch
 
-In this benchmark, **no agent ever judges itself**:
-1. **Worker Subagents (`Installers` & `Builders`)**:
-   - Focus exclusively on execution.
-   - Record factual raw traces (commands executed, error messages, timestamps, token counts, deployed workflows).
-   - **Never grade, score, or evaluate their own performance.**
-2. **Judge Subagent (`Impartial LLM Judge`)**:
-   - Independent subagent that wrote zero code and executed zero installations.
-   - Receives the raw installation logs, build logs, telemetry, and deployed workflow JSONs.
-   - Evaluates all dimensions objectively:
-     - **Ease of Installation (20%)** based on raw installer traces.
-     - **Ease of Use / DX (20%)** based on raw builder iteration logs and friction events.
-     - **Quality of Workflow (30%)** based on the deployed workflow JSON against the rubric.
-     - **Tokens (15%) & Time (15%)** computed mathematically from raw telemetry.
+To achieve absolute scientific neutrality:
+1. **Zero Self-Evaluation**: No worker (Installer or Builder) grades or evaluates its own work. They produce only factual, raw execution traces.
+2. **Zero Judge Contrast Bias (One Judge per Branch)**:
+   - If a single judge evaluates both tools, the evaluation of the second tool is inevitably contaminated by anchoring, recency, or contrast bias against the first.
+   - Therefore, **each branch has its own dedicated Judge Subagent** (`Judge A` for n8n-as-code, `Judge B` for Native MCP).
+   - `Judge A` evaluates **only** Branch A against the absolute rubric, having **never seen** Branch B.
+   - `Judge B` evaluates **only** Branch B against the exact same absolute rubric, having **never seen** Branch A.
+3. **Total Pipeline Isolation**: The two branches run in complete hermetic silos from installation to final scoring. The Primary Orchestrator merely aggregates the two independent scorecards.
 
 ```
                       ┌───────────────────────────────┐
@@ -45,36 +40,30 @@ In this benchmark, **no agent ever judges itself**:
      1. INSTALL      ▼                         ▼
             [Sous-Agent Installer A]   [Sous-Agent Installer B]
             - Exécute l'installation   - Exécute l'installation
-            - Produit: Raw Install Log - Produit: Raw Install Log
-            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
+            - Sort: Raw Install Log    - Sort: Raw Install Log
                      │                         │
      2. BUILD        ▼                         ▼
             [Sous-Agent Builder A]     [Sous-Agent Builder B]
             - Conçoit & déploie wf     - Conçoit & déploie wf
-            - Produit: Raw Build Log   - Produit: Raw Build Log
-            (AUCUNE AUTO-ÉVALUATION)   (AUCUNE AUTO-ÉVALUATION)
+            - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
+                     │                         │
+     3. JUDGE        ▼                         ▼
+            [Sous-Agent Juge A]        [Sous-Agent Juge B]
+            - Évalue UNIQUEMENT A      - Évalue UNIQUEMENT B
+            - Ne voit JAMAIS B         - Ne voit JAMAIS A
+            - Barème absolu 0-100      - Barème absolu 0-100
                      │                         │
                      └───────────┬─────────────┘
                                  │
-                   Transmission des Traces Brutes
-                   - Raw Install Logs (A & B)
-                   - Raw Build Logs & Telemetry (A & B)
-                   - Workflows JSON Déployés (A & B)
+                   Transmission des Notations
+                   - Évaluation A (indépendante)
+                   - Évaluation B (indépendante)
                                  │
                                  ▼
-     3. JUDGE        ┌───────────────────────────────┐
-                     │   [Sous-Agent Juge LLM]       │
-                     │   (Totalement neutre & externe)│
-                     │   - Juge l'Installation (20%) │
-                     │   - Juge l'Utilisation / DX   │
-                     │   - Juge la Qualité wf (30%)  │
-                     │   - Calcule Tokens & Temps    │
-                     └──────────────┬────────────────┘
-                                    │
-                                    ▼
-                     ┌───────────────────────────────┐
-                     │  Rapport & Dashboard Final    │
-                     └───────────────────────────────┘
+                      ┌───────────────────────────────┐
+                      │   Agrégation & Dashboard      │
+                      │   (Agent Principal / Rapports)│
+                      └───────────────────────────────┘
 ```
 
 ---
@@ -96,7 +85,7 @@ If any are missing:
 
 ### Step 2: LLM Model Locking
 To guarantee scientific parity:
-- Lock the model parameter for **all subagents** (`Model: 'inherit'`, `'flash'`, or `'pro'`).
+- Lock the model parameter for **all 6 subagents** (`Model: 'inherit'`, `'flash'`, or `'pro'`).
 - The chosen model is recorded in the benchmark telemetry and shown in the final reports.
 
 ---
@@ -107,33 +96,12 @@ Spawn two independent installer subagents via `invoke_subagent`:
 #### Installer A (`n8n-as-code Installer`)
 - **Workspace**: `benchmark/sandboxes/run_<id>_n8nac/`
 - **Task**: Install and link n8n-as-code to the target instance using credentials from `.env`.
-- **Output**: Return a factual execution log:
-  ```json
-  {
-    "tool": "n8n-as-code",
-    "commandsExecuted": ["n8nac env add...", "n8nac env auth..."],
-    "durationMs": 18000,
-    "stdout": "...",
-    "stderr": "...",
-    "frictionEvents": [],
-    "status": "ready"
-  }
-  ```
+- **Output**: Return a factual execution log (`commandsExecuted`, `durationMs`, `stdout`, `stderr`, `frictionEvents`, `status`).
 
 #### Installer B (`Native MCP Installer`)
 - **Workspace**: `benchmark/sandboxes/run_<id>_native_mcp/`
 - **Task**: Establish connection to the Native MCP server via credentials from `.env` and query available tools.
-- **Output**: Return a factual execution log:
-  ```json
-  {
-    "tool": "n8n-native-mcp",
-    "headersUsed": ["Accept: application/json, text/event-stream", ...],
-    "durationMs": 24000,
-    "toolsDiscovered": 39,
-    "frictionEvents": [],
-    "status": "ready"
-  }
-  ```
+- **Output**: Return a factual execution log (`headersUsed`, `durationMs`, `toolsDiscovered`, `frictionEvents`, `status`).
 
 ---
 
@@ -153,29 +121,31 @@ Spawn two independent builder subagents in their respective configured sandboxes
 
 ---
 
-### Step 5: Phase 3 — Impartial Evaluation (`Judge Subagent`)
-Spawn an **independent Judge Subagent** with zero prior context:
-- **Role**: `Impartial Benchmark Judge`
-- **Model**: Same locked model
-- **Inputs**:
-  - Raw Installer Logs (A & B)
-  - Raw Builder Logs (A & B)
-  - Raw Telemetry (duration, tokens)
-  - Deployed Workflow JSONs (A & B)
-  - Standardized Rubric ([`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md))
-- **Judge Responsibilities**:
-  1. **Scores Installation (20%)** based on command count, errors, and onboarding complexity.
-  2. **Scores Ease of Use / DX (20%)** based on iteration loops, linting safety, and friction.
-  3. **Scores Workflow Quality (30%)** across Brief (25), Nodes & Wiring (25), Wow/Style (25), and Execution (25).
-  4. **Computes Tokens (15%) & Time (15%)** using mathematical normalization formulas.
-  5. Produces detailed justifications for every score without bias.
+### Step 5: Phase 3 — Symmetrical Independent Evaluation (`Judges A & B`)
+Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own branch:
+
+#### Judge A (`Judge n8n-as-code`)
+- **Input**: Only Installer A Log, Builder A Log, Telemetry A, Workflow A JSON, and [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md).
+- **Task**:
+  - Score Installation A (20%)
+  - Score Ease of Use / DX A (20%)
+  - Score Workflow Quality A (30%)
+  - Compute Tokens A (15%) and Time A (15%)
+  - Output structured scorecard with line-by-line justifications.
+
+#### Judge B (`Judge Native MCP`)
+- **Input**: Only Installer B Log, Builder B Log, Telemetry B, Workflow B JSON, and [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md).
+- **Task**:
+  - Score Installation B (20%)
+  - Score Ease of Use / DX B (20%)
+  - Score Workflow Quality B (30%)
+  - Compute Tokens B (15%) and Time B (15%)
+  - Output structured scorecard with line-by-line justifications.
 
 ---
 
-### Step 6: Final Reporting & Dashboard
-The Primary Agent aggregates the Judge's evaluations into:
+### Step 6: Final Aggregation & Dashboard Compilation
+The Primary Orchestrator receives both independent scorecards, merges them into the comparative reports, and displays the results:
 - 📄 `benchmark/reports/benchmark_report.md`
 - 📊 `benchmark/reports/benchmark_dashboard.html`
 - 💾 `benchmark/reports/benchmark_results.json`
-
-And presents the final scores and deployed workflow links to the user.
