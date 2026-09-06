@@ -166,8 +166,11 @@ export async function compileBenchmarkResults(options = {}) {
     },
     weights: {
       workflowQuality: 0.40,
+      quality: 0.40,
       buildTime: 0.25,
+      creationTime: 0.25,
       tokenEfficiency: 0.25,
+      tokenConsumption: 0.25,
       setupTime: 0.10
     },
     n8nac: {
@@ -176,8 +179,11 @@ export async function compileBenchmarkResults(options = {}) {
       scores: {
         setupTime: setupTimeMinimax.scoreA,
         creationTime: buildTimeMinimax.scoreA,
+        buildTime: buildTimeMinimax.scoreA,
         tokenConsumption: tokensMinimax.scoreA,
+        tokenEfficiency: tokensMinimax.scoreA,
         workflowQuality: n8nacQualityAudit.scores.compositeQuality,
+        quality: n8nacQualityAudit.scores.compositeQuality,
         composite: n8nacComposite
       },
       qualityAudit: n8nacQualityAudit,
@@ -200,8 +206,11 @@ export async function compileBenchmarkResults(options = {}) {
       scores: {
         setupTime: setupTimeMinimax.scoreB,
         creationTime: buildTimeMinimax.scoreB,
+        buildTime: buildTimeMinimax.scoreB,
         tokenConsumption: tokensMinimax.scoreB,
+        tokenEfficiency: tokensMinimax.scoreB,
         workflowQuality: mcpQualityAudit.scores.compositeQuality,
+        quality: mcpQualityAudit.scores.compositeQuality,
         composite: mcpComposite
       },
       qualityAudit: mcpQualityAudit,
