@@ -132,8 +132,6 @@ This repository embeds the dedicated Antigravity skill in:
 - [`SKILL.md`](skills/benchmark-n8n-workflow-creation/SKILL.md): Orchestration protocol & step-by-step instructions.
 - [`references/ISOLATION_AND_IMPARTIALITY.md`](skills/benchmark-n8n-workflow-creation/references/ISOLATION_AND_IMPARTIALITY.md): Context protection & subagent isolation rules.
 - [`references/EVALUATION_RUBRIC.md`](skills/benchmark-n8n-workflow-creation/references/EVALUATION_RUBRIC.md): Full scoring breakdown (0–100).
-- [`references/N8N_AS_CODE_GUIDE.md`](skills/benchmark-n8n-workflow-creation/references/N8N_AS_CODE_GUIDE.md): n8n-as-code authoring reference.
-- [`references/N8N_NATIVE_MCP_GUIDE.md`](skills/benchmark-n8n-workflow-creation/references/N8N_NATIVE_MCP_GUIDE.md): Native MCP authoring reference.
 
 ---
 
