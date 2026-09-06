@@ -33,7 +33,7 @@ export class MarkdownReporter {
 | **Timestamp** | \`${metadata.timestamp || new Date().toISOString()}\` |
 
 **Standardized Prompt:**  
-> *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
+> *"Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard."*
 
 ---
 

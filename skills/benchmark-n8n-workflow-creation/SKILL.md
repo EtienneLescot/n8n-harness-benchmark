@@ -15,14 +15,14 @@ To achieve absolute scientific neutrality and eliminate subjective LLM evaluatio
 1. **Zero Self-Evaluation**: No worker (Installer or Builder) grades or evaluates its own work. They produce only factual, raw execution traces.
 2. **Zero Subjective LLM Judges**: Replaced entirely by server-side ground truth via n8n's official `validate_node_config` RPC tool, graph topology inspection, and live cloud execution audits.
 3. **Universal Confinement**: A strictly generic system prompt prevents agents from querying or listing existing workflows on the target instance:
-   > *« INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création. »*
+   > *“STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.”*
 4. **Universal Minimax Scaling**: Quantitative latencies and token counts are scaled symmetrically via $\text{Score} = 100 \times \frac{\min(A, B)}{X}$, eliminating floor effects.
 
 ```
                       ┌───────────────────────────────┐
                       │    User (Etienne Lescot)      │
                       └──────────────┬────────────────┘
-                                     │ "Lance le benchmark"
+                                     │ "Run the benchmark"
                                      ▼
                       ┌───────────────────────────────┐
                       │   Primary Agent / Orchestrator│
@@ -32,18 +32,18 @@ To achieve absolute scientific neutrality and eliminate subjective LLM evaluatio
                       └──────┬─────────────────┬──────┘
                              │                 │
              ┌───────────────┴──┐           ┌──┴───────────────┐
-             │  BRANCHE n8nac   │           │ BRANCHE NativeMCP│
+             │   n8nac BRANCH   │           │ NativeMCP BRANCH │
              └───────┬──────────┘           └──┬───────────────┘
                      │                         │
      1. INSTALL      ▼                         ▼
-            [Sous-Agent Installer A]   [Sous-Agent Installer B]
-            - Exécute l'installation   - Exécute l'installation
-            - Sort: Raw Install Log    - Sort: Raw Install Log
+            [Installer Subagent A]     [Installer Subagent B]
+            - Executes installation    - Executes installation
+            - Output: Raw Install Log  - Output: Raw Install Log
                      │                         │
      2. BUILD        ▼                         ▼
-            [Sous-Agent Builder A]     [Sous-Agent Builder B]
-            - Conçoit & déploie wf     - Conçoit & déploie wf
-            - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
+            [Builder Subagent A]       [Builder Subagent B]
+            - Designs & deploys wf     - Designs & deploys wf
+            - Output: Raw Build Log+wf - Output: Raw Build Log+wf
                      │                         │
                      └───────────┬─────────────┘
                                  │
@@ -113,8 +113,8 @@ CONFINEMENT & SECURITY RULES (CRITICAL):
 - You must operate exclusively within your current working directory.
 - NEVER list, inspect, read, or execute commands in parent directories ('..') or sibling workspaces.
 - Discover and utilize the tools, CLI binaries, libraries, or environment variables present in your local workspace.
-- INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création.
-- Nommez obligatoirement votre workflow sous la forme : workflow-<timestamp> (ex: workflow-1741300000).`,
+- STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.
+- Mandatory workflow naming format: workflow-<timestamp> (e.g., workflow-1741300000).`,
   enable_write_tools: true,
   enable_mcp_tools: true,
   enable_subagent_tools: false
@@ -133,7 +133,7 @@ Spawn two independent installer subagents in their respective clean sandboxes us
 - **Invocation**: `TypeName: "hermetic_worker"`, `Role: "Installer A (n8n-as-code)"`, `Workspace: "branch"`
 - **Pure User Prompt**:
   ```text
-  Installe n8n-as-code (https://github.com/EtienneLescot/n8n-as-code). Les credentials sont dans le .env
+  Install n8n-as-code (https://github.com/EtienneLescot/n8n-as-code). Credentials are in .env
   ```
 - **Harness Tracking**: The orchestrator records start/end timestamps and captures the installer commands and status.
 
@@ -141,7 +141,7 @@ Spawn two independent installer subagents in their respective clean sandboxes us
 - **Invocation**: `TypeName: "hermetic_worker"`, `Role: "Installer B (Native MCP)"`, `Workspace: "branch"`
 - **Pure User Prompt**:
   ```text
-  Installe et configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Les credentials sont dans le .env
+  Install and configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Credentials are in .env
   ```
 - **Harness Tracking**: The orchestrator records start/end timestamps and captures the installer commands and status.
 
@@ -156,7 +156,7 @@ Spawn two independent builder subagents in their respective configured sandboxes
 > 
 > **Exact User Prompt Sent to Both Builders**:
 > ```text
-> Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.
+> Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.
 > ```
 
 - **How Builders Discover Their Toolchain**:

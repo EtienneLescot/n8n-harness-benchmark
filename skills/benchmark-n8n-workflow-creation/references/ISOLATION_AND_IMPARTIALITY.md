@@ -14,9 +14,9 @@ No worker agent may ever evaluate, score, or comment qualitatively on its own pe
 ### 🛡️ Principle 2: Zero Instance Contamination (Universal Confinement & Opaque Naming)
 When running on a shared n8n Cloud instance with common API credentials:
 - **Universal System Prompt Instruction**:
-  > **« INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création. »**
+  > **“STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.”**
 - **Workflow Naming Rule**:
-  > **« Nommez obligatoirement votre workflow sous la forme : workflow-<timestamp> (ex: workflow-1741300000). »**
+  > **“Mandatory workflow naming format: workflow-<timestamp> (e.g., workflow-1741300000).”**
 - This instruction is strictly generic: it contains no tool-specific keywords (`n8nac`, `search_workflows`, etc.) to prevent context leakage across sandboxes.
 - Any attempt to list or inspect existing workflows on the cloud instance is audited and flagged as a toolchain isolation violation.
 
@@ -48,7 +48,7 @@ Workers must be tested under 100% natural, realistic user conditions:
                       ┌───────────────────────────────┐
                       │    User (Etienne Lescot)      │
                       └──────────────┬────────────────┘
-                                     │ "Lance le benchmark"
+                                     │ "Run the benchmark"
                                      ▼
                       ┌───────────────────────────────┐
                       │   Primary Agent / Orchestrator│
@@ -58,18 +58,18 @@ Workers must be tested under 100% natural, realistic user conditions:
                       └──────┬─────────────────┬──────┘
                              │                 │
              ┌───────────────┴──┐           ┌──┴───────────────┐
-             │  BRANCHE n8nac   │           │ BRANCHE NativeMCP│
+             │   n8nac BRANCH   │           │ NativeMCP BRANCH │
              └───────┬──────────┘           └──┬───────────────┘
                      │                         │
      1. INSTALL      ▼                         ▼
-            [Sous-Agent Installer A]   [Sous-Agent Installer B]
-            - Exécute l'installation   - Exécute l'installation
-            - Sort: Raw Install Log    - Sort: Raw Install Log
+            [Installer Subagent A]     [Installer Subagent B]
+            - Executes installation    - Executes installation
+            - Output: Raw Install Log  - Output: Raw Install Log
                      │                         │
      2. BUILD        ▼                         ▼
-            [Sous-Agent Builder A]     [Sous-Agent Builder B]
-            - Conçoit & déploie wf     - Conçoit & déploie wf
-            - Sort: Raw Build Log + wf - Sort: Raw Build Log + wf
+            [Builder Subagent A]       [Builder Subagent B]
+            - Designs & deploys wf     - Designs & deploys wf
+            - Output: Raw Build Log+wf - Output: Raw Build Log+wf
                      │                         │
                      └───────────┬─────────────┘
                                  │

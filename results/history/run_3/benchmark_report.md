@@ -14,7 +14,7 @@
 | **Timestamp** | `2026-09-06T20:32:11.892Z` |
 
 **Standardized Prompt:**  
-> *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
+> *"Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard."*
 
 ---
 

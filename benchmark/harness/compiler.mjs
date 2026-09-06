@@ -262,7 +262,7 @@ export async function compileBenchmarkResults(options = {}) {
     temperature: results.metadata.temperature ?? 0.2,
     promptId: 'daily-briefing',
     promptTitle: 'Multi-Agent Daily Email & Calendar Briefing',
-    promptText: 'Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.',
+    promptText: 'Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.',
     weights: results.weights,
     n8nac: {
       tool: results.n8nac.toolName,
