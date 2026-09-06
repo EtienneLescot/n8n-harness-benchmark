@@ -120,46 +120,91 @@ Spawn two independent installer subagents via `invoke_subagent`:
 ---
 
 ### Step 4: Phase 2 — Workflow Building Execution (`Builders`)
-Spawn two independent builder subagents in their respective configured sandboxes:
+Spawn two independent builder subagents in their respective configured sandboxes.
 
-- **Standardized Prompt**:
-  > *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
+> [!IMPORTANT]
+> **Agnostic User Prompt Rule**: Builders must be tested under natural, realistic conditions. They must receive an agnostic user request without technical implementation micro-management (no forced list of node types, no local JSON formatting requirements, no self-evaluation or self-timing instructions).
 
 #### Builder A (`n8n-as-code Builder`)
-- Authors the workflow, validates locally via `n8nac skills validate`, pushes to instance via `n8nac push`.
-- Returns raw facts: workflow ID, deployed JSON, turns taken, validation errors encountered, wall-clock time, tokens used.
+- **Initial Prompt**:
+  ```markdown
+  You are an AI assistant in an n8n development workspace configured with the tool `n8n-as-code` (n8nac).
+  Target environment: connected to the user's n8n instance.
+
+  User request:
+  "Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."
+
+  Instructions:
+  - Use your tools to build and deploy the workflow to the connected instance.
+  - Once deployed, reply with the deployed workflow ID and a brief summary of what you built.
+  ```
 
 #### Builder B (`Native MCP Builder`)
-- Authors the workflow using `@n8n/workflow-sdk`, deploys via `create_workflow_from_code` (or `create_workflow`).
-- Returns raw facts: workflow ID, deployed JSON, turns taken, validation errors encountered, wall-clock time, tokens used.
+- **Initial Prompt**:
+  ```markdown
+  You are an AI assistant in an n8n development workspace configured with the `n8n Native MCP` server.
+  Target environment: connected to the user's n8n instance via MCP.
+
+  User request:
+  "Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."
+
+  Instructions:
+  - Use your tools to build and deploy the workflow to the connected instance.
+  - Once deployed, reply with the deployed workflow ID and a brief summary of what you built.
+  ```
+
+> [!TIP]
+> **External Timing Measurement**: The Orchestrator records `startTime` when spawning the builder and `endTime` when the subagent signals completion (`durationMs = endTime - startTime`). This ensures 100% symmetric, objective time measurement across branches, free of self-reporting bias.
 
 ---
 
 ### Step 5: Phase 3 — Symmetrical Independent Evaluation (`Judges A & B`)
-Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own branch:
+Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own branch in complete isolation.
+
+> [!IMPORTANT]
+> **Live Instance JSON Retrieval**: Builders are NOT required to dump or convert JSON locally. Instead, the Judge uses the deployed `workflowId` returned by the Builder and fetches the workflow directly from the target instance:
+> `GET {N8N_HOST}/api/v1/workflows/{WORKFLOW_ID}` (with header `X-N8N-API-KEY: {N8N_API_KEY}`)
+> The retrieved JSON is saved to `workflows/deployed_workflow.json` in the sandbox for archiving and evaluation.
 
 #### Judge A (`Judge n8n-as-code`)
-- **Input**: Only Installer A Log, Builder A Log, Telemetry A, Workflow A JSON, and [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md).
+- **Input**:
+  - Installer A Log (`logs/installer_log.json`)
+  - Deployed `workflowId` from Builder A
+  - External Telemetry (Orchestrator-measured duration, turns, token count)
+  - Target instance credentials (`N8N_HOST`, `N8N_API_KEY`)
+  - Rubric: [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)
 - **Task**:
-  - Score Installation A (20%)
-  - Score Ease of Use / DX A (20%)
-  - Score Workflow Quality A (30%)
-  - Compute Tokens A (15%) and Time A (15%)
-  - Output structured scorecard with line-by-line justifications.
+  1. Fetch live workflow JSON from target instance and save to `workflows/deployed_workflow.json`.
+  2. Score Installation A (20%)
+  3. Score Ease of Use / DX A (20%)
+  4. Compute Tokens A (15%) and Time A (15%) using the rubric mathematical formula on external telemetry.
+  5. Score Workflow Quality A (30%) on the live workflow JSON.
+  6. Save scorecard to `logs/judge_log.json` and return it.
 
 #### Judge B (`Judge Native MCP`)
-- **Input**: Only Installer B Log, Builder B Log, Telemetry B, Workflow B JSON, and [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md).
+- **Input**:
+  - Installer B Log (`logs/installer_log.json`)
+  - Deployed `workflowId` from Builder B
+  - External Telemetry (Orchestrator-measured duration, turns, token count)
+  - Target instance credentials (`N8N_HOST`, `N8N_API_KEY`)
+  - Rubric: [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)
 - **Task**:
-  - Score Installation B (20%)
-  - Score Ease of Use / DX B (20%)
-  - Score Workflow Quality B (30%)
-  - Compute Tokens B (15%) and Time B (15%)
-  - Output structured scorecard with line-by-line justifications.
+  1. Fetch live workflow JSON from target instance and save to `workflows/deployed_workflow.json`.
+  2. Score Installation B (20%)
+  3. Score Ease of Use / DX B (20%)
+  4. Compute Tokens B (15%) and Time B (15%) using the rubric mathematical formula on external telemetry.
+  5. Score Workflow Quality B (30%) on the live workflow JSON.
+  6. Save scorecard to `logs/judge_log.json` and return it.
 
 ---
 
-### Step 6: Final Aggregation & Dashboard Compilation
-The Primary Orchestrator receives both independent scorecards, merges them into the comparative reports, and displays the results:
+### Step 6: Final Deterministic Aggregation & Reporting
+The Primary Orchestrator compiles the two scorecards deterministically with zero LLM inference using:
+```bash
+npm run report
+```
+This executes `benchmark/harness/compiler.mjs`, producing:
 - 📄 `benchmark/reports/benchmark_report.md`
 - 📊 `benchmark/reports/benchmark_dashboard.html`
 - 💾 `benchmark/reports/benchmark_results.json`
+
