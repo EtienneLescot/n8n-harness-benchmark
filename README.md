@@ -121,6 +121,7 @@ This repository embeds the dedicated Antigravity skill in:
 
 ## 🚀 How to Run the Benchmark
 
+### 1. In Antigravity (Recommended)
 Simply invoke the skill in Antigravity or tell your agent:
 > *"Execute the n8n workflow creation benchmark against my instance."*
 
@@ -129,9 +130,23 @@ The Orchestrator will automatically:
 2. **Lock LLM Parameters**: Align model configurations for strict parity.
 3. **Spawn Hermetic Subagents**: Run `n8n-as-code` and `n8n Native MCP` in parallel sandboxes.
 4. **Compile Reports**:
-   - 📄 `benchmark/reports/live_benchmark_report.md` (Markdown Summary)
-   - 📊 `benchmark/reports/live_benchmark_dashboard.html` (Interactive Generative UI Dashboard)
-   - 💾 `benchmark/reports/live_benchmark_results.json` (Raw Telemetry)
+   - 📄 `benchmark/reports/benchmark_report.md` (Markdown Summary)
+   - 📊 `benchmark/reports/benchmark_dashboard.html` (Interactive Generative UI Dashboard)
+   - 💾 `benchmark/reports/benchmark_results.json` (Raw Telemetry)
+
+### 2. Local CLI Utilities
+The repository also includes standalone zero-dependency utilities:
+```bash
+# 1. Verify credentials and connectivity to your n8n instance & Native MCP server
+npm run verify
+
+# 2. Evaluate any workflow JSON against the 5-dimension rubric
+npm run evaluate -- examples/workflow_n8n_as_code.json
+npm run evaluate -- examples/workflow_native_mcp.json
+
+# 3. Regenerate HTML dashboard and Markdown reports
+npm run report
+```
 
 ---
 

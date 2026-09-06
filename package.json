@@ -8,10 +8,9 @@
     "n8n-benchmark": "./benchmark/cli.mjs"
   },
   "scripts": {
-    "benchmark": "node benchmark/cli.mjs",
-    "benchmark:auto": "node benchmark/cli.mjs --mode=auto",
-    "benchmark:interactive": "node benchmark/cli.mjs --mode=interactive",
-    "compile:live-report": "node benchmark/harness/compile_live_report.mjs"
+    "verify": "node benchmark/cli.mjs verify",
+    "evaluate": "node benchmark/cli.mjs evaluate",
+    "report": "node benchmark/cli.mjs report"
   },
   "keywords": [
     "n8n",

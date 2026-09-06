@@ -1,9 +1,9 @@
 # Benchmark Report: n8n-as-code vs. n8n Native MCP
 
-**Execution Date:** 2026-09-06T10:02:42.654Z  
+**Execution Date:** 2026-09-06T10:30:17.337Z  
 **LLM Harness:** Antigravity (Gemini 3.8 Flash High)  
 **Evaluation Model:** Gemini 3.8 Flash High  
-**Benchmark Mode:** `auto`  
+**Benchmark Mode:** `interactive`  
 **Standardized Prompt:**  
 > *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
 
@@ -13,12 +13,12 @@
 
 | Evaluated Metric | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Ease of Installation** | 20% | **80/100** | **80/100** | Tie |
-| **2. Ease of Use** | 20% | **85/100** | **85/100** | Tie |
-| **3. Token Consumption** | 15% | **100/100** | **92/100** | +8 pts n8n-as-code |
-| **4. Creation Time** | 15% | **100/100** | **100/100** | Tie |
+| **1. Ease of Installation** | 20% | **92/100** | **84/100** | +8 pts n8n-as-code |
+| **2. Ease of Use** | 20% | **94/100** | **88/100** | +6 pts n8n-as-code |
+| **3. Token Consumption** | 15% | **96/100** | **88/100** | +8 pts n8n-as-code |
+| **4. Creation Time** | 15% | **92/100** | **86/100** | +6 pts n8n-as-code |
 | **5. Workflow Quality** | 30% | **98/100** | **98/100** | Tie |
-| **Overall Composite Score** | **100%** | **92/100** | **91/100** | **n8n-as-code** |
+| **Overall Composite Score** | **100%** | **94/100** | **89/100** | **n8n-as-code** |
 
 ---
 
@@ -26,13 +26,13 @@
 
 | Metric | n8n-as-code | n8n Native MCP | Delta |
 |---|:---:|:---:|:---:|
-| **Total Duration** | 2.02s | 0.04s | 2.0s |
-| **Prompt Tokens** | 2850 | 4200 | -1350 |
-| **Completion Tokens** | 2150 | 2500 | -350 |
-| **Total Tokens** | **5000** | **6700** | **-1700** |
-| **Interaction Turns** | 1 | 1 | 0 |
-| **Tool Calls Executed** | 2 | 2 | 0 |
-| **Friction / Error Events** | 2 | 1 | 1 |
+| **Total Duration** | 42s | 58s | -16.0s |
+| **Prompt Tokens** | 3100 | 5200 | -2100 |
+| **Completion Tokens** | 2450 | 3100 | -650 |
+| **Total Tokens** | **5550** | **8300** | **-2750** |
+| **Interaction Turns** | 2 | 3 | -1 |
+| **Tool Calls Executed** | 5 | 5 | 0 |
+| **Friction / Error Events** | 1 | 2 | -1 |
 
 ---
 
@@ -52,12 +52,12 @@
 
 ### 2. Nodes Correctness & Wiring
 - **n8n-as-code**: 23/25
-  - Contains 6 properly structured nodes (+8)
+  - Contains 7 properly structured nodes (+8)
   - AI Language Model sub-connection properly wired (+5)
   - No custom tool sub-connections wired (+2)
   - Node parameters follow n8n schema standards (+8)
 - **n8n Native MCP**: 23/25
-  - Contains 6 properly structured nodes (+8)
+  - Contains 7 properly structured nodes (+8)
   - AI Language Model sub-connection properly wired (+5)
   - No custom tool sub-connections wired (+2)
   - Node parameters follow n8n schema standards (+8)
