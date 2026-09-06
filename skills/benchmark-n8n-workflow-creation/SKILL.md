@@ -97,51 +97,92 @@ If any are missing:
 
 ---
 
-### Step 2: LLM Model Locking
-To guarantee scientific parity:
+### Step 2: LLM Model Locking & Subagent Persona Registration
+To guarantee scientific parity and strict sandbox confinement:
 - Lock the model parameter for **all 6 subagents** (`Model: 'inherit'`, `'flash'`, or `'pro'`).
 - The chosen model is recorded in the benchmark telemetry and shown in the final reports.
+
+#### Register Subagent Personas with Universal Confinement
+Before spawning workers or judges, the orchestrator registers two hermetic subagent types via `define_subagent` (or harness configuration):
+
+```javascript
+// 1. Worker Persona (Installers & Builders)
+define_subagent({
+  name: "hermetic_worker",
+  description: "Autonomous engineering subagent confined strictly to its local sandbox.",
+  system_prompt: `You are an autonomous software engineering agent tasked with executing development or configuration tasks.
+
+CONFINEMENT & SECURITY RULES (CRITICAL):
+- Your dedicated workspace is your current working directory ('.').
+- You must operate exclusively within your current working directory.
+- NEVER list, inspect, read, or execute commands in parent directories ('..') or sibling workspaces.
+- Discover and utilize the tools, CLI binaries, libraries, or environment variables present in your local workspace.
+- Do not make assumptions: verify your work locally before reporting completion.`,
+  enable_write_tools: true,
+  enable_mcp_tools: true,
+  enable_subagent_tools: false
+});
+
+// 2. Double-Blind Judge Persona (Evaluators)
+define_subagent({
+  name: "blind_judge",
+  description: "Double-blind evaluation agent confined strictly to its evaluation sandbox.",
+  system_prompt: `You are an independent, double-blind benchmark evaluator.
+
+EVALUATION PRINCIPLES & CONFINEMENT RULES (CRITICAL):
+- Your dedicated workspace is your current working directory ('.').
+- You must operate exclusively within your current working directory. NEVER explore parent directories ('..') or other sandboxes.
+- You are double-blind: you have NO knowledge of competitor branches, other tools, or parallel runs. You evaluate solely the artifacts in this environment against the absolute rubric.
+- Strictly adhere to the standardized evaluation rubric found in 'references/EVALUATION_RUBRIC.md'.
+- Every score must be strictly grounded in observable facts from 'logs/' (telemetry, turns, command history) and live API queries. Never invent or assume metrics.
+- Verify toolchain adherence: if the worker circumvented its designated tools or violated sandbox isolation, apply the mandatory -25 pts penalty on Ease of Use.
+- Output your final structured evaluation in 'logs/judge_log.json'.`,
+  enable_write_tools: true,
+  enable_mcp_tools: false,
+  enable_subagent_tools: false
+});
+```
 
 ---
 
 ### Step 3: Phase 1 — Installation Execution (`Installers`)
-Spawn two independent installer subagents via `invoke_subagent` in their respective clean sandboxes.
+Spawn two independent installer subagents in their respective clean sandboxes using the `hermetic_worker` persona with `Workspace: 'branch'`.
 
 > [!IMPORTANT]
-> **Natural Installer Prompts**: The installer is tested as an autonomous agent receiving only the authentic tool reference and credentials pointer.
+> **Pure Natural Installer Prompts**: No filesystem paths, no technical preamble, no policing in the user prompt. Confinement is enforced by the system prompt.
 
 #### Installer A (`n8n-as-code Installer`)
-- **Workspace**: `benchmark/sandboxes/run_<id>_n8nac/`
-- **Prompt**:
+- **Invocation**: `TypeName: "hermetic_worker"`, `Role: "Installer A (n8n-as-code)"`, `Workspace: "branch"`
+- **Pure User Prompt**:
   ```text
   Installe n8n-as-code (https://github.com/EtienneLescot/n8n-as-code). Les credentials sont dans le .env
   ```
 - **Harness Tracking**: The orchestrator records start/end timestamps and captures the installer commands and status.
 
 #### Installer B (`Native MCP Installer`)
-- **Workspace**: `benchmark/sandboxes/run_<id>_native_mcp/`
-- **Prompt**:
+- **Invocation**: `TypeName: "hermetic_worker"`, `Role: "Installer B (Native MCP)"`, `Workspace: "branch"`
+- **Pure User Prompt**:
   ```text
-  Installe et configure n8n Native MCP (https://docs.n8n.io/advanced-ai/mcp/mcp-server/). Les credentials sont dans le .env
+  Installe et configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Les credentials sont dans le .env
   ```
 - **Harness Tracking**: The orchestrator records start/end timestamps and captures the installer commands and status.
 
 ---
 
 ### Step 4: Phase 2 — Workflow Building Execution (`Builders`)
-Spawn two independent builder subagents in their respective configured sandboxes.
+Spawn two independent builder subagents in their respective configured sandboxes using `TypeName: "hermetic_worker"` and `Workspace: "branch"`.
 
 > [!IMPORTANT]
 > **100% Natural User Request**:
-> Both builders receive **strictly and exclusively** the authentic user request. No system role preamble, no technical micro-management, no instruction telling them how to structure files or report internal IDs.
+> Both builders receive **strictly and exclusively** the authentic user request. Zero filesystem paths, zero system role preamble, zero technical micro-management, zero formatting overhead.
 > 
-> **Exact Prompt Sent to Both Builders**:
+> **Exact User Prompt Sent to Both Builders**:
 > ```text
 > Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.
 > ```
 
 - **How Builders Discover Their Toolchain**:
-  - **Branch A (`n8n-as-code`)**: Discovers its environment through its sandbox setup (`AGENTS.md`, `.agents/skills/n8n-architect/`, `n8nac` commands).
+  - **Branch A (`n8n-as-code`)**: Discovers its environment through its local sandbox setup (`AGENTS.md`, `.agents/skills/n8n-architect/`, `n8nac` commands).
   - **Branch B (`n8n Native MCP`)**: Discovers its environment through the MCP server tools exposed in its runtime.
 - **External Harness Stopwatch**:
   - The Orchestrator records `startTime` upon dispatching the prompt and `endTime` when the subagent signals completion (`durationMs = endTime - startTime`).
@@ -150,19 +191,15 @@ Spawn two independent builder subagents in their respective configured sandboxes
 ---
 
 ### Step 5: Phase 3 — Symmetrical Independent Evaluation (`Judges A & B`)
-Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own sandbox in complete isolation.
+Spawn **two separate Judge Subagents** concurrently using `TypeName: "blind_judge"` and `Workspace: "branch"`, each reviewing strictly its own sandbox in complete isolation.
 
 > [!IMPORTANT]
-> **Universal Double-Blind Evaluation Prompt (Zero Meta-Context)**:
-> The Judge does NOT know a competitor branch exists. It simply evaluates the work done in its assigned sandbox.
+> **Double-Blind Independent Evaluation**:
+> The Judge does NOT know a competitor branch exists. Its system prompt enforces evidence-based grading against `references/EVALUATION_RUBRIC.md`, toolchain adherence checking (-25 pts penalty for circumvention), and live instance verification.
 > 
-> **Exact Prompt Sent to Both Judges (in their respective sandboxes)**:
+> **Exact User Prompt Sent to Both Judges**:
 > ```text
-> Évalue le travail réalisé dans cet environnement selon la grille d'évaluation fournie dans references/EVALUATION_RUBRIC.md.
-> 
-> Consulte les traces d'installation et le compte-rendu du builder dans logs/ pour identifier le workflow créé. Récupère ensuite le JSON de ce workflow directement sur l'instance n8n via l'API REST (les accès sont dans le .env) et enregistre-le dans workflows/deployed_workflow.json.
-> 
-> Vérifie que l'agent a bien utilisé les outils prévus dans son environnement sans contournement, puis génère ta fiche d'évaluation détaillée au format JSON dans logs/judge_log.json.
+> Évalue le travail réalisé dans cet environnement selon la grille standardisée 'references/EVALUATION_RUBRIC.md'. Récupère le workflow déployé sur l'instance n8n via l'API, vérifie l'adhérence aux outils sans contournement, et enregistre ton évaluation détaillée dans 'logs/judge_log.json'.
 > ```
 
 ---

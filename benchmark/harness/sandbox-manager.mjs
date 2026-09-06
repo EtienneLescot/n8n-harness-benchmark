@@ -44,6 +44,25 @@ export class SandboxManager {
     };
   }
 
+  initSandbox(toolName, runId = null, options = {}) {
+    const sandbox = this.createSandbox(toolName, runId);
+
+    // Copy rubric if available
+    const rubricSource = options.rubricPath || path.resolve('./skills/benchmark-n8n-workflow-creation/references/EVALUATION_RUBRIC.md');
+    if (fs.existsSync(rubricSource)) {
+      const rubricDestDir = path.join(sandbox.sandboxPath, 'references');
+      fs.mkdirSync(rubricDestDir, { recursive: true });
+      fs.copyFileSync(rubricSource, path.join(rubricDestDir, 'EVALUATION_RUBRIC.md'));
+    }
+
+    // Write partitioned or provided .env
+    if (options.envContent) {
+      fs.writeFileSync(path.join(sandbox.sandboxPath, '.env'), options.envContent, 'utf8');
+    }
+
+    return sandbox;
+  }
+
   writeArtifact(sandbox, filename, content) {
     const filePath = path.join(sandbox.sandboxPath, filename);
     const parentDir = path.dirname(filePath);
