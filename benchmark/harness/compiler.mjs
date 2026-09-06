@@ -36,8 +36,15 @@ loadEnv();
  * into official benchmark artifacts with ZERO LLM inference.
  */
 export function compileBenchmarkResults(options = {}) {
-  const n8nacSandbox = path.resolve(options.n8nacSandbox || 'benchmark/sandboxes/run_hermetic_n8nac');
-  const mcpSandbox = path.resolve(options.mcpSandbox || 'benchmark/sandboxes/run_hermetic_native_mcp');
+  const defaultN8nac = fs.existsSync('benchmark/sandboxes/run_pure_n8nac/logs/judge_log.json')
+    ? 'benchmark/sandboxes/run_pure_n8nac'
+    : 'benchmark/sandboxes/run_hermetic_n8nac';
+  const defaultMcp = fs.existsSync('benchmark/sandboxes/run_pure_native_mcp/logs/judge_log.json')
+    ? 'benchmark/sandboxes/run_pure_native_mcp'
+    : 'benchmark/sandboxes/run_hermetic_native_mcp';
+
+  const n8nacSandbox = path.resolve(options.n8nacSandbox || defaultN8nac);
+  const mcpSandbox = path.resolve(options.mcpSandbox || defaultMcp);
 
   // Read raw logs from Branch A (n8n-as-code)
   const n8nacInstaller = JSON.parse(fs.readFileSync(path.join(n8nacSandbox, 'logs/installer_log.json'), 'utf8'));

@@ -10,12 +10,12 @@
 | **Temperature** | `0.2` |
 | **Subagent Runtime** | `invoke_subagent` |
 | **Evaluation Mode** | Double-Blind Symmetrical (One independent judge per branch) |
-| **Host Platform** | win32 (x64) (x64) / Node v24.14.0 |
+| **Host Platform** | win32 (x64) / Node v24.14.0 |
 | **Target n8n Instance** | `https://etiennel.app.n8n.cloud` |
-| **Timestamp** | `2026-09-06T12:23:44.926Z` |
+| **Timestamp** | `2026-09-06T12:38:57.062Z` |
 
 **Standardized Prompt:**  
-> *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
+> *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
 
 ---
 
@@ -23,12 +23,12 @@
 
 | Evaluated Metric | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Ease of Installation** | 20% | **90/100** | **65/100** | +25 pts n8n-as-code |
-| **2. Ease of Use** | 20% | **75/100** | **65/100** | +10 pts n8n-as-code |
-| **3. Token Consumption** | 15% | **7.15/100** | **22.15/100** | +14.999999999999998 pts Native MCP |
-| **4. Creation Time** | 15% | **0/100** | **100/100** | +100 pts Native MCP |
-| **5. Workflow Quality** | 30% | **96/100** | **97/100** | +1 pts Native MCP |
-| **Overall Composite Score** | **100%** | **62.87/100** | **73.42/100** | **n8n Native MCP** |
+| **1. Ease of Installation** | 20% | **45/100** | **40/100** | +5.00 pts n8n-as-code |
+| **2. Ease of Use** | 20% | **75/100** | **40/100** | +35.00 pts n8n-as-code |
+| **3. Token Consumption** | 15% | **0/100** | **5.68/100** | +5.68 pts Native MCP |
+| **4. Creation Time** | 15% | **0/100** | **26.67/100** | +26.67 pts Native MCP |
+| **5. Workflow Quality** | 30% | **100/100** | **97/100** | +3.00 pts n8n-as-code |
+| **Overall Composite Score** | **100%** | **54/100** | **49.95/100** | **n8n-as-code** |
 
 ---
 
@@ -36,43 +36,34 @@
 
 | Metric | n8n-as-code | n8n Native MCP | Delta |
 |---|:---:|:---:|:---:|
-| **Total Duration** | 404.02s | 0.43s | 403.6s |
-| **Prompt Tokens** | 18450 | 18450 | 0 |
-| **Completion Tokens** | 5120 | 2120 | 3000 |
-| **Total Tokens** | **23570** | **20570** | **3000** |
-| **Interaction Turns** | 27 | 40 | -13 |
-| **Tool Calls Executed** | 0 | 0 | 0 |
-| **Friction / Error Events** | 0 | 0 | 0 |
+| **Total Duration** | 455s | 136s | 319.00s |
+| **Prompt Tokens** | 38023 | 22315 | 15708.00 |
+| **Completion Tokens** | 2962 | 1549 | N/A |
+| **Total Tokens** | **40985** | **23864** | **17121.00** |
+| **Interaction Turns** | 107 | 49 | 58.00 |
 
 ---
 
 ## 🔍 Detailed Quality Breakdown (Max 25 pts each)
 
 ### 1. Initial Brief Following
-- **n8n-as-code**: N/A/25
-
-- **n8n Native MCP**: N/A/25
-
+- **n8n-as-code**: 25/25
+- **n8n Native MCP**: 25/25
 
 ### 2. Nodes Correctness & Wiring
-- **n8n-as-code**: N/A/25
-
-- **n8n Native MCP**: N/A/25
-
+- **n8n-as-code**: 25/25
+- **n8n Native MCP**: 25/25
 
 ### 3. Wow Effect & Aesthetics
-- **n8n-as-code**: N/A/25
-
-- **n8n Native MCP**: N/A/25
-
+- **n8n-as-code**: 25/25
+- **n8n Native MCP**: 22/25
 
 ### 4. Workflow Execution & Dry-Run
-- **n8n-as-code**: N/A/25
-
-- **n8n Native MCP**: N/A/25
-
+- **n8n-as-code**: 25/25
+- **n8n Native MCP**: 25/25
 
 ---
+
 
 ## 💡 Qualitative Analysis & Observations
 

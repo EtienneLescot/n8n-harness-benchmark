@@ -1,0 +1,274 @@
+{
+  "id": "HakV7bOZlGBwGTre",
+  "name": "Daily Briefing & Multi-Agent Triage Dashboard [Benchmark-NativeMCP]",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T12:29:31.767Z",
+  "updatedAt": "2026-09-06T12:29:31.767Z",
+  "isArchived": false,
+  "versionId": "53a659d1-be69-4eeb-83b6-310bfc205d43",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "6978894f-ae22-41b1-8180-659c97397323",
+      "name": "Daily Schedule Trigger (8:00 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "761f7d54-23c0-4ea7-b828-102086f4c1f9",
+      "name": "Fetch Daily Google Mails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        360,
+        180
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "filters": {
+          "q": "newer_than:1d is:unread"
+        }
+      },
+      "webhookId": "cd604592-a3b8-47bf-9ba9-1693271f9e6b"
+    },
+    {
+      "id": "a4ef5f61-6bcb-4e85-aafa-10da648e445b",
+      "name": "Merge Ingested Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        620,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    },
+    {
+      "id": "f5bd5488-08e9-48f5-b7bf-37e5079b080e",
+      "name": "Fetch Today Google Calendar Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        360,
+        440
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "timeMin": "={{ $today.startOf('day').toISO() }}",
+        "timeMax": "={{ $today.endOf('day').toISO() }}"
+      }
+    },
+    {
+      "id": "f02f5b6b-f095-48e2-9171-6755e815099d",
+      "name": "Multi-Agent Daily Triage & Synthesis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following unread emails and calendar events:\n{{ JSON.stringify($json) }}\n\nTriage into:\n1. URGENT ACTION ITEMS (High priority emails requiring immediate reply or decision)\n2. SCHEDULE & PREP (Meetings, conflict detection, buffer time warnings, preparation notes)\n3. GENERAL DIGEST (Low-priority updates, newsletters, FYI)\n4. EXECUTIVE DAILY SUMMARY (A 3-sentence high-level overview for today).\n\nOutput a structured JSON with keys: executiveSummary, urgentItems, calendarAgenda, lowPriorityDigest, totalEmailsAnalyzed, totalMeetingsToday.",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are an executive daily briefing and multi-agent triage specialist. Analyze incoming Gmail messages and Google Calendar events to categorize urgency, extract deadlines, identify meeting prep needs, and synthesize a structured briefing."
+        }
+      }
+    },
+    {
+      "id": "e17f6687-6abb-453b-9bf1-a45a76991e55",
+      "name": "Gemini 3.8 Flash LLM",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        900,
+        520
+      ],
+      "parameters": {
+        "modelName": "gemini-2.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "id": "45d1ea9b-e38b-4880-a494-490d13109451",
+      "name": "Triage Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        900,
+        680
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e246d7a0-a3e9-4f10-9a6a-4f996780311e",
+      "name": "Generate HTML Dashboard of the Day",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "operation": "generateHtmlTemplate",
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Daily Briefing & Triage Dashboard</title>\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 32px 20px; }\n    .container { max-width: 900px; margin: 0 auto; }\n    .header { background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 16px; padding: 32px; margin-bottom: 28px; }\n    .card { background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 24px; margin-bottom: 20px; }\n    .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }\n    .badge-urgent { background: #ef4444; color: white; }\n    .badge-info { background: #3b82f6; color: white; }\n    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>🌅 Executive Daily Briefing (Native MCP)</h1>\n      <p>{{ $json.executiveSummary }}</p>\n    </div>\n    <div class=\"grid\">\n      <div class=\"card\">\n        <h3><span class=\"badge badge-urgent\">Urgent</span> 🚨 Action Items</h3>\n        <div>{{ $json.urgentItems }}</div>\n      </div>\n      <div class=\"card\">\n        <h3>📅 Today's Agenda & Conflicts</h3>\n        <div>{{ $json.calendarAgenda }}</div>\n      </div>\n    </div>\n    <div class=\"card\">\n      <h3><span class=\"badge badge-info\">Digest</span> 📰 Low-Priority Updates</h3>\n      <div>{{ $json.lowPriorityDigest }}</div>\n    </div>\n  </div>\n</body>\n</html>"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger (8:00 AM)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Daily Google Mails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today Google Calendar Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Daily Google Mails": {
+      "main": [
+        [
+          {
+            "node": "Merge Ingested Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Ingested Feeds": {
+      "main": [
+        [
+          {
+            "node": "Multi-Agent Daily Triage & Synthesis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Google Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Merge Ingested Feeds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Multi-Agent Daily Triage & Synthesis": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Dashboard of the Day",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 3.8 Flash LLM": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Multi-Agent Daily Triage & Synthesis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Multi-Agent Daily Triage & Synthesis",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "HakV7bOZlGBwGTre",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-06T12:29:31.772Z",
+      "updatedAt": "2026-09-06T12:29:31.772Z"
+    }
+  ],
+  "activeVersion": null
+}

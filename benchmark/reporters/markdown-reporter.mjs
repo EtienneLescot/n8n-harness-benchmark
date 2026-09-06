@@ -4,16 +4,24 @@ import path from 'node:path';
 /**
  * Generates an executive Markdown benchmark report comparing n8n-as-code and Native MCP.
  */
+function getQualitySubScore(branchData, index, keyName) {
+  if (!branchData) return 'N/A';
+  const q = branchData.breakdown?.workflowQuality || branchData.evaluation?.breakdown || {};
+  for (const k of Object.keys(q)) {
+    if (k.toLowerCase().includes(keyName.toLowerCase()) || k.includes(`${index}.`)) {
+      const val = q[k];
+      if (typeof val === 'number') return val;
+      if (val && typeof val.total === 'number') return val.total;
+      if (val && typeof val.score === 'number') return val.score;
+    }
+  }
+  return 'N/A';
+}
+
 export class MarkdownReporter {
-  static generateReport(results) {
-    const { n8nac, nativeMcp, metadata = {} } = results;
-
-    const n8nacScore = n8nac?.scores || {};
-    const mcpScore = nativeMcp?.scores || {};
-
-    const winner = (n8nacScore.composite || 0) >= (mcpScore.composite || 0)
-      ? 'n8n-as-code'
-      : 'n8n Native MCP';
+  static generateReport(data) {
+    const { metadata = {}, n8nac, nativeMcp } = data;
+    const delta = (a, b) => (typeof a === 'number' && typeof b === 'number') ? (a - b).toFixed(2) : 'N/A';
 
     return `# Benchmark Report: n8n-as-code vs. n8n Native MCP
 
@@ -27,12 +35,12 @@ export class MarkdownReporter {
 | **Temperature** | \`${metadata.temperature ?? 0.2}\` |
 | **Subagent Runtime** | \`${metadata.subagentRuntime || 'invoke_subagent'}\` |
 | **Evaluation Mode** | Double-Blind Symmetrical (One independent judge per branch) |
-| **Host Platform** | ${metadata.environment?.os || process.platform} (${metadata.environment?.arch || process.arch}) / Node ${metadata.environment?.nodeVersion || process.version} |
-| **Target n8n Instance** | \`${metadata.environment?.n8nInstance || metadata.instanceUrl || 'Cloud'}\` |
+| **Host Platform** | ${metadata.environment?.os || process.platform} / Node ${metadata.environment?.nodeVersion || process.version} |
+| **Target n8n Instance** | \`${metadata.environment?.n8nInstance || 'https://etiennel.app.n8n.cloud'}\` |
 | **Timestamp** | \`${metadata.timestamp || new Date().toISOString()}\` |
 
 **Standardized Prompt:**  
-> *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"*
+> *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
 
 ---
 
@@ -40,12 +48,12 @@ export class MarkdownReporter {
 
 | Evaluated Metric | Weight | n8n-as-code | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Ease of Installation** | 20% | **${n8nacScore.easeOfInstallation ?? 'N/A'}/100** | **${mcpScore.easeOfInstallation ?? 'N/A'}/100** | ${getAdvantage(n8nacScore.easeOfInstallation, mcpScore.easeOfInstallation)} |
-| **2. Ease of Use** | 20% | **${n8nacScore.easeOfUse ?? 'N/A'}/100** | **${mcpScore.easeOfUse ?? 'N/A'}/100** | ${getAdvantage(n8nacScore.easeOfUse, mcpScore.easeOfUse)} |
-| **3. Token Consumption** | 15% | **${n8nacScore.tokenConsumption ?? 'N/A'}/100** | **${mcpScore.tokenConsumption ?? 'N/A'}/100** | ${getAdvantage(n8nacScore.tokenConsumption, mcpScore.tokenConsumption)} |
-| **4. Creation Time** | 15% | **${n8nacScore.creationTime ?? 'N/A'}/100** | **${mcpScore.creationTime ?? 'N/A'}/100** | ${getAdvantage(n8nacScore.creationTime, mcpScore.creationTime)} |
-| **5. Workflow Quality** | 30% | **${n8nacScore.workflowQuality ?? 'N/A'}/100** | **${mcpScore.workflowQuality ?? 'N/A'}/100** | ${getAdvantage(n8nacScore.workflowQuality, mcpScore.workflowQuality)} |
-| **Overall Composite Score** | **100%** | **${n8nacScore.composite ?? 'N/A'}/100** | **${mcpScore.composite ?? 'N/A'}/100** | **${winner}** |
+| **1. Ease of Installation** | 20% | **${n8nac?.scores?.easeOfInstallation ?? 0}/100** | **${nativeMcp?.scores?.easeOfInstallation ?? 0}/100** | ${delta(n8nac?.scores?.easeOfInstallation, nativeMcp?.scores?.easeOfInstallation) > 0 ? `+${delta(n8nac?.scores?.easeOfInstallation, nativeMcp?.scores?.easeOfInstallation)} pts n8n-as-code` : `+${Math.abs(delta(n8nac?.scores?.easeOfInstallation, nativeMcp?.scores?.easeOfInstallation))} pts Native MCP`} |
+| **2. Ease of Use** | 20% | **${n8nac?.scores?.easeOfUse ?? 0}/100** | **${nativeMcp?.scores?.easeOfUse ?? 0}/100** | ${delta(n8nac?.scores?.easeOfUse, nativeMcp?.scores?.easeOfUse) > 0 ? `+${delta(n8nac?.scores?.easeOfUse, nativeMcp?.scores?.easeOfUse)} pts n8n-as-code` : `+${Math.abs(delta(n8nac?.scores?.easeOfUse, nativeMcp?.scores?.easeOfUse))} pts Native MCP`} |
+| **3. Token Consumption** | 15% | **${n8nac?.scores?.tokenConsumption ?? 0}/100** | **${nativeMcp?.scores?.tokenConsumption ?? 0}/100** | ${delta(n8nac?.scores?.tokenConsumption, nativeMcp?.scores?.tokenConsumption) > 0 ? `+${delta(n8nac?.scores?.tokenConsumption, nativeMcp?.scores?.tokenConsumption)} pts n8n-as-code` : `+${Math.abs(delta(n8nac?.scores?.tokenConsumption, nativeMcp?.scores?.tokenConsumption))} pts Native MCP`} |
+| **4. Creation Time** | 15% | **${n8nac?.scores?.creationTime ?? 0}/100** | **${nativeMcp?.scores?.creationTime ?? 0}/100** | ${delta(n8nac?.scores?.creationTime, nativeMcp?.scores?.creationTime) > 0 ? `+${delta(n8nac?.scores?.creationTime, nativeMcp?.scores?.creationTime)} pts n8n-as-code` : `+${Math.abs(delta(n8nac?.scores?.creationTime, nativeMcp?.scores?.creationTime))} pts Native MCP`} |
+| **5. Workflow Quality** | 30% | **${n8nac?.scores?.workflowQuality ?? 0}/100** | **${nativeMcp?.scores?.workflowQuality ?? 0}/100** | ${delta(n8nac?.scores?.workflowQuality, nativeMcp?.scores?.workflowQuality) > 0 ? `+${delta(n8nac?.scores?.workflowQuality, nativeMcp?.scores?.workflowQuality)} pts n8n-as-code` : `+${Math.abs(delta(n8nac?.scores?.workflowQuality, nativeMcp?.scores?.workflowQuality))} pts Native MCP`} |
+| **Overall Composite Score** | **100%** | **${n8nac?.scores?.composite ?? 0}/100** | **${nativeMcp?.scores?.composite ?? 0}/100** | **${(n8nac?.scores?.composite ?? 0) >= (nativeMcp?.scores?.composite ?? 0) ? 'n8n-as-code' : 'n8n Native MCP'}** |
 
 ---
 
@@ -53,43 +61,34 @@ export class MarkdownReporter {
 
 | Metric | n8n-as-code | n8n Native MCP | Delta |
 |---|:---:|:---:|:---:|
-| **Total Duration** | ${n8nac?.rawMetrics?.totalDurationSec ?? 0}s | ${nativeMcp?.rawMetrics?.totalDurationSec ?? 0}s | ${((n8nac?.rawMetrics?.totalDurationSec || 0) - (nativeMcp?.rawMetrics?.totalDurationSec || 0)).toFixed(1)}s |
-| **Prompt Tokens** | ${n8nac?.rawMetrics?.tokenUsage?.promptTokens ?? 0} | ${nativeMcp?.rawMetrics?.tokenUsage?.promptTokens ?? 0} | ${(n8nac?.rawMetrics?.tokenUsage?.promptTokens || 0) - (nativeMcp?.rawMetrics?.tokenUsage?.promptTokens || 0)} |
-| **Completion Tokens** | ${n8nac?.rawMetrics?.tokenUsage?.completionTokens ?? 0} | ${nativeMcp?.rawMetrics?.tokenUsage?.completionTokens ?? 0} | ${(n8nac?.rawMetrics?.tokenUsage?.completionTokens || 0) - (nativeMcp?.rawMetrics?.tokenUsage?.completionTokens || 0)} |
-| **Total Tokens** | **${n8nac?.rawMetrics?.tokenUsage?.totalTokens ?? 0}** | **${nativeMcp?.rawMetrics?.tokenUsage?.totalTokens ?? 0}** | **${(n8nac?.rawMetrics?.tokenUsage?.totalTokens || 0) - (nativeMcp?.rawMetrics?.tokenUsage?.totalTokens || 0)}** |
-| **Interaction Turns** | ${n8nac?.rawMetrics?.interactions?.turns ?? 1} | ${nativeMcp?.rawMetrics?.interactions?.turns ?? 1} | ${(n8nac?.rawMetrics?.interactions?.turns || 1) - (nativeMcp?.rawMetrics?.interactions?.turns || 1)} |
-| **Tool Calls Executed** | ${n8nac?.rawMetrics?.interactions?.toolCalls ?? 0} | ${nativeMcp?.rawMetrics?.interactions?.toolCalls ?? 0} | ${(n8nac?.rawMetrics?.interactions?.toolCalls || 0) - (nativeMcp?.rawMetrics?.interactions?.toolCalls || 0)} |
-| **Friction / Error Events** | ${n8nac?.rawMetrics?.frictionEventsCount ?? 0} | ${nativeMcp?.rawMetrics?.frictionEventsCount ?? 0} | ${(n8nac?.rawMetrics?.frictionEventsCount || 0) - (nativeMcp?.rawMetrics?.frictionEventsCount || 0)} |
+| **Total Duration** | ${n8nac?.rawMetrics?.totalDurationSec ?? 'N/A'}s | ${nativeMcp?.rawMetrics?.totalDurationSec ?? 'N/A'}s | ${delta(n8nac?.rawMetrics?.totalDurationSec, nativeMcp?.rawMetrics?.totalDurationSec)}s |
+| **Prompt Tokens** | ${n8nac?.rawMetrics?.tokenUsage?.promptTokens ?? 'N/A'} | ${nativeMcp?.rawMetrics?.tokenUsage?.promptTokens ?? 'N/A'} | ${delta(n8nac?.rawMetrics?.tokenUsage?.promptTokens, nativeMcp?.rawMetrics?.tokenUsage?.promptTokens)} |
+| **Completion Tokens** | ${n8nac?.rawMetrics?.tokenUsage?.completionTokens ?? 'N/A'} | ${nativeMcp?.rawMetrics?.tokenUsage?.completionTokens ?? 'N/A'} | ${delta(n8nac?.rawMetrics?.tokenUsage?.completionTokens, nativeMcp?.rawMetrics?.completionTokens)} |
+| **Total Tokens** | **${n8nac?.rawMetrics?.tokenUsage?.totalTokens ?? 'N/A'}** | **${nativeMcp?.rawMetrics?.tokenUsage?.totalTokens ?? 'N/A'}** | **${delta(n8nac?.rawMetrics?.tokenUsage?.totalTokens, nativeMcp?.rawMetrics?.tokenUsage?.totalTokens)}** |
+| **Interaction Turns** | ${n8nac?.rawMetrics?.interactions?.turns ?? 'N/A'} | ${nativeMcp?.rawMetrics?.interactions?.turns ?? 'N/A'} | ${delta(n8nac?.rawMetrics?.interactions?.turns, nativeMcp?.rawMetrics?.interactions?.turns)} |
 
 ---
 
 ## 🔍 Detailed Quality Breakdown (Max 25 pts each)
 
 ### 1. Initial Brief Following
-- **n8n-as-code**: ${n8nac?.evaluation?.breakdown?.briefFollowing?.score ?? 'N/A'}/25
-${(n8nac?.evaluation?.breakdown?.briefFollowing?.checks || []).map(c => `  - ${c}`).join('\n')}
-- **n8n Native MCP**: ${nativeMcp?.evaluation?.breakdown?.briefFollowing?.score ?? 'N/A'}/25
-${(nativeMcp?.evaluation?.breakdown?.briefFollowing?.checks || []).map(c => `  - ${c}`).join('\n')}
+- **n8n-as-code**: ${getQualitySubScore(n8nac, 1, 'brief')}/25
+- **n8n Native MCP**: ${getQualitySubScore(nativeMcp, 1, 'brief')}/25
 
 ### 2. Nodes Correctness & Wiring
-- **n8n-as-code**: ${n8nac?.evaluation?.breakdown?.nodesCorrectness?.score ?? 'N/A'}/25
-${(n8nac?.evaluation?.breakdown?.nodesCorrectness?.checks || []).map(c => `  - ${c}`).join('\n')}
-- **n8n Native MCP**: ${nativeMcp?.evaluation?.breakdown?.nodesCorrectness?.score ?? 'N/A'}/25
-${(nativeMcp?.evaluation?.breakdown?.nodesCorrectness?.checks || []).map(c => `  - ${c}`).join('\n')}
+- **n8n-as-code**: ${getQualitySubScore(n8nac, 2, 'correctness')}/25
+- **n8n Native MCP**: ${getQualitySubScore(nativeMcp, 2, 'correctness')}/25
 
 ### 3. Wow Effect & Aesthetics
-- **n8n-as-code**: ${n8nac?.evaluation?.breakdown?.wowEffect?.score ?? 'N/A'}/25
-${(n8nac?.evaluation?.breakdown?.wowEffect?.checks || []).map(c => `  - ${c}`).join('\n')}
-- **n8n Native MCP**: ${nativeMcp?.evaluation?.breakdown?.wowEffect?.score ?? 'N/A'}/25
-${(nativeMcp?.evaluation?.breakdown?.wowEffect?.checks || []).map(c => `  - ${c}`).join('\n')}
+- **n8n-as-code**: ${getQualitySubScore(n8nac, 3, 'wow')}/25
+- **n8n Native MCP**: ${getQualitySubScore(nativeMcp, 3, 'wow')}/25
 
 ### 4. Workflow Execution & Dry-Run
-- **n8n-as-code**: ${n8nac?.evaluation?.breakdown?.workflowExecution?.score ?? 'N/A'}/25
-${(n8nac?.evaluation?.breakdown?.workflowExecution?.checks || []).map(c => `  - ${c}`).join('\n')}
-- **n8n Native MCP**: ${nativeMcp?.evaluation?.breakdown?.workflowExecution?.score ?? 'N/A'}/25
-${(nativeMcp?.evaluation?.breakdown?.workflowExecution?.checks || []).map(c => `  - ${c}`).join('\n')}
+- **n8n-as-code**: ${getQualitySubScore(n8nac, 4, 'execution')}/25
+- **n8n Native MCP**: ${getQualitySubScore(nativeMcp, 4, 'execution')}/25
 
 ---
+
 
 ## 💡 Qualitative Analysis & Observations
 

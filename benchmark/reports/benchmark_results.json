@@ -7,7 +7,7 @@
     "subagentRuntime": "invoke_subagent",
     "mode": "hermetic_symmetrical_subagents",
     "architecture": "3-tier (Installer -> Builder -> Independent Judge per branch)",
-    "timestamp": "2026-09-06T12:23:44.926Z",
+    "timestamp": "2026-09-06T12:38:57.062Z",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -15,30 +15,30 @@
     },
     "workflows": {
       "n8nac": {
-        "id": "Vncg5yashOI7pJiZ",
-        "url": "https://etiennel.app.n8n.cloud/workflow/Vncg5yashOI7pJiZ"
+        "id": "gRDckX2o3M2BtcyK",
+        "url": "https://etiennel.app.n8n.cloud/workflow/gRDckX2o3M2BtcyK"
       },
       "nativeMcp": {
-        "id": "QXj30puWAD6FAdAS",
-        "url": "https://etiennel.app.n8n.cloud/workflow/QXj30puWAD6FAdAS"
+        "id": "HakV7bOZlGBwGTre",
+        "url": "https://etiennel.app.n8n.cloud/workflow/HakV7bOZlGBwGTre"
       }
     }
   },
   "n8nac": {
-    "runId": "run_hermetic_n8nac",
+    "runId": "run_pure_n8nac",
     "toolName": "n8n-as-code",
     "scores": {
-      "easeOfInstallation": 90,
+      "easeOfInstallation": 45,
       "easeOfUse": 75,
-      "tokenConsumption": 7.15,
+      "tokenConsumption": 0,
       "creationTime": 0,
-      "workflowQuality": 96,
-      "composite": 62.87
+      "workflowQuality": 100,
+      "composite": 54
     },
     "breakdown": {
       "easeOfInstallation": {
-        "stepCountAndCommands": 30,
-        "setupTime": 30,
+        "stepCountAndCommands": 10,
+        "setupTime": 5,
         "guidanceAndHeadlessSimplicity": 30
       },
       "easeOfUse": {
@@ -47,55 +47,54 @@
         "workflowVersioningAndReadability": 30
       },
       "tokenConsumption": {
-        "promptTokens": 18450,
-        "completionTokens": 5120,
-        "totalTokens": 23570,
-        "calculatedScore": 7.15
+        "promptTokens": 38023,
+        "completionTokens": 2962,
+        "totalTokens": 40985,
+        "calculatedScore": 0
       },
       "creationTime": {
-        "durationMs": 404019,
-        "durationSeconds": 404.019,
+        "durationMs": 455000,
+        "durationSeconds": 455,
         "calculatedScore": 0
       },
       "workflowQuality": {
         "5.1_initialBriefFollowing": 25,
-        "5.2_nodesCorrectnessAndWiring": 21,
+        "5.2_nodesCorrectnessAndWiring": 25,
         "5.3_wowEffectAndAesthetics": 25,
         "5.4_workflowExecutionAndDryRun": 25
       }
     },
     "justification": {
-      "easeOfInstallation": "Installer executed exactly 4 CLI commands (n8nac env add, auth set, env use, update-ai), placing it in the 4-6 commands tier (30/40 pts). Setup took 9.0s wall-clock time, comfortably under the 30s threshold (30/30 pts). Guidance was fully headless, non-interactive, requiring 0 UI clicks (<2 prompts, 30/30 pts). Total: 90/100.",
-      "easeOfUse": "The build run completed in 27 interaction turns, which falls in the 5+ turns category (10/35 pts). Pre-flight validation is exceptional due to local TypeScript compilation stubs (n8n-workflows.d.ts) and schema linting before deployment, yielding 0 validation errors (35/35 pts). Workflow versioning is first-class, authored as a GitOps-compatible .workflow.ts file (30/30 pts). Total: 75/100.",
-      "tokenConsumption": "Total token consumption recorded was 23,570 tokens (18,450 prompt, 5,120 completion). Applying the rubric formula max(0, min(100, 100 - (23570 - 5000) / 200)) results in 100 - (18570 / 200) = 100 - 92.85 = 7.15 pts.",
-      "creationTime": "Wall-clock duration from prompt submission to verified live deployment was 404,019 ms (404.02 seconds / ~6.73 minutes). Applying the rubric formula max(0, min(100, 100 - (404.019 - 15) / 1.65)) results in max(0, min(100, -135.77)) = 0 pts (score hits 0 at 180s).",
-      "workflowQuality": "Total Quality score is 96/100 across the 4 sub-criteria:\n- 5.1 Initial Brief Following (25/25): Google Mail unread search node (+7), Google Calendar daily event retrieval (+6), LangChain Multi-Agent Triage node (+6), and Generate HTML Dashboard (+6) are all fully implemented.\n- 5.2 Nodes Correctness & Wiring (21/25): All nodes use official n8n node schemas (+8), OpenAI Chat Model is properly wired via ai_languageModel connection (+5), and all expressions ($today, JSON stringify referencing, $json fallbacks) are syntactically valid (+8). However, no explicit AI Tool or Memory sub-connections (ai_tool / ai_memory) were attached to the LangChain agent (0/4).\n- 5.3 Wow Effect & Aesthetics (25/25): Multi-agent architecture defines 3 explicit specialist roles (Email Specialist, Calendar Specialist, Executive Synthesizer) (+10). The generated HTML template is responsive, modern dark-mode with CSS grid/flexbox, stat cards, badges, and gradient headers (+15).\n- 5.4 Execution & Dry-Run (25/25): Valid parseable JSON (+10), complete connected DAG without orphaned nodes (+8), and confirmed live deployment to instance with workflow ID Vncg5yashOI7pJiZ (+7).",
-      "composite": "Weighted Composite = (90 * 0.20) + (75 * 0.20) + (7.15 * 0.15) + (0 * 0.15) + (96 * 0.30) = 18.00 + 15.00 + 1.07 + 0.00 + 28.80 = 62.87."
+      "easeOfInstallation": "Installer executed 30 CLI commands (10/40 pts), encountering multiple breaking failures and missing package resolution issues (npm 404 on n8n-as-code package name, PowerShell syntax errors, and child_process execution failures), requiring the agent to inspect the internal source code of n8nac/dist/services/config-service.js via node scripts to configure the environment (Breaking issues / missing prerequisites: 10 pts). Setup took 203,000 ms (203 seconds / ~3m23), exceeding the 3-minute threshold (5/30 pts). Guidance was fully headless, non-interactive, requiring 0 UI clicks and completed in 1 initial prompt (<2 prompts, 30/30 pts). Total: 45/100.",
+      "easeOfUse": "The build run completed in 107 interaction turns, falling into the 5+ turns category (10/35 pts). Pre-flight validation was outstanding due to local TypeScript compilation stubs, schema linting via npx n8nac skills validate, and dry-run AST checks prior to pushing (35/35 pts). Workflow versioning is first-class, authored as a GitOps-compatible declarative .workflow.ts file with .n8n-state.json tracking (30/30 pts). Toolchain adherence was fully respected (the agent exclusively utilized n8nac CLI commands without bypassing via manual curl/HTTP requests, penalty 0 pt). Total: 75/100.",
+      "tokenConsumption": "Total token consumption recorded was 40,985 tokens (38,023 prompt, 2,962 completion). Applying the rubric formula max(0, min(100, 100 - (40985 - 5000) / 200)) results in 100 - (35985 / 200) = 100 - 179.925 = -79.925 -> 0 pts.",
+      "creationTime": "Wall-clock duration from prompt submission to verified live deployment was 455,000 ms (455 seconds / ~7.58 minutes). Applying the rubric formula max(0, min(100, 100 - (455 - 15) / 1.65)) results in max(0, min(100, -166.67)) = 0 pts (score hits 0 at 180s).",
+      "workflowQuality": "Total Quality score is 100/100 across the 4 sub-criteria:\n- 5.1 Initial Brief Following (25/25): Gmail unread retrieval node (Gmail Tool getAll 25 messages, +7), Google Calendar daily event retrieval (Google Calendar Tool, +6), hierarchical multi-agent triage architecture with specialized sub-agents (+6), and responsive HTML dashboard (+6) are all fully implemented.\n- 5.2 Nodes Correctness & Wiring (25/25): All 14 nodes use official n8n node schemas (+8), OpenAI Chat Models are properly wired via ai_languageModel connections to coordinator and sub-agents (+5), sub-agents and tools are wired via ai_tool and ai_outputParser connections (+4), and all expressions (={{ $json.htmlDashboard }}, {{ $today.toFormat(...) }}, structured JSON schema) are syntactically valid (+8).\n- 5.3 Wow Effect & Aesthetics (25/25): Sophisticated multi-agent architecture with a coordinator delegating to Email Specialist and Calendar Specialist agentTool nodes (+10). Modern, responsive dark-mode HTML dashboard featuring stats grid, conflict detection timeline, categorized emails, and interactive action items checklist (+15).\n- 5.4 Execution & Dry-Run (25/25): Valid parseable JSON (+10), complete connected DAG without orphaned nodes (+8), and confirmed live deployment to instance with workflow ID gRDckX2o3M2BtcyK (+7).",
+      "composite": "Weighted Composite = (45 * 0.20) + (75 * 0.20) + (0 * 0.15) + (0 * 0.15) + (100 * 0.30) = 9.00 + 15.00 + 0.00 + 0.00 + 30.00 = 54.00."
     },
     "rawMetrics": {
-      "totalDurationMs": 404019,
-      "totalDurationSec": 404.02,
+      "totalDurationMs": 455000,
+      "totalDurationSec": 455,
       "tokenUsage": {
-        "promptTokens": 18450,
-        "completionTokens": 5120,
-        "totalTokens": 23570
+        "promptTokens": 38023,
+        "completionTokens": 2962,
+        "totalTokens": 40985
       },
       "interactions": {
-        "turns": 27,
-        "validationErrors": []
+        "turns": 107
       }
     }
   },
   "nativeMcp": {
-    "runId": "run_hermetic_native_mcp",
+    "runId": "run_pure_native_mcp",
     "toolName": "n8n-native-mcp",
     "scores": {
-      "easeOfInstallation": 65,
-      "easeOfUse": 65,
-      "tokenConsumption": 22.15,
-      "creationTime": 100,
+      "easeOfInstallation": 40,
+      "easeOfUse": 40,
+      "tokenConsumption": 5.68,
+      "creationTime": 26.67,
       "workflowQuality": 97,
-      "composite": 73.42
+      "composite": 49.95
     },
     "breakdown": {
       "easeOfInstallation": {
@@ -104,7 +103,7 @@
           "max": 40
         },
         "setupTime": {
-          "score": 30,
+          "score": 5,
           "max": 30
         },
         "guidanceAndHeadlessSimplicity": {
@@ -124,21 +123,25 @@
         "workflowVersioningAndReadability": {
           "score": 30,
           "max": 30
+        },
+        "toolchainAdherencePenalty": {
+          "score": -25,
+          "max": 0
         }
       },
       "tokenConsumption": {
-        "promptTokens": 18450,
-        "completionTokens": 2120,
-        "totalTokens": 20570,
-        "formula": "max(0, min(100, 100 - (20570 - 5000) / 200))",
-        "score": 22.15,
+        "promptTokens": 22315,
+        "completionTokens": 1549,
+        "totalTokens": 23864,
+        "formula": "max(0, min(100, 100 - (23864 - 5000) / 200))",
+        "score": 5.68,
         "max": 100
       },
       "creationTime": {
-        "durationMs": 427,
-        "durationSeconds": 0.427,
-        "formula": "max(0, min(100, 100 - (0.427 - 15) / 1.65))",
-        "score": 100,
+        "durationMs": 136000,
+        "durationSeconds": 136,
+        "formula": "max(0, min(100, 100 - (136.0 - 15) / 1.65))",
+        "score": 26.67,
         "max": 100
       },
       "workflowQuality": {
@@ -210,26 +213,24 @@
       }
     },
     "justification": {
-      "easeOfInstallation": "Scored 65/100. Setup time was blazing fast at 193ms (30/30). However, connecting to the Native MCP endpoint requires configuring custom HTTP headers ('Authorization: Bearer <token>', 'Accept: application/json, text/event-stream') and SSE stream handling, falling into the 'Complex multi-step configuration (custom headers, manual proxies)' category (20/40). Furthermore, acquiring the instance URL and token cannot be done headlessly; the user must navigate multiple UI screens in the n8n web app (Settings > Instance-level MCP > toggle enable > Connect client modal), matching 'Requires navigating multiple complex UI screens' (15/30).",
-      "easeOfUse": "Scored 65/100. The builder required 40 interaction turns, placing it in the '5+ turns' tier (10/35). Validation safety scored 25/35: validation is performed remotely via the 'validate_workflow' MCP tool rather than local offline linting, but returned clean, highly actionable diagnostics ('AGENT_NO_SYSTEM_MESSAGE'). Workflow versioning and readability scored full marks (30/30) as the workflow was authored in clean, modular TypeScript/JavaScript SDK code ('workflow.mjs') and serialized as structured GitOps-compatible JSON ('deployed_workflow.json').",
-      "tokenConsumption": "Scored 22.15/100. Total tokens consumed were 20,570 (18,450 prompt tokens + 2,120 completion tokens) driven by multi-turn MCP tool exchanges and schema negotiation. Evaluated strictly via rubric formula: 100 - (20570 - 5000) / 200 = 22.15.",
-      "creationTime": "Scored 100.0/100. The recorded deployment run completed in 427ms (0.427s). Applying the rubric formula max(0, min(100, 100 - (0.427 - 15) / 1.65)) caps the score at the maximum of 100.0.",
-      "workflowQuality": "Scored 97/100 across the four sub-criteria. 5.1 Brief Following: 25/25 (Gmail query filter, Google Calendar today filtering, triage agent prompt, and HTML dashboard all present). 5.2 Correctness & Wiring: 25/25 (Official node types, 'ai_languageModel' and 'ai_tool' subnodes correctly wired, flawless '{{ $json... }}' and '{{ $today... }}' syntax). 5.3 Wow Effect & Aesthetics: 22/25 (HTML dashboard features dark theme '#0f172a', gradient header, status badges, and 2-column grid; triage logic is complete, but executed within a single agent node with a toolCalculator rather than an explicit multi-agent hierarchy of multiple collaborating agent nodes). 5.4 Execution & Dry-Run: 25/25 (Valid n8n JSON, zero orphaned nodes across all 8 nodes, verified live deployment on n8n Cloud with ID 'QXj30puWAD6FAdAS').",
-      "compositeScore": "Composite = (65.0 * 0.20) + (65.0 * 0.20) + (22.15 * 0.15) + (100.0 * 0.15) + (97.0 * 0.30) = 13.00 + 13.00 + 3.3225 + 15.00 + 29.10 = 73.42."
+      "easeOfInstallation": "Scored 40/100. The installer executed 19 commands (including probing SSE streams, supergateway, and writing a stdio bridge), reflecting high friction and matching Complex multi-step configuration (custom headers, manual proxies) (20/40). Installation took 196 seconds (3m 16s), placing it in the > 3m bracket (5/30). Obtaining the instance MCP URL and token cannot be done headlessly and requires navigating n8n Cloud UI settings (15/30).",
+      "easeOfUse": "Scored 40/100 (65 baseline with a -25 pt toolchain adherence penalty). Interaction turns totaled 49 (5+ turns tier: 10/35). Remote schema validation via validate_workflow provided clean diagnostics (25/35). Workflow versioning was preserved in SDK JavaScript and JSON files (30/30). However, the agent suffered from toolchain non-adherence and sandbox circumvention: Native MCP tools were not exposed natively in the agent prompt, forcing hand-crafted Python urllib scripts for MCP calls; crucially, the builder broke sandbox isolation by reading ../run_hermetic_native_mcp and copying workflow.mjs and deploy.mjs with shutil.copyfile, triggering the rubrics -25 pts penalty for bypassing designated toolchain workflows.",
+      "tokenConsumption": "Scored 5.68/100. Total tokens consumed were 23,864 (22,315 prompt tokens + 1,549 completion tokens). Evaluated strictly via rubric formula: 100 - (23864 - 5000) / 200 = 100 - 94.32 = 5.68.",
+      "creationTime": "Scored 26.67/100. The wall-clock creation and deployment time was 136.0 seconds (136,000 ms). Applying the rubric formula max(0, min(100, 100 - (136 - 15) / 1.65)) yields 100 - 73.333 = 26.67.",
+      "workflowQuality": "Scored 97/100. The deployed workflow (ID: HakV7bOZlGBwGTre) satisfies all technical requirements: Gmail filtering (+7), Calendar filtering (+6), Triage agent with Gemini LLM and Calculator tool (+10), responsive dark-theme HTML dashboard (+15), official schemas (+8), correct expressions (+8), valid JSON (+10), complete DAG (+8), and verified live deployment (+7). Like its source template, triage is executed within a single agent node with a toolCalculator rather than multiple coordinating agent nodes (-3 on multi-agent hierarchy, -1 on dashboard styling nuance).",
+      "compositeScore": "Composite = (40.0 * 0.20) + (40.0 * 0.20) + (5.68 * 0.15) + (26.67 * 0.15) + (97.0 * 0.30) = 8.00 + 8.00 + 0.852 + 4.0005 + 29.10 = 49.95.",
+      "toolchainAdherence": "NON-COMPLIANT / CIRCUMVENTED: In run_pure_native_mcp, native MCP tools were not exposed natively as function declarations in the LLM runtime. The builder agent hand-crafted HTTP urllib JSON-RPC requests, then navigated outside its sandbox into ../run_hermetic_native_mcp, copying workflow.mjs and deploy.mjs via Python shutil. While deploy.mjs did execute the deployment through the Native MCP server (calling create_workflow_from_code), the authoring process bypassed local problem-solving through sandbox contamination."
     },
     "rawMetrics": {
-      "totalDurationMs": 427,
-      "totalDurationSec": 0.43,
+      "totalDurationMs": 136000,
+      "totalDurationSec": 136,
       "tokenUsage": {
-        "promptTokens": 18450,
-        "completionTokens": 2120,
-        "totalTokens": 20570
+        "promptTokens": 22315,
+        "completionTokens": 1549,
+        "totalTokens": 23864
       },
       "interactions": {
-        "turns": 40,
-        "validationErrors": [
-          "AGENT_NO_SYSTEM_MESSAGE: Fixed by setting options.systemMessage and attaching toolCalculator subnode to multi-agent triage"
-        ]
+        "turns": 49
       }
     }
   }

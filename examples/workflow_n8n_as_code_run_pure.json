@@ -1,0 +1,454 @@
+{
+  "id": "gRDckX2o3M2BtcyK",
+  "name": "Multi-Agent Daily Assistant: Emails, Calendar & HTML Dashboard",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T12:34:08.404Z",
+  "updatedAt": "2026-09-06T12:34:08.404Z",
+  "isArchived": false,
+  "versionId": "48d2c8e9-7e07-49d4-b612-ed59c9fa9c57",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "30796b34-2943-4082-9b55-1d9bac114680",
+      "name": "Schedule Trigger (Daily 8h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cebadf8b-75e9-4e4c-b295-c8321d3f03d5",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e6f6f1d9-1aed-4e0a-917d-751a88921d60",
+      "name": "Webhook (Dashboard View)",
+      "webhookId": "f5c8f91c-758c-423d-b05d-5aa21110dae6",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        520
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "daily-dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "77d84970-8af4-404d-ac69-394fb75dd939",
+      "name": "Daily Coordinator Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        360
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Aujourd'hui nous sommes le {{ $today.toFormat('yyyy-MM-dd') }}.\nEffectue le briefing exécutif de ma journée :\n1. Fais appel au spécialiste des emails (\"Email Specialist Agent\") pour récupérer et analyser mes emails récents (dernières 24h), filtrer le bruit/spam et extraire les emails prioritaires nécessitant une action.\n2. Fais appel au spécialiste du calendrier (\"Calendar Specialist Agent\") pour inspecter mon agenda Google Calendar d'aujourd'hui, lister mes réunions, calculer le temps de réunion et le temps de travail concentré disponible, et identifier d'éventuels conflits.\n3. Synthétise l'ensemble de ces informations sous forme d'un objet JSON structuré respectant exactement le schéma demandé.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es un Assistant Exécutif IA de haut niveau. Ton rôle est d'orchestrer la préparation du briefing quotidien en déléguant précisément aux sous-agents spécialisés :\n- Pour les emails : délègue à \"Email Specialist Agent\".\n- Pour le calendrier : délègue à \"Calendar Specialist Agent\".\nEnsuite, classe et priorise toutes les informations de manière stratégique et pragmatique (Urgent, Important, FYI, Temps libre). Fournis toujours un résultat structuré, complet et sans omission."
+        }
+      }
+    },
+    {
+      "id": "1c94b1a3-e6bd-46c3-b657-3a2e3fe8e5d7",
+      "name": "OpenAI GPT-4o (Coordinator)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        420,
+        600
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "9cb4e17b-a6ab-4c43-866f-3058c60d3cce",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        600
+      ],
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"date\": { \"type\": \"string\", \"description\": \"Date du jour format YYYY-MM-DD\" },\n    \"dateFormatted\": { \"type\": \"string\", \"description\": \"Date lisible en français ex: Lundi 6 Septembre 2026\" },\n    \"executiveSummary\": { \"type\": \"string\", \"description\": \"Synthèse exécutive claire de la journée (2-3 phrases percutantes)\" },\n    \"metrics\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"emailsTotal\": { \"type\": \"number\" },\n        \"emailsUrgent\": { \"type\": \"number\" },\n        \"meetingsCount\": { \"type\": \"number\" },\n        \"meetingsTotalHours\": { \"type\": \"number\" },\n        \"focusHours\": { \"type\": \"number\" }\n      },\n      \"required\": [\"emailsTotal\", \"emailsUrgent\", \"meetingsCount\", \"meetingsTotalHours\", \"focusHours\"]\n    },\n    \"schedule\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"time\": { \"type\": \"string\" },\n          \"title\": { \"type\": \"string\" },\n          \"duration\": { \"type\": \"string\" },\n          \"attendees\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"locationOrLink\": { \"type\": \"string\" },\n          \"prepNotes\": { \"type\": \"string\" },\n          \"isConflict\": { \"type\": \"boolean\" }\n        },\n        \"required\": [\"time\", \"title\"]\n      }\n    },\n    \"priorityEmails\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"from\": { \"type\": \"string\" },\n          \"subject\": { \"type\": \"string\" },\n          \"category\": { \"type\": \"string\", \"enum\": [\"URGENT\", \"ACTION_REQUISE\", \"INFO_IMPORTANTE\", \"PROJET\"] },\n          \"urgency\": { \"type\": \"string\", \"enum\": [\"HAUTE\", \"MOYENNE\", \"BASSE\"] },\n          \"summary\": { \"type\": \"string\" },\n          \"actionRequired\": { \"type\": \"string\" }\n        },\n        \"required\": [\"from\", \"subject\", \"category\", \"urgency\", \"summary\"]\n      }\n    },\n    \"actionItems\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"task\": { \"type\": \"string\" },\n          \"priority\": { \"type\": \"string\", \"enum\": [\"HAUTE\", \"MOYENNE\", \"BASSE\"] },\n          \"source\": { \"type\": \"string\", \"enum\": [\"EMAIL\", \"CALENDRIER\", \"STRATÉGIQUE\"] }\n        },\n        \"required\": [\"task\", \"priority\", \"source\"]\n      }\n    },\n    \"productivityAdvice\": { \"type\": \"string\", \"description\": \"Conseil d'organisation personnalisé pour optimiser la journée\" }\n  },\n  \"required\": [\"date\", \"executiveSummary\", \"metrics\", \"schedule\", \"priorityEmails\", \"actionItems\", \"productivityAdvice\"]\n}"
+      }
+    },
+    {
+      "id": "f6506aa2-7b8b-4556-ae60-6f0a717906ab",
+      "name": "Email Specialist Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        800,
+        480
+      ],
+      "parameters": {
+        "toolDescription": "Agent spécialisé dans la récupération, le filtrage et l analyse des emails récents et non lus de Gmail. Utilisé pour identifier les urgences, les demandes d action et ignorer le spam/newsletters.",
+        "text": "Consulte les messages récents dans Gmail, élimine le spam et les newsletters publicitaires, analyse les expéditeurs, les sujets et les contenus pertinents, classe-les par priorité et extrait les actions requises.",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "Tu es un expert en gestion et tri des emails professionnels. Ton rôle est d interroger Gmail avec ton outil, d analyser les emails des dernières 24h, de distinguer le signal du bruit (ignorer promotions/newsletters automatisées), et de restituer une liste claire des emails importants avec leur degré d urgence et les réponses ou actions attendues."
+        }
+      }
+    },
+    {
+      "id": "4b9fb986-45a8-4c8b-8b1a-f28851b63e22",
+      "name": "OpenAI GPT-4o (Email Agent)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        740,
+        700
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "ee5633f3-3d89-4bb9-9515-e31bc5805d19",
+      "name": "Gmail Tool",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        860,
+        700
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "limit": 25,
+        "simple": false,
+        "filters": {
+          "readStatus": "both"
+        }
+      },
+      "webhookId": "2f28e146-1006-4609-abfb-c7de0ccfbe74"
+    },
+    {
+      "id": "76b81c89-10f6-48ff-af79-c882f60bf28f",
+      "name": "Calendar Specialist Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        1060,
+        480
+      ],
+      "parameters": {
+        "toolDescription": "Agent spécialisé dans l analyse du calendrier Google Calendar pour la journée en cours. Utilisé pour lister les réunions, vérifier les plages horaires, détecter les conflits d agenda et calculer le temps de travail concentré.",
+        "text": "Consulte les événements de la journée sur Google Calendar, analyse les horaires de début et fin, les participants, les ordres du jour, calcule le temps total de réunion et identifie les périodes propices au travail concentré.",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "Tu es un expert en planification et optimisation de temps. Interroge Google Calendar pour la journée en cours, analyse minutieusement chaque rendez-vous, repère les chevauchements éventuels, note les besoins de préparation pour chaque réunion et calcule le volume d heures de réunion versus le temps libre disponible."
+        }
+      }
+    },
+    {
+      "id": "ae0d3999-f403-4f45-a8a6-c2f34516afe5",
+      "name": "OpenAI GPT-4o (Calendar Agent)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1000,
+        700
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "964877d5-5a26-4641-a2ac-625557ae1cd8",
+      "name": "Google Calendar Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        700
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "mode": "list",
+          "value": "primary"
+        },
+        "limit": 25
+      }
+    },
+    {
+      "id": "a9502648-ce12-465b-af59-b71bfb4e1ada",
+      "name": "Générer Dashboard HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        280
+      ],
+      "parameters": {
+        "jsCode": "// Récupération sécurisée des données produites par le Coordinator Agent\nconst item = items[0].json;\nlet data = item.output || item;\n\nif (typeof data === 'string') {\n  try {\n    data = JSON.parse(data);\n  } catch (e) {\n    data = {\n      dateFormatted: new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),\n      executiveSummary: data,\n      metrics: { emailsTotal: 0, emailsUrgent: 0, meetingsCount: 0, meetingsTotalHours: 0, focusHours: 8 },\n      schedule: [],\n      priorityEmails: [],\n      actionItems: [],\n      productivityAdvice: \"Consultez vos messages et votre agenda manuellement.\"\n    };\n  }\n}\n\nconst metrics = data.metrics || { emailsTotal: 0, emailsUrgent: 0, meetingsCount: 0, meetingsTotalHours: 0, focusHours: 8 };\nconst schedule = Array.isArray(data.schedule) ? data.schedule : [];\nconst emails = Array.isArray(data.priorityEmails) ? data.priorityEmails : [];\nconst actions = Array.isArray(data.actionItems) ? data.actionItems : [];\nconst dateStr = data.dateFormatted || new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\nconst summary = data.executiveSummary || \"Votre journée est prête à être organisée.\";\nconst advice = data.productivityAdvice || \"Priorisez les tâches à fort impact durant vos plages de concentration.\";\n\n// Construction des blocs HTML\nconst scheduleHtml = schedule.length > 0\n  ? schedule.map(ev => `\n    <div class=\"timeline-item ${ev.isConflict ? 'conflict' : ''}\">\n      <div class=\"time-badge\">${ev.time || '--:--'} (${ev.duration || '30m'})</div>\n      <div class=\"timeline-content\">\n        <div class=\"timeline-header\">\n          <h4 class=\"event-title\">${ev.title || 'Réunion'}</h4>\n          ${ev.isConflict ? '<span class=\"badge badge-danger\">⚠️ Conflit détecté</span>' : ''}\n        </div>\n        ${ev.locationOrLink ? `<p class=\"event-meta\">📍 ${ev.locationOrLink}</p>` : ''}\n        ${ev.attendees && ev.attendees.length ? `<p class=\"event-meta\">👥 ${ev.attendees.join(', ')}</p>` : ''}\n        ${ev.prepNotes ? `<div class=\"event-prep\">💡 ${ev.prepNotes}</div>` : ''}\n      </div>\n    </div>\n  `).join('')\n  : '<p class=\"empty-state\">🎉 Aucun rendez-vous prévu aujourd\\'hui. Excellente journée pour avancer en profondeur !</p>';\n\nconst emailsHtml = emails.length > 0\n  ? emails.map(em => {\n      const badgeClass = em.urgency === 'HAUTE' ? 'badge-danger' : em.urgency === 'MOYENNE' ? 'badge-warning' : 'badge-info';\n      return `\n        <div class=\"card email-card\">\n          <div class=\"email-header\">\n            <div>\n              <span class=\"badge ${badgeClass}\">${em.urgency || 'NORMAL'}</span>\n              <span class=\"email-category\">${em.category || 'Email'}</span>\n            </div>\n            <span class=\"email-sender\">${em.from || 'Expéditeur inconnu'}</span>\n          </div>\n          <h4 class=\"email-subject\">${em.subject || '(Sans objet)'}</h4>\n          <p class=\"email-summary\">${em.summary || ''}</p>\n          ${em.actionRequired ? `<div class=\"action-box\"><strong>Action :</strong> ${em.actionRequired}</div>` : ''}\n        </div>\n      `;\n    }).join('')\n  : '<p class=\"empty-state\">📬 Aucun email urgent détecté. Votre boîte de réception est sous contrôle !</p>';\n\nconst actionsHtml = actions.length > 0\n  ? actions.map(act => {\n      const priorityClass = act.priority === 'HAUTE' ? 'p-high' : act.priority === 'MOYENNE' ? 'p-medium' : 'p-low';\n      return `\n        <li class=\"action-item\">\n          <input type=\"checkbox\" id=\"check-${Math.random().toString(36).substring(7)}\" />\n          <div class=\"action-content\">\n            <span class=\"action-text\">${act.task}</span>\n            <div class=\"action-tags\">\n              <span class=\"priority-pill ${priorityClass}\">${act.priority}</span>\n              <span class=\"source-tag\">🏷️ ${act.source || 'Général'}</span>\n            </div>\n          </div>\n        </li>\n      `;\n    }).join('')\n  : '<p class=\"empty-state\">✅ Aucune action urgente en attente.</p>';\n\nconst html = `<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Daily Dashboard - ${dateStr}</title>\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n  <link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n  <style>\n    :root {\n      --bg: #090d16;\n      --surface: #111827;\n      --surface-border: #1f2937;\n      --surface-hover: #1e293b;\n      --text-main: #f9fafb;\n      --text-muted: #9ca3af;\n      --primary: #6366f1;\n      --primary-light: #818cf8;\n      --accent: #06b6d4;\n      --success: #10b981;\n      --warning: #f59e0b;\n      --danger: #ef4444;\n      --radius: 16px;\n      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);\n    }\n    * { box-sizing: border-box; margin: 0; padding: 0; }\n    body {\n      font-family: 'Inter', sans-serif;\n      background: radial-gradient(circle at top right, #1e1b4b 0%, var(--bg) 60%);\n      color: var(--text-main);\n      min-height: 100vh;\n      padding: 32px 20px;\n    }\n    .container { max-width: 1200px; margin: 0 auto; }\n    \n    /* Header */\n    header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      margin-bottom: 28px;\n      padding-bottom: 24px;\n      border-bottom: 1px solid var(--surface-border);\n      flex-wrap: wrap;\n      gap: 16px;\n    }\n    .header-title h1 {\n      font-size: 2rem;\n      font-weight: 800;\n      background: linear-gradient(135deg, #ffffff 0%, var(--text-muted) 100%);\n      -webkit-background-clip: text;\n      -webkit-text-fill-color: transparent;\n    }\n    .header-title p {\n      color: var(--accent);\n      font-size: 1rem;\n      margin-top: 4px;\n      text-transform: capitalize;\n      font-weight: 500;\n    }\n    .header-badges {\n      display: flex;\n      gap: 10px;\n    }\n    .chip {\n      background: rgba(99, 102, 241, 0.15);\n      border: 1px solid rgba(99, 102, 241, 0.3);\n      color: var(--primary-light);\n      padding: 6px 14px;\n      border-radius: 9999px;\n      font-size: 0.85rem;\n      font-weight: 600;\n      display: inline-flex;\n      align-items: center;\n      gap: 6px;\n    }\n\n    /* Executive summary card */\n    .hero-card {\n      background: linear-gradient(135deg, rgba(30, 27, 75, 0.8) 0%, rgba(17, 24, 39, 0.9) 100%);\n      border: 1px solid rgba(99, 102, 241, 0.3);\n      border-radius: var(--radius);\n      padding: 24px;\n      margin-bottom: 32px;\n      box-shadow: var(--shadow);\n      position: relative;\n      overflow: hidden;\n    }\n    .hero-card::before {\n      content: '';\n      position: absolute;\n      top: 0; left: 0; width: 6px; height: 100%;\n      background: linear-gradient(to bottom, var(--primary), var(--accent));\n    }\n    .hero-title {\n      font-size: 0.9rem;\n      color: var(--primary-light);\n      text-transform: uppercase;\n      letter-spacing: 0.08em;\n      font-weight: 700;\n      margin-bottom: 8px;\n      display: flex;\n      align-items: center;\n      gap: 8px;\n    }\n    .hero-text {\n      font-size: 1.15rem;\n      line-height: 1.6;\n      color: #f3f4f6;\n    }\n    .hero-advice {\n      margin-top: 14px;\n      padding-top: 14px;\n      border-top: 1px solid rgba(255, 255, 255, 0.1);\n      color: #cbd5e1;\n      font-size: 0.95rem;\n      font-style: italic;\n    }\n\n    /* Metrics Grid */\n    .metrics-grid {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));\n      gap: 18px;\n      margin-bottom: 36px;\n    }\n    .metric-box {\n      background: var(--surface);\n      border: 1px solid var(--surface-border);\n      border-radius: var(--radius);\n      padding: 20px;\n      display: flex;\n      align-items: center;\n      gap: 16px;\n      box-shadow: var(--shadow);\n    }\n    .metric-icon {\n      width: 48px;\n      height: 48px;\n      border-radius: 12px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 1.4rem;\n    }\n    .m-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }\n    .m-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }\n    .m-indigo { background: rgba(99, 102, 241, 0.15); color: #818cf8; }\n    .m-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }\n    .metric-info .val {\n      font-size: 1.6rem;\n      font-weight: 800;\n      line-height: 1.1;\n    }\n    .metric-info .lbl {\n      color: var(--text-muted);\n      font-size: 0.85rem;\n      font-weight: 500;\n      margin-top: 4px;\n    }\n\n    /* Main layout columns */\n    .main-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 28px;\n    }\n    @media (max-width: 900px) {\n      .main-grid { grid-template-columns: 1fr; }\n    }\n\n    .column-header {\n      display: flex;\n      align-items: center;\n      justify-content: space-between;\n      margin-bottom: 18px;\n    }\n    .column-header h2 {\n      font-size: 1.25rem;\n      font-weight: 700;\n      display: flex;\n      align-items: center;\n      gap: 10px;\n    }\n\n    /* Timeline Calendar */\n    .timeline {\n      display: flex;\n      flex-direction: column;\n      gap: 14px;\n    }\n    .timeline-item {\n      background: var(--surface);\n      border: 1px solid var(--surface-border);\n      border-radius: var(--radius);\n      padding: 16px 20px;\n      display: flex;\n      gap: 16px;\n      transition: all 0.2s;\n    }\n    .timeline-item:hover {\n      background: var(--surface-hover);\n      border-color: #374151;\n    }\n    .timeline-item.conflict {\n      border-color: rgba(239, 68, 68, 0.6);\n      background: rgba(239, 68, 68, 0.06);\n    }\n    .time-badge {\n      background: #1f2937;\n      color: #93c5fd;\n      padding: 6px 12px;\n      border-radius: 8px;\n      font-size: 0.85rem;\n      font-weight: 700;\n      height: fit-content;\n      white-space: nowrap;\n    }\n    .timeline-content { flex: 1; }\n    .timeline-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      margin-bottom: 6px;\n    }\n    .event-title {\n      font-size: 1.05rem;\n      font-weight: 600;\n      color: #f9fafb;\n    }\n    .event-meta {\n      font-size: 0.85rem;\n      color: var(--text-muted);\n      margin-top: 4px;\n    }\n    .event-prep {\n      margin-top: 8px;\n      padding: 6px 10px;\n      background: rgba(99, 102, 241, 0.1);\n      border-left: 3px solid var(--primary);\n      border-radius: 4px;\n      font-size: 0.85rem;\n      color: #e0e7ff;\n    }\n\n    /* Emails */\n    .emails-list {\n      display: flex;\n      flex-direction: column;\n      gap: 14px;\n    }\n    .card {\n      background: var(--surface);\n      border: 1px solid var(--surface-border);\n      border-radius: var(--radius);\n      padding: 18px 20px;\n      transition: all 0.2s;\n    }\n    .card:hover {\n      background: var(--surface-hover);\n      border-color: #374151;\n    }\n    .email-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      margin-bottom: 10px;\n      font-size: 0.85rem;\n    }\n    .email-sender {\n      color: var(--text-muted);\n      font-size: 0.85rem;\n      max-width: 240px;\n      overflow: hidden;\n      text-overflow: ellipsis;\n      white-space: nowrap;\n    }\n    .email-category {\n      color: var(--text-muted);\n      margin-left: 6px;\n      font-size: 0.8rem;\n    }\n    .email-subject {\n      font-size: 1.05rem;\n      font-weight: 600;\n      margin-bottom: 8px;\n    }\n    .email-summary {\n      color: #d1d5db;\n      font-size: 0.9rem;\n      line-height: 1.5;\n    }\n    .action-box {\n      margin-top: 10px;\n      padding: 8px 12px;\n      background: rgba(245, 158, 11, 0.1);\n      border-left: 3px solid var(--warning);\n      border-radius: 4px;\n      font-size: 0.85rem;\n      color: #fef3c7;\n    }\n\n    /* Badges */\n    .badge {\n      padding: 4px 10px;\n      border-radius: 6px;\n      font-size: 0.75rem;\n      font-weight: 700;\n      letter-spacing: 0.05em;\n      text-transform: uppercase;\n    }\n    .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }\n    .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }\n    .badge-info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }\n\n    /* Action checklist */\n    .actions-card {\n      margin-top: 32px;\n      background: var(--surface);\n      border: 1px solid var(--surface-border);\n      border-radius: var(--radius);\n      padding: 24px;\n    }\n    .actions-list {\n      list-style: none;\n      display: flex;\n      flex-direction: column;\n      gap: 12px;\n      margin-top: 16px;\n    }\n    .action-item {\n      display: flex;\n      align-items: center;\n      gap: 14px;\n      padding: 12px 16px;\n      background: rgba(255, 255, 255, 0.02);\n      border: 1px solid rgba(255, 255, 255, 0.06);\n      border-radius: 10px;\n      transition: background 0.15s;\n    }\n    .action-item:hover { background: rgba(255, 255, 255, 0.05); }\n    .action-item input[type=\"checkbox\"] {\n      width: 20px;\n      height: 20px;\n      cursor: pointer;\n      accent-color: var(--primary);\n    }\n    .action-content {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      flex: 1;\n      gap: 12px;\n      flex-wrap: wrap;\n    }\n    .action-text {\n      font-size: 0.95rem;\n      font-weight: 500;\n    }\n    .action-tags {\n      display: flex;\n      gap: 8px;\n      align-items: center;\n    }\n    .priority-pill {\n      font-size: 0.75rem;\n      font-weight: 700;\n      padding: 3px 8px;\n      border-radius: 4px;\n    }\n    .p-high { background: rgba(239, 68, 68, 0.2); color: #f87171; }\n    .p-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }\n    .p-low { background: rgba(16, 185, 129, 0.2); color: #34d399; }\n    .source-tag {\n      font-size: 0.75rem;\n      color: var(--text-muted);\n    }\n    .empty-state {\n      padding: 30px;\n      text-align: center;\n      color: var(--text-muted);\n      font-size: 0.95rem;\n      background: rgba(255, 255, 255, 0.01);\n      border-radius: var(--radius);\n      border: 1px dashed var(--surface-border);\n    }\n\n    footer {\n      margin-top: 48px;\n      text-align: center;\n      color: var(--text-muted);\n      font-size: 0.85rem;\n      padding-top: 20px;\n      border-top: 1px solid var(--surface-border);\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <header>\n      <div class=\"header-title\">\n        <h1>Briefing Quotidien Multi-Agents</h1>\n        <p>📅 ${dateStr}</p>\n      </div>\n      <div class=\"header-badges\">\n        <span class=\"chip\">🤖 Multi-Agents Orchestré</span>\n        <span class=\"chip\">⚡ Live n8n Engine</span>\n      </div>\n    </header>\n\n    <div class=\"hero-card\">\n      <div class=\"hero-title\">⚡ Synthèse Stratégique du Jour</div>\n      <div class=\"hero-text\">${summary}</div>\n      <div class=\"hero-advice\">💡 <strong>Recommandation :</strong> ${advice}</div>\n    </div>\n\n    <div class=\"metrics-grid\">\n      <div class=\"metric-box\">\n        <div class=\"metric-icon m-blue\">✉️</div>\n        <div class=\"metric-info\">\n          <div class=\"val\">${metrics.emailsTotal}</div>\n          <div class=\"lbl\">Emails Analysés</div>\n        </div>\n      </div>\n      <div class=\"metric-box\">\n        <div class=\"metric-icon m-red\">🚨</div>\n        <div class=\"metric-info\">\n          <div class=\"val\">${metrics.emailsUrgent}</div>\n          <div class=\"lbl\">Emails Urgents</div>\n        </div>\n      </div>\n      <div class=\"metric-box\">\n        <div class=\"metric-icon m-indigo\">🗓️</div>\n        <div class=\"metric-info\">\n          <div class=\"val\">${metrics.meetingsCount} (${metrics.meetingsTotalHours}h)</div>\n          <div class=\"lbl\">Réunions du Jour</div>\n        </div>\n      </div>\n      <div class=\"metric-box\">\n        <div class=\"metric-icon m-green\">🎯</div>\n        <div class=\"metric-info\">\n          <div class=\"val\">${metrics.focusHours}h</div>\n          <div class=\"lbl\">Temps de Focus Dispo</div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"main-grid\">\n      <div class=\"column\">\n        <div class=\"column-header\">\n          <h2>🗓️ Agenda & Réunions</h2>\n        </div>\n        <div class=\"timeline\">\n          ${scheduleHtml}\n        </div>\n      </div>\n\n      <div class=\"column\">\n        <div class=\"column-header\">\n          <h2>📬 Emails Prioritaires & Triés</h2>\n        </div>\n        <div class=\"emails-list\">\n          ${emailsHtml}\n        </div>\n      </div>\n    </div>\n\n    <div class=\"actions-card\">\n      <div class=\"column-header\">\n        <h2>✅ Actions Recommandées & Priorités</h2>\n      </div>\n      <ul class=\"actions-list\">\n        ${actionsHtml}\n      </ul>\n    </div>\n\n    <footer>\n      Généré automatiquement par le workflow multi-agents n8n • Google Suite & AI Assistant\n    </footer>\n  </div>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    ...data,\n    htmlDashboard: html\n  }\n}];"
+      }
+    },
+    {
+      "id": "cc66df38-965a-44e4-bfc9-9bacd47c8221",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1140,
+        280
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.htmlDashboard }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Daily 8h)": {
+      "main": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Dashboard View)": {
+      "main": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Coordinator Agent": {
+      "main": [
+        [
+          {
+            "node": "Générer Dashboard HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générer Dashboard HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o (Coordinator)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Specialist Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Specialist Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Coordinator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o (Email Agent)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Specialist Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Specialist Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4o (Calendar Agent)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Specialist Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Specialist Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "gRDckX2o3M2BtcyK",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-06T12:34:08.406Z",
+      "updatedAt": "2026-09-06T12:34:08.406Z"
+    }
+  ],
+  "activeVersion": null
+}
