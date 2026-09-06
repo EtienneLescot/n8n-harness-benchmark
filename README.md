@@ -17,7 +17,7 @@
 
 ## 🎯 The Benchmark Matrix & Impartiality Protocol
 
-To ensure 100% scientific validity and prevent bias:
+To ensure 100% scientific validity and prevent context contamination:
 
 | Dimension | Standardized Condition |
 |---|---|
@@ -25,10 +25,54 @@ To ensure 100% scientific validity and prevent bias:
 | **Network & Instance** | Identical n8n Cloud production instance. |
 | **LLM Engine** | **Google Antigravity** paired with **Gemini 3.8 Flash (High)**. |
 | **Judge / Evaluator** | Same Antigravity + Gemini 3.8 Flash (High) using standardized rubric. |
-| **Model Temperature** | Fixed at `0.2` (deterministic). |
+| **Model Parameters** | Locked identically across both subagents (`Model: inherit / flash / pro`, temperature: `0.2`). |
 | **Exact Prompt** | *"build a multi agent n8n workflow to check daily Google mails and calendar, triage data, and present an html dashboard of the day"* |
-| **Isolation** | Hermetic sandboxing per run (`sandboxes/run_<timestamp>_<tool>/`). Zero shared state or cache. |
-| **2 Modes** | **Interactive Mode** (human user + assistant) & **Auto Mode** (autonomous subagents). |
+| **Hermetic Isolation** | **Concurrent Subagents** with zero cross-talk. Each subagent runs in its own pristine sandbox with partitioned `.env`. |
+| **No Sequential Carryover** | Eliminates the first-mover cognitive advantage and second-mover mimicry bias. |
+
+---
+
+## 🏗️ Unified Orchestration Architecture
+
+Rather than separating into rigid interactive vs. non-interactive modes, the benchmark operates through a **Unified Agentic Orchestrator**:
+
+```
+                  ┌───────────────────────────────┐
+                  │    User (Etienne Lescot)      │
+                  └──────────────┬────────────────┘
+                                 │ "Lance le benchmark"
+                                 ▼
+                  ┌───────────────────────────────┐
+                  │   Primary Agent / Orchestrator│
+                  │   1. Credentials Gate         │
+                  │      - Reads .env             │
+                  │      - Prompts user if absent │
+                  │   2. Locks Subagent Model     │
+                  │   3. Creates Pristine Sandboxes│
+                  │   4. Spawns Hermetic Subagents│
+                  │   5. Evaluates & Compiles     │
+                  └──────┬─────────────────┬──────┘
+                         │                 │
+           invoke_subagent                 invoke_subagent
+     (Isolated Sandbox 1)                 (Isolated Sandbox 2)
+     (Model: locked)                      (Model: locked)
+                         │                 │
+                         ▼                 ▼
+          ┌──────────────────────┐  ┌──────────────────────┐
+          │  Subagent A (n8nac)  │  │ Subagent B (Native)  │
+          │  - Own isolated .env │  │ - Own isolated .env │
+          │  - n8n-as-code docs  │  │ - Native MCP docs   │
+          │  - Builds & Deploys  │  │ - Builds & Deploys  │
+          └──────────┬───────────┘  └──────────┬───────────┘
+                     │                         │
+                     └───────────┬─────────────┘
+                                 │ Telemetry & Workflows
+                                 ▼
+                  ┌───────────────────────────────┐
+                  │     Evaluator & Dashboard     │
+                  │   (Reports & Visualizations)  │
+                  └───────────────────────────────┘
+```
 
 ---
 
@@ -57,13 +101,8 @@ Tested and validated on a live n8n instance:
 - **n8n-as-code**: The agent has local schema knowledge and stubs bundled in the workspace (`n8nac update-ai`), using only **5,550 tokens**.
 - **n8n Native MCP**: The agent must retrieve the SDK reference and coding patterns over MCP (`get_workflow_sdk_reference`), resulting in **8,300 tokens** (~50% higher context consumption).
 
-### 3. Workflow Quality Parity
-Both paradigms produced an exceptional **98/100** workflow quality:
-- **Google Mail** ingestion node (unread messages from last 24h)
-- **Google Calendar** events ingestion node (today's agenda)
-- **Merge Node** combining both streams
-- **LangChain AI Agent** node triaging items into Action Items, Schedule Prep, and Executive Briefing
-- **HTML Dashboard Node** generating a dark-mode responsive dashboard with cards and priority badges
+### 3. Preventing Context Contamination
+Running both tests sequentially in the same conversation chat window creates a cognitive leakage where the second tool reproduces the exact node names and coordinates of the first. The subagent architecture completely solves this by spinning up two hermetic, independent memory spaces.
 
 ---
 
@@ -72,8 +111,8 @@ Both paradigms produced an exceptional **98/100** workflow quality:
 This repository embeds the dedicated Antigravity skill in:
 [`skills/benchmark-n8n-workflow-creation/`](skills/benchmark-n8n-workflow-creation/)
 
-- [`SKILL.md`](skills/benchmark-n8n-workflow-creation/SKILL.md): Complete operational instructions.
-- [`references/ISOLATION_AND_IMPARTIALITY.md`](skills/benchmark-n8n-workflow-creation/references/ISOLATION_AND_IMPARTIALITY.md): Strict protocol for sandboxing and impartiality.
+- [`SKILL.md`](skills/benchmark-n8n-workflow-creation/SKILL.md): Orchestration protocol & step-by-step instructions.
+- [`references/ISOLATION_AND_IMPARTIALITY.md`](skills/benchmark-n8n-workflow-creation/references/ISOLATION_AND_IMPARTIALITY.md): Context protection & subagent isolation rules.
 - [`references/EVALUATION_RUBRIC.md`](skills/benchmark-n8n-workflow-creation/references/EVALUATION_RUBRIC.md): Full scoring breakdown (0–100).
 - [`references/N8N_AS_CODE_GUIDE.md`](skills/benchmark-n8n-workflow-creation/references/N8N_AS_CODE_GUIDE.md): n8n-as-code authoring reference.
 - [`references/N8N_NATIVE_MCP_GUIDE.md`](skills/benchmark-n8n-workflow-creation/references/N8N_NATIVE_MCP_GUIDE.md): Native MCP authoring reference.
@@ -82,34 +121,17 @@ This repository embeds the dedicated Antigravity skill in:
 
 ## 🚀 How to Run the Benchmark
 
-### Prerequisites
-- Node.js `v18+`
-- An accessible n8n instance (Local Docker or n8n Cloud)
+Simply invoke the skill in Antigravity or tell your agent:
+> *"Execute the n8n workflow creation benchmark against my instance."*
 
-### 1. Interactive Mode (Human in the Loop)
-You act as the user, and the model guides you through setup and authors the workflows:
-```bash
-npm run benchmark:interactive
-```
-
-### 2. Auto Mode (Fully Autonomous)
-1. Configure credentials in `.env`:
-   ```env
-   N8N_HOST=https://your-instance.app.n8n.cloud
-   N8N_API_KEY=your_api_key
-   N8N_NATIVE_MCP_URL=https://your-instance.app.n8n.cloud/mcp-server/http
-   N8N_NATIVE_MCP_TOKEN=your_mcp_bearer_token
-   ```
-2. Run:
-   ```bash
-   npm run benchmark:auto
-   ```
-
-### 3. Generated Artifacts
-Every run compiles:
-- 📄 `benchmark/reports/live_benchmark_report.md` (Markdown Summary)
-- 📊 `benchmark/reports/live_benchmark_dashboard.html` (Interactive Generative UI Dashboard)
-- 💾 `benchmark/reports/live_benchmark_results.json` (Raw Telemetry)
+The Orchestrator will automatically:
+1. **Verify Credentials**: Check `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, `N8N_NATIVE_MCP_TOKEN`. If missing, ask you interactively in the chat with step-by-step guidance.
+2. **Lock LLM Parameters**: Align model configurations for strict parity.
+3. **Spawn Hermetic Subagents**: Run `n8n-as-code` and `n8n Native MCP` in parallel sandboxes.
+4. **Compile Reports**:
+   - 📄 `benchmark/reports/live_benchmark_report.md` (Markdown Summary)
+   - 📊 `benchmark/reports/live_benchmark_dashboard.html` (Interactive Generative UI Dashboard)
+   - 💾 `benchmark/reports/live_benchmark_results.json` (Raw Telemetry)
 
 ---
 
