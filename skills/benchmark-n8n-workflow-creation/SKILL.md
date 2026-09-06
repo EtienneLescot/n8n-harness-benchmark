@@ -105,17 +105,26 @@ To guarantee scientific parity:
 ---
 
 ### Step 3: Phase 1 — Installation Execution (`Installers`)
-Spawn two independent installer subagents via `invoke_subagent`:
+Spawn two independent installer subagents via `invoke_subagent` in their respective clean sandboxes.
+
+> [!IMPORTANT]
+> **Natural Installer Prompts**: The installer is tested as an autonomous agent receiving only the authentic tool reference and credentials pointer.
 
 #### Installer A (`n8n-as-code Installer`)
 - **Workspace**: `benchmark/sandboxes/run_<id>_n8nac/`
-- **Task**: Install and link n8n-as-code to the target instance using credentials from `.env`.
-- **Output**: Return a factual execution log (`commandsExecuted`, `durationMs`, `stdout`, `stderr`, `frictionEvents`, `status`).
+- **Prompt**:
+  ```text
+  Installe n8n-as-code (https://github.com/EtienneLescot/n8n-as-code). Les credentials sont dans le .env
+  ```
+- **Harness Tracking**: The orchestrator records start/end timestamps and captures the installer commands and status.
 
 #### Installer B (`Native MCP Installer`)
 - **Workspace**: `benchmark/sandboxes/run_<id>_native_mcp/`
-- **Task**: Establish connection to the Native MCP server via credentials from `.env` and query available tools.
-- **Output**: Return a factual execution log (`headersUsed`, `durationMs`, `toolsDiscovered`, `frictionEvents`, `status`).
+- **Prompt**:
+  ```text
+  Installe et configure n8n Native MCP (https://docs.n8n.io/advanced-ai/mcp/mcp-server/). Les credentials sont dans le .env
+  ```
+- **Harness Tracking**: The orchestrator records start/end timestamps and captures the installer commands and status.
 
 ---
 
@@ -123,11 +132,11 @@ Spawn two independent installer subagents via `invoke_subagent`:
 Spawn two independent builder subagents in their respective configured sandboxes.
 
 > [!IMPORTANT]
-> **100% Natural Agnostic User Request**:
+> **100% Natural User Request**:
 > Both builders receive **strictly and exclusively** the authentic user request. No system role preamble, no technical micro-management, no instruction telling them how to structure files or report internal IDs.
 > 
 > **Exact Prompt Sent to Both Builders**:
-> ```
+> ```text
 > Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.
 > ```
 
@@ -136,52 +145,25 @@ Spawn two independent builder subagents in their respective configured sandboxes
   - **Branch B (`n8n Native MCP`)**: Discovers its environment through the MCP server tools exposed in its runtime.
 - **External Harness Stopwatch**:
   - The Orchestrator records `startTime` upon dispatching the prompt and `endTime` when the subagent signals completion (`durationMs = endTime - startTime`).
+  - The Orchestrator writes `logs/builder_run.json` with external telemetry and the builder's completion message.
 
 ---
 
 ### Step 5: Phase 3 — Symmetrical Independent Evaluation (`Judges A & B`)
-Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own branch in complete isolation.
+Spawn **two separate Judge Subagents** concurrently, each reviewing strictly its own sandbox in complete isolation.
 
 > [!IMPORTANT]
-> **Live Instance JSON Retrieval & Toolchain Adherence**:
-> 1. **Toolchain Adherence**: The Judge verifies that the builder genuinely used its assigned toolchain (CLI `n8nac` commands for Branch A, Native MCP tools for Branch B) without bypassing it.
-> 2. **Workflow Identification**: The Judge identifies the deployed `workflowId` from the builder's natural response, tool execution traces, or by querying `GET /api/v1/workflows` on the instance.
-> 3. **Direct Cloud Download**: The Judge retrieves the deployed workflow JSON directly from the instance:
->    `GET {N8N_HOST}/api/v1/workflows/{WORKFLOW_ID}` (with header `X-N8N-API-KEY: {N8N_API_KEY}`)
->    The fetched JSON is archived to `workflows/deployed_workflow.json` in the sandbox.
-
-#### Judge A (`Judge n8n-as-code`)
-- **Input**:
-  - Installer A Log (`logs/installer_log.json`)
-  - Builder A Transcript & Final Message
-  - External Telemetry (Orchestrator-measured duration, turns, token count)
-  - Target instance credentials (`N8N_HOST`, `N8N_API_KEY`)
-  - Rubric: [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)
-- **Task**:
-  1. Verify toolchain adherence (did Builder A use `n8n-as-code`?).
-  2. Retrieve the deployed workflow JSON from the live instance and save to `workflows/deployed_workflow.json`.
-  3. Score Installation A (20%)
-  4. Score Ease of Use / DX A (20%)
-  5. Compute Tokens A (15%) and Time A (15%) using the rubric mathematical formula on external telemetry.
-  6. Score Workflow Quality A (30%) on the live workflow JSON.
-  7. Save scorecard to `logs/judge_log.json` and return it.
-
-#### Judge B (`Judge Native MCP`)
-- **Input**:
-  - Installer B Log (`logs/installer_log.json`)
-  - Builder B Transcript & Final Message
-  - External Telemetry (Orchestrator-measured duration, turns, token count)
-  - Target instance credentials (`N8N_HOST`, `N8N_API_KEY`)
-  - Rubric: [`references/EVALUATION_RUBRIC.md`](references/EVALUATION_RUBRIC.md)
-- **Task**:
-  1. Verify toolchain adherence (did Builder B use Native MCP tools?).
-  2. Retrieve the deployed workflow JSON from the live instance and save to `workflows/deployed_workflow.json`.
-  3. Score Installation B (20%)
-  4. Score Ease of Use / DX B (20%)
-  5. Compute Tokens B (15%) and Time B (15%) using the rubric mathematical formula on external telemetry.
-  6. Score Workflow Quality B (30%) on the live workflow JSON.
-  7. Save scorecard to `logs/judge_log.json` and return it.
-
+> **Universal Double-Blind Evaluation Prompt (Zero Meta-Context)**:
+> The Judge does NOT know a competitor branch exists. It simply evaluates the work done in its assigned sandbox.
+> 
+> **Exact Prompt Sent to Both Judges (in their respective sandboxes)**:
+> ```text
+> Évalue le travail réalisé dans cet environnement selon la grille d'évaluation fournie dans references/EVALUATION_RUBRIC.md.
+> 
+> Consulte les traces d'installation et le compte-rendu du builder dans logs/ pour identifier le workflow créé. Récupère ensuite le JSON de ce workflow directement sur l'instance n8n via l'API REST (les accès sont dans le .env) et enregistre-le dans workflows/deployed_workflow.json.
+> 
+> Vérifie que l'agent a bien utilisé les outils prévus dans son environnement sans contournement, puis génère ta fiche d'évaluation détaillée au format JSON dans logs/judge_log.json.
+> ```
 
 ---
 
@@ -194,4 +176,5 @@ This executes `benchmark/harness/compiler.mjs`, producing:
 - 📄 `benchmark/reports/benchmark_report.md`
 - 📊 `benchmark/reports/benchmark_dashboard.html`
 - 💾 `benchmark/reports/benchmark_results.json`
+
 
