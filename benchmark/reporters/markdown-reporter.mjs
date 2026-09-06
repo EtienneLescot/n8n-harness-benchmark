@@ -55,8 +55,8 @@ export class MarkdownReporter {
 |---|:---:|:---:|:---:|---|
 | **Setup Time** | **${nTel.setupTimeSec ?? 'N/A'}s** | **${mTel.setupTimeSec ?? 'N/A'}s** | ${diff(nTel.setupTimeSec, mTel.setupTimeSec)}s | n8n-as-code setup is ${nTel.setupTimeSec <= mTel.setupTimeSec ? `${(mTel.setupTimeSec / nTel.setupTimeSec).toFixed(1)}x faster` : 'slower'} |
 | **Setup Commands** | ${nTel.setupCommandsCount ?? 'N/A'} | ${mTel.setupCommandsCount ?? 'N/A'} | ${diff(nTel.setupCommandsCount, mTel.setupCommandsCount)} | Both headless, zero UI navigation |
-| **Creation Duration** | **${nTel.totalDurationSec ?? 'N/A'}s** | **${mTel.totalDurationSec ?? 'N/A'}s** | **${diff(nTel.totalDurationSec, mTel.totalDurationSec)}s** | n8n-as-code is **${(mTel.totalDurationSec / nTel.totalDurationSec).toFixed(1)}x faster** |
-| **Total Tokens** | **${nTel.tokenUsage?.totalTokens ?? 'N/A'}** | **${mTel.tokenUsage?.totalTokens ?? 'N/A'}** | **${diff(nTel.tokenUsage?.totalTokens, mTel.tokenUsage?.totalTokens)}** | n8n-as-code consumes **${(100 - (nTel.tokenUsage?.totalTokens / mTel.tokenUsage?.totalTokens) * 100).toFixed(0)}% fewer tokens** |
+| **Creation Duration** | **${nTel.totalDurationSec ?? 'N/A'}s** | **${mTel.totalDurationSec ?? 'N/A'}s** | **${diff(nTel.totalDurationSec, mTel.totalDurationSec)}s** | ${nTel.totalDurationSec <= mTel.totalDurationSec ? `n8n-as-code is **${(mTel.totalDurationSec / nTel.totalDurationSec).toFixed(1)}x faster**` : `Native MCP is **${(nTel.totalDurationSec / mTel.totalDurationSec).toFixed(1)}x faster**`} |
+| **Total Tokens** | **${nTel.tokenUsage?.totalTokens ?? 'N/A'}** | **${mTel.tokenUsage?.totalTokens ?? 'N/A'}** | **${diff(nTel.tokenUsage?.totalTokens, mTel.tokenUsage?.totalTokens)}** | ${nTel.tokenUsage?.totalTokens <= mTel.tokenUsage?.totalTokens ? `n8n-as-code consumes **${(100 - (nTel.tokenUsage?.totalTokens / mTel.tokenUsage?.totalTokens) * 100).toFixed(0)}% fewer tokens**` : `Native MCP consumes **${(100 - (mTel.tokenUsage?.totalTokens / nTel.tokenUsage?.totalTokens) * 100).toFixed(0)}% fewer tokens**`} |
 | **Interaction Turns** | ${nTel.interactions?.turns ?? 'N/A'} | ${mTel.interactions?.turns ?? 'N/A'} | 0 | Both completed autonomously in 1 turn |
 
 ---
@@ -73,15 +73,16 @@ export class MarkdownReporter {
 
 ---
 
-## 💡 Engineering Insights & Takeaways
+## 💡 Engineering Insights & Takeaways (Run 3)
 
-### 1. Speed & Token Efficiency Advantage (n8n-as-code)
-- **3.2x Faster Build Time**: Local TypeScript code authoring with instantaneous file edits completely avoids network roundtrips during graph design.
-- **52% Token Reduction**: Generating a single cohesive TypeScript workflow file saves tens of thousands of tokens otherwise spent transporting expansive MCP tool schemas.
+### 1. Speed & Schema Validity (n8n Native MCP)
+- **Fast Build Duration (270s)**: With the extraneous verification loop removed, Native MCP built and deployed a comprehensive 23-node multi-agent architecture in just 4m30s.
+- **100% Server Schema Compliance (23/23)**: Iterative JSON-RPC validation against \`validate_node_config\` guaranteed zero parameter or subnode errors in production.
 
-### 2. Live Introspection & Remote Validation (n8n Native MCP)
-- **Live Server RPC**: Native MCP performs iterative remote validations against the live server schema via JSON-RPC.
-- **Proactive Execution Testing**: Native MCP autonomously initiated an execution run on the cloud instance before reporting completion.
+### 2. Token & Setup Efficiency (n8n-as-code)
+- **Fastest Setup (18s)**: Pure headless CLI setup (\`n8nac setup\` and \`n8nac env\`) completed in 18 seconds with zero HTTP bearer token / MCP bridging overhead.
+- **19% Token Reduction**: Declarative TypeScript authoring required 55k tokens vs 68k tokens for MCP schema introspection.
+- **Node Schema Discrepancies**: 4 nodes encountered server schema warnings (e.g. \`sessionKey\` without \`customKey\`, \`parameters.calendar.__rl\`), highlighting areas where local TypeScript validation schemas can be tightened to match n8n Cloud's RPC validator.
 
 ---
 *Report generated automatically by Antigravity Benchmark Harness Framework (Option B: Ground-Truth API Validation & Universal Minimax).*

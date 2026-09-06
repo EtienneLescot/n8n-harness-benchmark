@@ -92,15 +92,15 @@ Tested live on `https://etiennel.app.n8n.cloud` under identical conditions:
 
 | Evaluated Metric | Weight | n8n-as-code (@next) | n8n Native MCP | Advantage |
 |---|:---:|:---:|:---:|:---:|
-| **1. Workflow Quality (API Ground Truth)** | 35% | **85.88 / 100** | **100 / 100** | +14.12 pts Native MCP *(60% Schema + 40% Graph)* |
-| **2. Creation Time (Minimax Ratio)** | 25% | **100 / 100** *(474s)* | **31.08 / 100** *(1525s)* | **+68.92 pts n8n-as-code** *(3.2x faster build)* |
-| **3. Token Efficiency (Minimax Ratio)** | 20% | **100 / 100** *(72k)* | **48.00 / 100** *(150k)* | **+52.00 pts n8n-as-code** *(52% fewer tokens)* |
+| **1. Workflow Quality (API Ground Truth)** | 35% | **80.00 / 100** | **100 / 100** | +20.00 pts Native MCP *(23/23 valid nodes vs 8/12)* |
+| **2. Creation Time (Minimax Ratio)** | 25% | **72.58 / 100** *(372s)* | **100 / 100** *(270s)* | **+27.42 pts Native MCP** *(1.4x faster build)* |
+| **3. Token Efficiency (Minimax Ratio)** | 20% | **100 / 100** *(55k)* | **80.88 / 100** *(68k)* | **+19.12 pts n8n-as-code** *(19% fewer tokens)* |
 | **4. Setup Time (Minimax Ratio)** | 20% | **100 / 100** *(18s)* | **81.82 / 100** *(22s)* | **+18.18 pts n8n-as-code** *(1.2x faster setup)* |
-| **Overall Composite Score** | **100%** | **95.06 / 100** | **68.73 / 100** | 🏆 **n8n-as-code wins on speed & token efficiency** |
+| **Overall Composite Score** | **100%** | **86.14 / 100** | **92.54 / 100** | 🏆 **n8n Native MCP wins on build speed & schema compliance** |
 
-### Live Workflows Deployed
-- **n8n-as-code**: [`y7SWIwjXjL8x3mwU`](https://etiennel.app.n8n.cloud/workflow/y7SWIwjXjL8x3mwU) — 16 nodes, multi-agent email & calendar triage, 0 orphaned nodes, styled HTML dashboard.
-- **n8n Native MCP**: [`Nr5K7Hhga1nykKT1`](https://etiennel.app.n8n.cloud/workflow/Nr5K7Hhga1nykKT1) — 14 nodes, 0 orphaned nodes, multi-agent triage with supervisor & subnodes.
+### Live Workflows Deployed (Run 3)
+- **n8n-as-code**: [`zFWxpFpUBtn71uA8`](https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8) — 12 nodes, multi-agent triage, memory buffer, responsive HTML briefing, 0 orphaned nodes.
+- **n8n Native MCP**: [`vopZrnULIAAWt7Yh`](https://etiennel.app.n8n.cloud/workflow/vopZrnULIAAWt7Yh) — 23 nodes, 100% server schema validity (23/23), dual triggers (Schedule + Webhook), structured parsers, 0 orphaned nodes.
 
 ---
 

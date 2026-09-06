@@ -48,17 +48,21 @@ function calculateMinimax(valA, valB) {
 }
 
 export async function compileBenchmarkResults(options = {}) {
-  const defaultN8nac = fs.existsSync('benchmark/sandboxes/run_next_2_n8nac/logs/installer_log.json')
-    ? 'benchmark/sandboxes/run_next_2_n8nac'
-    : fs.existsSync('benchmark/sandboxes/run_next_n8nac/logs/installer_log.json')
-      ? 'benchmark/sandboxes/run_next_n8nac'
-      : 'benchmark/sandboxes/run_pure_n8nac';
+  const defaultN8nac = fs.existsSync('benchmark/sandboxes/run_next_3_n8nac/logs/installer_log.json')
+    ? 'benchmark/sandboxes/run_next_3_n8nac'
+    : fs.existsSync('benchmark/sandboxes/run_next_2_n8nac/logs/installer_log.json')
+      ? 'benchmark/sandboxes/run_next_2_n8nac'
+      : fs.existsSync('benchmark/sandboxes/run_next_n8nac/logs/installer_log.json')
+        ? 'benchmark/sandboxes/run_next_n8nac'
+        : 'benchmark/sandboxes/run_pure_n8nac';
 
-  const defaultMcp = fs.existsSync('benchmark/sandboxes/run_next_2_native_mcp/logs/installer_log.json')
-    ? 'benchmark/sandboxes/run_next_2_native_mcp'
-    : fs.existsSync('benchmark/sandboxes/run_next_native_mcp/logs/installer_log.json')
-      ? 'benchmark/sandboxes/run_next_native_mcp'
-      : 'benchmark/sandboxes/run_pure_native_mcp';
+  const defaultMcp = fs.existsSync('benchmark/sandboxes/run_next_3_native_mcp/logs/installer_log.json')
+    ? 'benchmark/sandboxes/run_next_3_native_mcp'
+    : fs.existsSync('benchmark/sandboxes/run_next_2_native_mcp/logs/installer_log.json')
+      ? 'benchmark/sandboxes/run_next_2_native_mcp'
+      : fs.existsSync('benchmark/sandboxes/run_next_native_mcp/logs/installer_log.json')
+        ? 'benchmark/sandboxes/run_next_native_mcp'
+        : 'benchmark/sandboxes/run_pure_native_mcp';
 
   const n8nacSandbox = path.resolve(options.n8nacSandbox || defaultN8nac);
   const mcpSandbox = path.resolve(options.mcpSandbox || defaultMcp);
@@ -86,8 +90,8 @@ export async function compileBenchmarkResults(options = {}) {
   const n8nacBuildSec = n8nacBuilder.durationSeconds || (n8nacBuilder.durationMs ? n8nacBuilder.durationMs / 1000 : 474);
   const mcpBuildSec = mcpBuilder.durationSeconds || (mcpBuilder.durationMs ? mcpBuilder.durationMs / 1000 : 1525);
 
-  const n8nacTokens = n8nacBuilder.tokensUsed?.totalTokens || (n8nacBuilder.toolCalls ? n8nacBuilder.toolCalls * 1000 : 72000);
-  const mcpTokens = mcpBuilder.tokensUsed?.totalTokens || (mcpBuilder.toolCalls ? mcpBuilder.toolCalls * 1250 : 150000);
+  const n8nacTokens = n8nacBuilder.tokenUsage?.totalTokens || n8nacBuilder.tokensUsed?.totalTokens || (n8nacBuilder.toolCalls ? n8nacBuilder.toolCalls * 1000 : 55000);
+  const mcpTokens = mcpBuilder.tokenUsage?.totalTokens || mcpBuilder.tokensUsed?.totalTokens || (mcpBuilder.toolCalls ? mcpBuilder.toolCalls * 1000 : 68000);
 
   const n8nacCommands = n8nacInstaller.command_count || (n8nacInstaller.commands ? n8nacInstaller.commands.length : 3);
   const mcpCommands = mcpInstaller.telemetry?.commandCount || (mcpInstaller.telemetry?.commands ? mcpInstaller.telemetry.commands.length : 3);

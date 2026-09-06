@@ -6,7 +6,7 @@
     "temperature": 0.2,
     "subagentRuntime": "invoke_subagent",
     "evaluationEngine": "Deterministic n8n API Validator + Universal Minimax Scoring (Option B)",
-    "timestamp": "2026-09-06T20:08:54.902Z",
+    "timestamp": "2026-09-06T20:22:34.676Z",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -14,12 +14,12 @@
     },
     "workflows": {
       "n8nac": {
-        "id": "y7SWIwjXjL8x3mwU",
-        "url": "https://etiennel.app.n8n.cloud/workflow/y7SWIwjXjL8x3mwU"
+        "id": "zFWxpFpUBtn71uA8",
+        "url": "https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8"
       },
       "nativeMcp": {
-        "id": "Nr5K7Hhga1nykKT1",
-        "url": "https://etiennel.app.n8n.cloud/workflow/Nr5K7Hhga1nykKT1"
+        "id": "vopZrnULIAAWt7Yh",
+        "url": "https://etiennel.app.n8n.cloud/workflow/vopZrnULIAAWt7Yh"
       }
     }
   },
@@ -30,32 +30,32 @@
     "setupTime": 0.2
   },
   "n8nac": {
-    "runId": "run_next_2_n8nac",
+    "runId": "run_next_3_n8nac",
     "toolName": "n8n-as-code",
     "scores": {
       "setupTime": 100,
-      "creationTime": 100,
+      "creationTime": 72.58,
       "tokenConsumption": 100,
-      "workflowQuality": 85.88,
-      "composite": 95.06
+      "workflowQuality": 80,
+      "composite": 86.14
     },
     "qualityAudit": {
-      "workflowId": "y7SWIwjXjL8x3mwU",
-      "workflowName": "Daily Briefing - Multi-Agent Email & Calendar Triage",
-      "instanceUrl": "https://etiennel.app.n8n.cloud/workflow/y7SWIwjXjL8x3mwU",
+      "workflowId": "zFWxpFpUBtn71uA8",
+      "workflowName": "Multi-Agent Daily Briefing & Dashboard",
+      "instanceUrl": "https://etiennel.app.n8n.cloud/workflow/zFWxpFpUBtn71uA8",
       "metrics": {
-        "nodeCount": 17,
-        "functionalNodeCount": 13,
-        "connectionCount": 12,
+        "nodeCount": 12,
+        "functionalNodeCount": 12,
+        "connectionCount": 11,
         "orphanedNodeCount": 0,
-        "validNodeCount": 13,
+        "validNodeCount": 8,
         "invalidNodeCount": 4
       },
       "scores": {
-        "nodeSchemaValidity": 76.47,
+        "nodeSchemaValidity": 66.67,
         "graphIntegrity": 100,
         "liveExecution": 0,
-        "compositeQuality": 85.88
+        "compositeQuality": 80
       },
       "liveExecution": {
         "executed": false,
@@ -67,17 +67,7 @@
       },
       "invalidNodes": [
         {
-          "name": "OpenAI Model - Triage",
-          "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-          "errors": [
-            {
-              "path": "parameters.builtInTools",
-              "message": "Field \"parameters.builtInTools\": This field is only allowed when: /responsesApiEnabled=true"
-            }
-          ]
-        },
-        {
-          "name": "Memory - Triage Agent",
+          "name": "Simple Memory",
           "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
           "errors": [
             {
@@ -87,35 +77,45 @@
           ]
         },
         {
-          "name": "OpenAI Model - Executive",
-          "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+          "name": "Google Calendar Tool",
+          "type": "n8n-nodes-base.googleCalendarTool",
           "errors": [
             {
-              "path": "parameters.builtInTools",
-              "message": "Field \"parameters.builtInTools\": This field is only allowed when: /responsesApiEnabled=true"
+              "path": "",
+              "message": "Validation failed: \"parameters.calendar.__rl\" must be \"true\"."
             }
           ]
         },
         {
-          "name": "Memory - Executive Agent",
-          "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+          "name": "Daily Briefing Orchestrator",
+          "type": "@n8n/n8n-nodes-langchain.agent",
           "errors": [
             {
-              "path": "parameters.sessionKey",
-              "message": "Field \"parameters.sessionKey\": This field is only allowed when: sessionIdType=\"customKey\""
+              "path": "parameters.text",
+              "message": "Field \"parameters.text\": This field is only allowed when: promptType=\"define\""
+            }
+          ]
+        },
+        {
+          "name": "Generate HTML Dashboard",
+          "type": "n8n-nodes-base.html",
+          "errors": [
+            {
+              "path": "parameters.dataPropertyName",
+              "message": "Field \"parameters.dataPropertyName\": This field is only allowed when one of: (operation=\"extractHtmlContent\", sourceData=\"binary\") or (operation=\"extractHtmlContent\", sourceData=\"json\")"
             }
           ]
         }
       ],
-      "timestamp": "2026-09-06T20:08:54.703Z"
+      "timestamp": "2026-09-06T20:22:34.474Z"
     },
     "rawMetrics": {
       "setupTimeSec": 18,
       "setupCommandsCount": 3,
-      "totalDurationSec": 474,
-      "totalDurationMs": 474000,
+      "totalDurationSec": 372,
+      "totalDurationMs": 372000,
       "tokenUsage": {
-        "totalTokens": 72000
+        "totalTokens": 55000
       },
       "interactions": {
         "turns": 1
@@ -123,25 +123,25 @@
     }
   },
   "nativeMcp": {
-    "runId": "run_next_2_native_mcp",
+    "runId": "run_next_3_native_mcp",
     "toolName": "n8n-native-mcp",
     "scores": {
       "setupTime": 81.82,
-      "creationTime": 31.08,
-      "tokenConsumption": 48,
+      "creationTime": 100,
+      "tokenConsumption": 80.88,
       "workflowQuality": 100,
-      "composite": 68.73
+      "composite": 92.54
     },
     "qualityAudit": {
-      "workflowId": "Nr5K7Hhga1nykKT1",
-      "workflowName": "Assistant Quotidien Multi-Agents : Triage Emails, Calendrier & Dashboard",
-      "instanceUrl": "https://etiennel.app.n8n.cloud/workflow/Nr5K7Hhga1nykKT1",
+      "workflowId": "vopZrnULIAAWt7Yh",
+      "workflowName": "Multi-Agent Daily Executive Briefing & Dashboard",
+      "instanceUrl": "https://etiennel.app.n8n.cloud/workflow/vopZrnULIAAWt7Yh",
       "metrics": {
-        "nodeCount": 14,
-        "functionalNodeCount": 14,
-        "connectionCount": 12,
+        "nodeCount": 23,
+        "functionalNodeCount": 20,
+        "connectionCount": 19,
         "orphanedNodeCount": 0,
-        "validNodeCount": 14,
+        "validNodeCount": 23,
         "invalidNodeCount": 0
       },
       "scores": {
@@ -159,15 +159,15 @@
         "durationMs": 0
       },
       "invalidNodes": [],
-      "timestamp": "2026-09-06T20:08:54.902Z"
+      "timestamp": "2026-09-06T20:22:34.676Z"
     },
     "rawMetrics": {
       "setupTimeSec": 22,
       "setupCommandsCount": 3,
-      "totalDurationSec": 1525,
-      "totalDurationMs": 1525000,
+      "totalDurationSec": 270,
+      "totalDurationMs": 270000,
       "tokenUsage": {
-        "totalTokens": 150000
+        "totalTokens": 68000
       },
       "interactions": {
         "turns": 1

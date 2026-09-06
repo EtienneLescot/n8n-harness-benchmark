@@ -1,0 +1,708 @@
+{
+  "id": "vopZrnULIAAWt7Yh",
+  "name": "Multi-Agent Daily Executive Briefing & Dashboard",
+  "description": "Workflow multi-agents vérifiant quotidiennement les emails Google et le calendrier, avec triage intelligent et dashboard HTML interactif.",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-06T20:18:56.210Z",
+  "updatedAt": "2026-09-06T20:18:56.210Z",
+  "isArchived": false,
+  "versionId": "d2e736ec-4ae0-4abb-a9e2-b26eebddab51",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "951a0d0e-fba0-4a0e-9dd8-3be581a6c1e0",
+      "name": "Daily Morning Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        208
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "65655dd5-b53f-4024-8478-8ddb1326a392",
+      "name": "Initialize Daily Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        304
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dateToday",
+              "name": "dateToday",
+              "value": "={{ $now.toFormat(\"yyyy-MM-dd\") }}",
+              "type": "string"
+            },
+            {
+              "id": "startOfDay",
+              "name": "startOfDay",
+              "value": "={{ $now.startOf(\"day\").toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "endOfDay",
+              "name": "endOfDay",
+              "value": "={{ $now.endOf(\"day\").toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      }
+    },
+    {
+      "id": "971e5fb9-0bfc-495a-be64-95525472d020",
+      "name": "Dashboard Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "daily-dashboard",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "cf149fed-c153-48a3-9c2a-c4a9662ddfbc"
+    },
+    {
+      "id": "4dd94b60-c6bc-44e6-baaa-305774983b54",
+      "name": "Fetch Google Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        112
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 15,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "0e20ab81-7833-40dd-8c3c-d0f9109669c4"
+    },
+    {
+      "id": "f0d6cfc9-240a-498a-a1ef-62782be07575",
+      "name": "Format Emails For Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        112
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst validEmails = [];\nfor (const item of items) {\n  const j = item.json;\n  if (j && (j.Subject || j.subject || j.snippet || j.From || j.from)) {\n    validEmails.push({\n      from: j.From || j.from || 'Inconnu',\n      subject: j.Subject || j.subject || '(Sans objet)',\n      snippet: j.snippet || '',\n      date: j.internalDate || ''\n    });\n  }\n}\nreturn [{\n  json: {\n    emailCount: validEmails.length,\n    rawEmails: validEmails,\n    agentPrompt: validEmails.length > 0\n      ? 'Voici les ' + validEmails.length + ' emails reçus aujourd hui à trier et analyser :\\n' + JSON.stringify(validEmails, null, 2)\n      : 'Aucun nouvel email reçu sur les dernières 24h.'\n  }\n}];"
+      }
+    },
+    {
+      "id": "f2b74ed3-dd15-4fdc-ac89-159d2855ca29",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.agentPrompt }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es un agent IA spécialisé dans le tri et l analyse des emails professionnels. Classe chaque email dans l une des catégories : \"urgent\", \"action_required\", \"important\", \"newsletter\", ou \"info\". Extrais précisément les actions à mener et identifie les urgences réelles."
+        }
+      }
+    },
+    {
+      "id": "2bc7eafb-39d9-4195-83e4-dd9da6124985",
+      "name": "OpenAI Model - Email Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        224
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "e8cc6eb6-24be-4a8a-b41b-d6d55cd8c45a",
+      "name": "Email Triage Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        224
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"summary\":\"Aperçu global de la boîte de réception\",\"urgentCount\":1,\"actionRequiredCount\":1,\"emails\":[{\"from\":\"expediteur@domaine.com\",\"subject\":\"Sujet du message\",\"category\":\"urgent\",\"summary\":\"Résumé clair en une phrase\",\"actionRequired\":\"Action spécifique à entreprendre\"}]}"
+      }
+    },
+    {
+      "id": "eddf04c3-70d2-46a0-b520-4e58e9642c1e",
+      "name": "Merge Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1248,
+        304
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition"
+      }
+    },
+    {
+      "id": "11d585ad-183b-43f8-98dc-7992af81c8c5",
+      "name": "Fetch Google Calendar Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        512
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": false,
+        "limit": 20,
+        "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+        "timeMax": "={{ $now.endOf(\"day\").toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "8f132302-c0f0-4990-8a33-750a68a2899f",
+      "name": "Format Calendar For Agent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        512
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst validEvents = [];\nfor (const item of items) {\n  const j = item.json;\n  if (j && (j.summary || j.id)) {\n    validEvents.push({\n      summary: j.summary || '(Sans titre)',\n      start: j.start?.dateTime || j.start?.date || '',\n      end: j.end?.dateTime || j.end?.date || '',\n      description: j.description || '',\n      organizer: j.organizer?.email || ''\n    });\n  }\n}\nreturn [{\n  json: {\n    eventCount: validEvents.length,\n    rawEvents: validEvents,\n    agentPrompt: validEvents.length > 0\n      ? 'Voici les ' + validEvents.length + ' événements du calendrier d aujourd hui :\\n' + JSON.stringify(validEvents, null, 2)\n      : 'Aucun événement prévu dans le calendrier aujourd hui.'\n  }\n}];"
+      }
+    },
+    {
+      "id": "a3526b23-a677-4b81-8c57-efa2ab38f9ed",
+      "name": "Calendar Agenda Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        512
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.agentPrompt }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es un assistant IA spécialisé dans la gestion de temps et l optimisation de journée. Analyse la liste des réunions du jour, calcule le temps disponible pour le deep work, détecte les réunions prioritaires et note la préparation requise pour chacune."
+        }
+      }
+    },
+    {
+      "id": "eed18521-5c5f-46a8-977d-76d5dc4fc933",
+      "name": "OpenAI Model - Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        736
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "516ba22c-dd40-4ee6-b42b-061c37ed9fef",
+      "name": "Calendar Agenda Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        736
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"summary\":\"Aperçu de la journée et charge de travail\",\"totalMeetings\":2,\"estimatedFocusHours\":4.5,\"events\":[{\"summary\":\"Titre de la réunion\",\"startTime\":\"09:30\",\"endTime\":\"10:00\",\"durationMinutes\":30,\"isImportant\":true,\"preparationNeeded\":\"Préparer les métriques clés\"}]}"
+      }
+    },
+    {
+      "id": "fb76bf27-7c01-4c98-a040-6c55b27b9333",
+      "name": "Executive Synthesis Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1472,
+        304
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voici les résultats des deux agents spécialistes pour la journée :\n\n1. ANALYSE DES EMAILS :\n{{ JSON.stringify($(\"Email Triage Agent\").all()[0].json, null, 2) }}\n\n2. ANALYSE DU CALENDRIER :\n{{ JSON.stringify($(\"Calendar Agenda Agent\").all()[0].json, null, 2) }}\n\nSynthétise un briefing exécutif stratégique : croise les informations, établis les 3 priorités majeures, et formule des conseils pour maximiser l impact de la journée.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es le Chief of Staff et directeur exécutif IA. Tu reçois l analyse détaillée des emails par l agent Email et l analyse de l agenda par l agent Calendrier. Ton rôle est d établir des liens croisés (ex: un email qui prépare une réunion de l après-midi), de définir la stratégie du jour et les priorités absolues avec clarté, élégance et proactivité."
+        }
+      }
+    },
+    {
+      "id": "0eb338a4-6f79-4376-b89d-63b5ca60fd07",
+      "name": "OpenAI Model - Synthesis Agent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1488,
+        528
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "2911e8ca-dec7-4252-a0ff-11e5a1bc3616",
+      "name": "Executive Synthesis Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1616,
+        528
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"greeting\":\"Bonjour, voici votre briefing exécutif du jour.\",\"dailyTheme\":\"Focus Stratégique & Clôture Budgétaire\",\"topPriorities\":[\"Valider le budget avec Sophie lors du point de 14h\",\"Traiter les demandes urgentes avant midi\"],\"crossCorrelations\":[\"L email de Sophie concerne directement le sujet de votre réunion de 14h\"],\"strategicAdvice\":\"Privilégiez 2h de deep work ce matin pour finaliser vos dossiers.\",\"motivationalQuote\":\"L efficacité consiste à faire les bonnes choses au bon moment.\"}"
+      }
+    },
+    {
+      "id": "37420673-3657-4953-8991-af19310e3b20",
+      "name": "Generate HTML Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        304
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const synthesis = $('Executive Synthesis Agent').all()[0]?.json || {};\nconst emailData = $('Email Triage Agent').all()[0]?.json || {};\nconst calendarData = $('Calendar Agenda Agent').all()[0]?.json || {};\n\nconst todayStr = new Date().toLocaleDateString('fr-FR', {\n  weekday: 'long',\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric'\n});\n\nconst emails = emailData.emails || [];\nconst events = calendarData.events || [];\nconst priorities = synthesis.topPriorities || [];\nconst correlations = synthesis.crossCorrelations || [];\n\nconst emailRowsHtml = emails.length > 0\n  ? emails.map(e => {\n      const badgeClass = e.category === 'urgent'\n        ? 'bg-rose-100 text-rose-700 border-rose-200'\n        : (e.category === 'action_required'\n          ? 'bg-amber-100 text-amber-700 border-amber-200'\n          : 'bg-emerald-100 text-emerald-700 border-emerald-200');\n      const actionHtml = e.actionRequired\n        ? '<div class=\"mt-2 text-xs font-medium text-amber-800 bg-amber-50 p-2 rounded border border-amber-200\">⚡ Action : ' + e.actionRequired + '</div>'\n        : '';\n      return '<div class=\"p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition\">'\n        + '<div class=\"flex items-center justify-between gap-2 mb-1\">'\n        + '<span class=\"font-semibold text-slate-900 text-sm\">' + (e.from || 'Inconnu') + '</span>'\n        + '<span class=\"text-xs px-2 py-0.5 rounded-full font-semibold border ' + badgeClass + '\">' + (e.category || 'Info').toUpperCase() + '</span>'\n        + '</div>'\n        + '<div class=\"font-medium text-slate-800 text-sm mb-1\">' + (e.subject || '(Sans objet)') + '</div>'\n        + '<div class=\"text-xs text-slate-600\">' + (e.summary || '') + '</div>'\n        + actionHtml\n        + '</div>';\n    }).join('')\n  : '<div class=\"p-6 text-center text-sm text-slate-500 bg-slate-50 rounded-xl\">Aucun email prioritaire pour aujourd\\'hui.</div>';\n\nconst eventsHtml = events.length > 0\n  ? events.map(ev => {\n      const prepHtml = ev.preparationNeeded\n        ? '<div class=\"mt-2 text-xs text-indigo-700 bg-indigo-50 p-2 rounded border border-indigo-100\">📌 Préparation : ' + ev.preparationNeeded + '</div>'\n        : '';\n      return '<div class=\"flex gap-4 p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition\">'\n        + '<div class=\"flex flex-col items-center justify-center min-w-[70px] bg-indigo-50 text-indigo-900 rounded-lg p-2 font-mono text-xs font-bold\">'\n        + '<span>' + (ev.startTime || '--:--') + '</span>'\n        + '<span class=\"text-[10px] text-indigo-500 font-normal\">à ' + (ev.endTime || '--:--') + '</span>'\n        + '</div>'\n        + '<div class=\"flex-1\">'\n        + '<div class=\"font-semibold text-slate-900 text-sm\">' + (ev.summary || 'Réunion') + '</div>'\n        + prepHtml\n        + '</div>'\n        + '</div>';\n    }).join('')\n  : '<div class=\"p-6 text-center text-sm text-slate-500 bg-slate-50 rounded-xl\">Aucun rendez-vous planifié dans l\\'agenda.</div>';\n\nconst prioritiesHtml = priorities.map((p, idx) => {\n  return '<li class=\"flex items-start gap-3 p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 text-sm text-slate-800\">'\n    + '<span class=\"flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-xs shrink-0\">' + (idx + 1) + '</span>'\n    + '<span>' + p + '</span>'\n    + '</li>';\n}).join('');\n\nconst correlationsHtml = correlations.length > 0\n  ? correlations.map(c => '<div class=\"p-3 bg-purple-50 border border-purple-200 text-purple-900 text-xs rounded-lg flex items-start gap-2\"><span>💡</span><span>' + c + '</span></div>').join('')\n  : '';\n\nconst html = '<!DOCTYPE html>'\n  + '<html lang=\"fr\">'\n  + '<head>'\n  + '<meta charset=\"UTF-8\">'\n  + '<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">'\n  + '<title>Executive Daily Briefing</title>'\n  + '<script src=\"https://cdn.tailwindcss.com\"></script>'\n  + '</head>'\n  + '<body class=\"bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8\">'\n  + '<div class=\"max-w-6xl mx-auto space-y-6\">'\n  + '  <div class=\"bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 md:p-8 shadow-xl border border-slate-800\">'\n  + '    <div class=\"flex flex-col md:flex-row md:items-center justify-between gap-4\">'\n  + '      <div>'\n  + '        <div class=\"text-xs uppercase tracking-widest text-indigo-400 font-semibold mb-1\">Système Multi-Agents Exécutif</div>'\n  + '        <h1 class=\"text-2xl md:text-3xl font-bold tracking-tight\">' + (synthesis.greeting || 'Briefing Quotidien') + '</h1>'\n  + '        <p class=\"text-sm text-slate-300 capitalize mt-1\">' + todayStr + ' • <span class=\"text-indigo-300 font-medium\">' + (synthesis.dailyTheme || '') + '</span></p>'\n  + '      </div>'\n  + '      <div class=\"flex items-center gap-2\">'\n  + '        <span class=\"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30\">'\n  + '          <span class=\"w-2 h-2 rounded-full bg-emerald-400 animate-pulse\"></span> Synchronisé'\n  + '        </span>'\n  + '      </div>'\n  + '    </div>'\n  + '  </div>'\n  + '  <div class=\"grid grid-cols-2 md:grid-cols-4 gap-4\">'\n  + '    <div class=\"bg-white p-5 rounded-2xl border border-slate-200 shadow-sm\">'\n  + '      <div class=\"text-xs font-semibold text-slate-500 uppercase tracking-wider\">Réunions</div>'\n  + '      <div class=\"text-2xl font-black text-indigo-600 mt-1\">' + (calendarData.totalMeetings || 0) + '</div>'\n  + '      <div class=\"text-xs text-slate-500 mt-0.5\">rendez-vous planifiés</div>'\n  + '    </div>'\n  + '    <div class=\"bg-white p-5 rounded-2xl border border-slate-200 shadow-sm\">'\n  + '      <div class=\"text-xs font-semibold text-slate-500 uppercase tracking-wider\">Deep Work</div>'\n  + '      <div class=\"text-2xl font-black text-emerald-600 mt-1\">' + (calendarData.estimatedFocusHours || 0) + 'h</div>'\n  + '      <div class=\"text-xs text-slate-500 mt-0.5\">temps de concentration</div>'\n  + '    </div>'\n  + '    <div class=\"bg-white p-5 rounded-2xl border border-slate-200 shadow-sm\">'\n  + '      <div class=\"text-xs font-semibold text-slate-500 uppercase tracking-wider\">Emails Traités</div>'\n  + '      <div class=\"text-2xl font-black text-slate-800 mt-1\">' + (emails.length || 0) + '</div>'\n  + '      <div class=\"text-xs text-slate-500 mt-0.5\">dernières 24h</div>'\n  + '    </div>'\n  + '    <div class=\"bg-white p-5 rounded-2xl border border-slate-200 shadow-sm\">'\n  + '      <div class=\"text-xs font-semibold text-rose-600 uppercase tracking-wider\">Actions Urgentes</div>'\n  + '      <div class=\"text-2xl font-black text-rose-600 mt-1\">' + (emailData.urgentCount || 0) + '</div>'\n  + '      <div class=\"text-xs text-slate-500 mt-0.5\">priorité maximale</div>'\n  + '    </div>'\n  + '  </div>'\n  + '  <div class=\"bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4\">'\n  + '    <div class=\"flex items-center gap-2\">'\n  + '      <span class=\"text-lg\">🎯</span>'\n  + '      <h2 class=\"text-base font-bold text-slate-900\">Priorités Absolues de la Journée</h2>'\n  + '    </div>'\n  + '    <ul class=\"space-y-2\">' + prioritiesHtml + '</ul>'\n  + (correlationsHtml ? '    <div class=\"pt-2 space-y-2\"><div class=\"text-xs font-semibold uppercase text-purple-800 tracking-wider\">Synergies & Corrélations Détectées</div>' + correlationsHtml + '</div>' : '')\n  + (synthesis.strategicAdvice ? '    <div class=\"p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-lg font-medium flex items-center gap-2\"><span>💡 Recommandation Stratégique :</span><span>' + synthesis.strategicAdvice + '</span></div>' : '')\n  + '  </div>'\n  + '  <div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\">'\n  + '    <div class=\"space-y-3\">'\n  + '      <div class=\"flex items-center justify-between\">'\n  + '        <h3 class=\"font-bold text-slate-900 text-sm flex items-center gap-2\"><span>📅</span> Agenda & Rendez-vous</h3>'\n  + '        <span class=\"text-xs text-slate-500 font-medium\">' + events.length + ' session(s)</span>'\n  + '      </div>'\n  + '      <div class=\"space-y-3\">' + eventsHtml + '</div>'\n  + '    </div>'\n  + '    <div class=\"space-y-3\">'\n  + '      <div class=\"flex items-center justify-between\">'\n  + '        <h3 class=\"font-bold text-slate-900 text-sm flex items-center gap-2\"><span>📬</span> Triage Intelligent des Emails</h3>'\n  + '        <span class=\"text-xs text-slate-500 font-medium\">' + emails.length + ' analysé(s)</span>'\n  + '      </div>'\n  + '      <div class=\"space-y-3\">' + emailRowsHtml + '</div>'\n  + '    </div>'\n  + '  </div>'\n  + (synthesis.motivationalQuote ? '  <div class=\"text-center text-xs text-slate-400 italic py-2\">« ' + synthesis.motivationalQuote + ' »</div>' : '')\n  + '</div>'\n  + '</body>'\n  + '</html>';\n\nreturn [{ json: { html: html, briefing: synthesis, emailTriage: emailData, calendarAgenda: calendarData } }];"
+      }
+    },
+    {
+      "id": "a06fabe1-75fb-4f8e-bbf5-06af68095e69",
+      "name": "Check Trigger Source",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2048,
+        304
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Dashboard Webhook\").all().length > 0 ? \"webhook\" : \"schedule\" }}",
+              "rightValue": "webhook",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3b801654-8215-4d14-9cba-0191250fb31d",
+      "name": "Respond With HTML Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2272,
+        304
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "23a0396b-b8af-4188-acbb-cafdfbffbec4",
+      "name": "Sticky Note 55daed51",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        720
+      ],
+      "parameters": {
+        "content": "### 📬 Agent Spécialiste Emails\nRécupération automatique des emails Gmail récents, formatage du contexte et analyse par l'Agent IA de triage.",
+        "color": 4
+      }
+    },
+    {
+      "id": "3ad7bfea-c011-416e-ab16-282767fc9729",
+      "name": "Sticky Note 889482b2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        976
+      ],
+      "parameters": {
+        "content": "### 📅 Agent Spécialiste Agenda\nRécupération Google Calendar de la journée, calcul des créneaux de travail et analyse par l'Agent IA d'agenda.",
+        "color": 6
+      }
+    },
+    {
+      "id": "2d8da839-d223-4e23-9213-d09612ad3192",
+      "name": "Sticky Note f7fd2db0",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        1232
+      ],
+      "parameters": {
+        "content": "### 👑 Synthèse Exécutive & Dashboard\nFusion des flux, synthèse stratégique croisée par le Chief of Staff IA et génération du dashboard HTML interactif.",
+        "color": 5
+      }
+    }
+  ],
+  "connections": {
+    "Daily Morning Schedule": {
+      "main": [
+        [
+          {
+            "node": "Initialize Daily Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Daily Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch Google Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Google Calendar Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Webhook": {
+      "main": [
+        [
+          {
+            "node": "Initialize Daily Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Google Emails": {
+      "main": [
+        [
+          {
+            "node": "Format Emails For Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Emails For Agent": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Email Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Executive Synthesis Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Google Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Format Calendar For Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Calendar For Agent": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agenda Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agenda Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Calendar Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Agenda Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agenda Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Calendar Agenda Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executive Synthesis Agent": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Synthesis Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Executive Synthesis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executive Synthesis Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Executive Synthesis Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Check Trigger Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Trigger Source": {
+      "main": [
+        [
+          {
+            "node": "Respond With HTML Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "vopZrnULIAAWt7Yh",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-06T20:18:56.214Z",
+      "updatedAt": "2026-09-06T20:18:56.214Z"
+    }
+  ],
+  "activeVersion": null
+}
