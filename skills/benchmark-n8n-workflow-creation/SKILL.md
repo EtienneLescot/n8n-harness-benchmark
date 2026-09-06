@@ -114,7 +114,7 @@ CONFINEMENT & SECURITY RULES (CRITICAL):
 - NEVER list, inspect, read, or execute commands in parent directories ('..') or sibling workspaces.
 - Discover and utilize the tools, CLI binaries, libraries, or environment variables present in your local workspace.
 - INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création.
-- NOMMAGE OPAQUE DU WORKFLOW : Afin d'éviter toute fuite d'information ou reconnaissance par un autre processus sur l'instance partagée, vous devez obligatoirement attribuer à votre workflow un nom opaque et générique (par exemple "benchmark-workflow-canvas"), sans jamais inclure les mots-clés de la consigne (ne pas inclure "multi-agent", "daily briefing", "email", "calendar", etc.).`,
+- Nommez obligatoirement votre workflow sous la forme : workflow-<timestamp> (ex: workflow-1741300000).`,
   enable_write_tools: true,
   enable_mcp_tools: true,
   enable_subagent_tools: false
