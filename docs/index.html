@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>n8n Harness Benchmark — n8n-as-code vs. n8n Native MCP</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Standardized, deterministic benchmark comparing n8n-as-code with n8n Native MCP for AI-driven workflow creation — zero subjective LLM judges, server-side RPC validation, and universal minimax scaling.">
+  <meta name="description" content="Aggregated benchmark comparing n8n-as-code with n8n Native MCP across multiple agent runtimes, LLMs, and workflow scenarios.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -105,7 +105,7 @@
       align-items: center;
     }
     .brand b { font-weight: 500; color: var(--ink); }
-    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
     .btn {
       font-family: var(--mono);
       font-size: 11px;
@@ -143,24 +143,6 @@
       color: var(--ink-2);
       max-width: 54ch;
       text-wrap: pretty;
-    }
-    .prompt-box {
-      margin-top: 18px;
-      padding: 12px 14px;
-      background: var(--sunk);
-      border-left: 3px solid var(--accent);
-      font-family: var(--mono);
-      font-size: 11.5px;
-      line-height: 1.5;
-      color: var(--ink-2);
-    }
-    .prompt-box span {
-      display: block;
-      font-size: 9.5px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      color: var(--ink-3);
-      margin-bottom: 4px;
     }
 
     .hero-side {
@@ -205,7 +187,66 @@
       line-height: 1.5;
     }
 
-    section { padding: clamp(40px, 5vw, 64px) 0 0; }
+    /* Filter Bar */
+    .filter-panel {
+      margin: 24px 0 12px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px 24px;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .filter-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    select {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--ink);
+      background: var(--paper);
+      border: 1px solid var(--line-2);
+      border-radius: 2px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+
+    .view-toggle {
+      margin-left: auto;
+      display: flex;
+      border: 1px solid var(--line-2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .view-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: transparent;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      color: var(--ink-3);
+    }
+    .view-btn.active {
+      background: var(--ink);
+      color: var(--paper);
+      font-weight: 500;
+    }
+
+    section { padding: clamp(36px, 4.5vw, 56px) 0 0; }
     .sec-head {
       display: flex;
       align-items: baseline;
@@ -230,7 +271,7 @@
       color: var(--ink-3);
     }
     .prose {
-      margin: 0 0 24px;
+      margin: 0 0 20px;
       font-size: 1rem;
       line-height: 1.6;
       color: var(--ink-2);
@@ -238,6 +279,7 @@
       text-wrap: pretty;
     }
 
+    /* Cards */
     .board-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -250,9 +292,7 @@
       padding: 24px;
       position: relative;
     }
-    .contender-card.winner {
-      border-top: 3px solid var(--win);
-    }
+    .contender-card.lead { border-top: 3px solid var(--win); }
     .card-top {
       display: flex;
       justify-content: space-between;
@@ -322,8 +362,9 @@
       left: 0; top: 0; bottom: 0;
       background: var(--ink-2);
     }
-    .contender-card.winner .bar-fill { background: var(--win); }
+    .contender-card.lead .bar-fill { background: var(--win); }
 
+    /* Tables */
     .tw {
       overflow-x: auto;
       border-top: 1px solid var(--ink);
@@ -351,9 +392,10 @@
       border-bottom: 1px solid var(--line);
       color: var(--ink);
     }
-    tr:last-child td { border-bottom: none; }
-    td.num { text-align: right; }
-    th.num { text-align: right; }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover td { background: var(--sunk); }
+    tr.selected td { background: var(--accent-soft); font-weight: 500; }
+    td.num, th.num { text-align: right; }
 
     .aside {
       border: 1px solid var(--line);
@@ -364,6 +406,31 @@
     }
     .aside p { margin: 0; font-size: .95rem; line-height: 1.6; color: var(--ink-2); }
     .aside strong { color: var(--ink); font-weight: 600; }
+
+    /* Detail Modal / Panel */
+    .run-detail {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--accent);
+      padding: 24px;
+      margin-top: 24px;
+    }
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+    .detail-title {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
 
     footer {
       margin-top: 80px;
@@ -385,12 +452,12 @@
       <div class="brand">
         <b>n8n Harness Benchmark</b>
         <span>/</span>
-        <span>n8n-as-code (@next) vs. n8n Native MCP</span>
+        <span>Cross-Agent Matrix</span>
       </div>
       <div class="top-actions">
         <button class="btn" id="themeBtn" onclick="toggleTheme()">Theme</button>
         <a class="btn" href="https://github.com/EtienneLescot/n8n-harness-benchmark" target="_blank" rel="noopener">GitHub</a>
-        <a class="btn" href="./results.json" target="_blank">Raw JSON</a>
+        <a class="btn" href="./aggregate.json" target="_blank">Aggregate JSON</a>
       </div>
     </div>
 
@@ -398,287 +465,256 @@
       <div>
         <h1>How fast, frugal, and compliant is AI-driven workflow creation on n8n?</h1>
         <p class="hero-lede">
-          The exact same prompt, the same live n8n Cloud instance, and the same orchestrator — evaluated with zero subjective LLM judges, server-side RPC parameter validation, and universal minimax scaling.
+          Comparing code-first GitOps (<code>n8n-as-code</code>) with remote JSON-RPC (<code>n8n Native MCP</code>) across coding agents, models, and scenarios. Evaluated deterministically with zero subjective LLM judges.
         </p>
-        <div class="prompt-box">
-          <span>Standardized Prompt</span>
-          "Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."
-        </div>
       </div>
 
       <div class="hero-side">
         <div class="stats">
           <div>
-            <b>40 %</b>
-            <span>Quality Weight (RPC)</span>
+            <b id="statRuns">3</b>
+            <span>Total Submissions</span>
           </div>
           <div>
-            <b>0 LLM</b>
-            <span>Subjective Judges</span>
+            <b id="statWinRatio">2 : 1</b>
+            <span>MCP vs n8nac Wins</span>
           </div>
           <div>
-            <b>55k vs 68k</b>
-            <span>Tokens Consumed</span>
+            <b id="statAvgTokens">56k vs 80k</b>
+            <span>Avg Tokens (Frugality)</span>
           </div>
           <div>
-            <b>270s vs 372s</b>
-            <span>Build Duration</span>
+            <b id="statAvgTime">372s vs 270s</b>
+            <span>Latest Duration</span>
           </div>
         </div>
         <div class="stamp">
-          Platform: win32-x64 / Node v24.14.0<br>
-          Instance: <a href="https://etiennel.app.n8n.cloud" target="_blank" rel="noopener">etiennel.app.n8n.cloud</a><br>
-          Orchestrator: Antigravity / Gemini 3.8 Flash High
+          Evaluation: Server RPC <code>validate_node_config</code> + Minimax Scaling<br>
+          Target: <a href="https://etiennel.app.n8n.cloud" target="_blank" rel="noopener">etiennel.app.n8n.cloud</a>
         </div>
       </div>
     </div>
 
-    <!-- Leaderboard -->
-    <section>
-      <div class="sec-head">
-        <h2>Overall Leaderboard (Run 3 — Sanitized & Rebalanced)</h2>
-        <span class="sec-note">Minimax-scaled & API Ground Truth</span>
+    <!-- Filter Bar -->
+    <div class="filter-panel">
+      <div class="filter-group">
+        <span class="filter-label">Coding Agent:</span>
+        <select id="agentFilter" onchange="applyFilters()">
+          <option value="ALL">All Agents (Antigravity, etc.)</option>
+        </select>
       </div>
-      <p class="prose">
-        Composite scores aggregate four standardized dimensions: <strong>Workflow Quality (40%)</strong>, <strong>Creation Time (25%)</strong>, <strong>Token Efficiency (25%)</strong>, and <strong>Setup Time (10%)</strong>.
-      </p>
+      <div class="filter-group">
+        <span class="filter-label">Model:</span>
+        <select id="modelFilter" onchange="applyFilters()">
+          <option value="ALL">All Models</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Prompt / Scenario:</span>
+        <select id="promptFilter" onchange="applyFilters()">
+          <option value="ALL">All Prompts</option>
+        </select>
+      </div>
 
-      <div class="board-grid">
-        <!-- Native MCP Card -->
-        <div class="contender-card winner">
-          <div class="card-top">
-            <span class="contender-name">n8n Native MCP</span>
-            <span class="badge win">🏆 Winner (+8.26 pts)</span>
-          </div>
-          <div class="card-score">
-            <b>93.40</b>
-            <span>/ 100</span>
-          </div>
-          <div class="bars">
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Workflow Quality (40%)</span>
-                <span>100.00 / 100</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 100%;"></div></div>
-            </div>
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Creation Time (25%)</span>
-                <span>100.00 / 100 (270s)</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 100%;"></div></div>
-            </div>
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Token Efficiency (25%)</span>
-                <span>80.88 / 100 (68k)</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 80.88%;"></div></div>
-            </div>
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Setup Time (10%)</span>
-                <span>81.82 / 100 (22s)</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 81.82%;"></div></div>
-            </div>
-          </div>
+      <div class="view-toggle">
+        <button id="btnViewAgg" class="view-btn active" onclick="setViewMode('aggregate')">Matrix</button>
+        <button id="btnViewRuns" class="view-btn" onclick="setViewMode('runs')">Runs List</button>
+      </div>
+    </div>
+
+    <!-- AGGREGATE VIEW -->
+    <div id="aggregateView">
+      <section>
+        <div class="sec-head">
+          <h2>Aggregated Matrix Comparison</h2>
+          <span class="sec-note" id="aggSampleCount">Across 3 verified runs</span>
         </div>
-
-        <!-- n8n-as-code Card -->
-        <div class="contender-card">
-          <div class="card-top">
-            <span class="contender-name">n8n-as-code (@next)</span>
-            <span class="badge">Contender</span>
-          </div>
-          <div class="card-score">
-            <b>85.14</b>
-            <span>/ 100</span>
-          </div>
-          <div class="bars">
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Workflow Quality (40%)</span>
-                <span>80.00 / 100</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 80%;"></div></div>
-            </div>
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Creation Time (25%)</span>
-                <span>72.58 / 100 (372s)</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 72.58%;"></div></div>
-            </div>
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Token Efficiency (25%)</span>
-                <span>100.00 / 100 (55k)</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 100%;"></div></div>
-            </div>
-            <div class="bar-row">
-              <div class="bar-meta">
-                <span>Setup Time (10%)</span>
-                <span>100.00 / 100 (18s)</span>
-              </div>
-              <div class="bar-track"><div class="bar-fill" style="width: 100%;"></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Ground-Truth Verification -->
-    <section>
-      <div class="sec-head">
-        <h2>Ground-Truth Quality Audit (Zero LLM Inference)</h2>
-        <span class="sec-note">Audited by n8n Cloud validate_node_config RPC</span>
-      </div>
-      <p class="prose">
-        Rather than asking an LLM judge to guess code quality, the benchmark queries the live n8n Cloud server's official validator RPC and walks the graph topology.
-      </p>
-
-      <div class="tw">
-        <table>
-          <thead>
-            <tr>
-              <th>Audit Dimension</th>
-              <th>Verification Method</th>
-              <th>n8n-as-code (@next)</th>
-              <th>n8n Native MCP</th>
-              <th>Fact-Grounded Finding</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Workflow Identity</strong></td>
-              <td><code>GET /api/v1/workflows/:id</code></td>
-              <td><code>zFWxpFpUBtn71uA8</code></td>
-              <td><code>vopZrnULIAAWt7Yh</code></td>
-              <td>Both deployed live to n8n Cloud</td>
-            </tr>
-            <tr>
-              <td><strong>Total Nodes on Canvas</strong></td>
-              <td>Canvas Node Count</td>
-              <td>12 nodes</td>
-              <td>23 nodes</td>
-              <td>Multi-agent architecture with subnodes</td>
-            </tr>
-            <tr>
-              <td><strong>Server Schema Validity</strong></td>
-              <td>RPC <code>validate_node_config</code></td>
-              <td><strong>66.67%</strong> (8 / 12 valid)</td>
-              <td><strong>100.00%</strong> (23 / 23 valid)</td>
-              <td>MCP validated iteratively against server schema</td>
-            </tr>
-            <tr>
-              <td><strong>Graph Topology & Integrity</strong></td>
-              <td>Adjacency Traversal</td>
-              <td><strong>100%</strong> (0 orphans)</td>
-              <td><strong>100%</strong> (0 orphans)</td>
-              <td>All functional nodes connected in graph</td>
-            </tr>
-            <tr>
-              <td><strong>Live Cloud Execution</strong></td>
-              <td><code>GET /api/v1/executions</code></td>
-              <td>Untriggered (0%)</td>
-              <td>Untriggered (0%)</td>
-              <td>Informative: 3rd-party credentials (OAuth2) excluded</td>
-            </tr>
-            <tr>
-              <td><strong>Composite Quality Score</strong></td>
-              <td>60% Schema + 40% Graph</td>
-              <td><strong>80.00 / 100</strong></td>
-              <td><strong>100.00 / 100</strong></td>
-              <td><strong>Native MCP (+20.00 pts)</strong></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="aside">
-        <p>
-          <strong>Why did n8n-as-code lose 4 nodes on schema validity?</strong><br>
-          The n8n canvas UI hides inactive conditional parameters without displaying red error icons. However, the server's strict RPC validator flagged:
-          <code>Simple Memory</code> (<code>sessionKey</code> without <code>sessionIdType="customKey"</code>),
-          <code>Google Calendar Tool</code> (missing <code>calendar.__rl: true</code>),
-          <code>Daily Briefing Orchestrator</code> (<code>text</code> without <code>promptType="define"</code>), and
-          <code>OpenAI Chat Model</code> (<code>builtInTools</code> without <code>responsesApiEnabled=true</code>).
-          These discrepancies provide clear feedback to tighten <code>n8nac</code>'s local TypeScript schema validator.
+        <p class="prose">
+          Scores averaged across matching runs. Standardized weights: <strong>Workflow Quality (40%)</strong>, <strong>Creation Time (25%)</strong>, <strong>Token Efficiency (25%)</strong>, <strong>Setup Time (10%)</strong>.
         </p>
-      </div>
-    </section>
 
-    <!-- Operational Telemetry -->
+        <div class="board-grid">
+          <!-- Native MCP Aggregated Card -->
+          <div class="contender-card" id="cardMcp">
+            <div class="card-top">
+              <span class="contender-name">n8n Native MCP</span>
+              <span class="badge" id="badgeMcp">Leader</span>
+            </div>
+            <div class="card-score">
+              <b id="scoreMcpAvg">86.05</b>
+              <span>/ 100 avg</span>
+            </div>
+            <div class="bars">
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Workflow Quality (40%)</span>
+                  <span id="barMcpQualVal">97.33 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barMcpQual" style="width: 97%;"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Creation Time (25%)</span>
+                  <span id="barMcpTimeVal">77.03 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barMcpTime" style="width: 77%;"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Token Efficiency (25%)</span>
+                  <span id="barMcpTokVal">76.29 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barMcpTok" style="width: 76%;"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Setup Time (10%)</span>
+                  <span id="barMcpSetupVal">87.88 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barMcpSetup" style="width: 88%;"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- n8n-as-code Aggregated Card -->
+          <div class="contender-card" id="cardN8nac">
+            <div class="card-top">
+              <span class="contender-name">n8n-as-code</span>
+              <span class="badge" id="badgeN8nac">Contender</span>
+            </div>
+            <div class="card-score">
+              <b id="scoreN8nacAvg">80.51</b>
+              <span>/ 100 avg</span>
+            </div>
+            <div class="bars">
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Workflow Quality (40%)</span>
+                  <span id="barN8nacQualVal">81.29 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barN8nacQual" style="width: 81%;"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Creation Time (25%)</span>
+                  <span id="barN8nacTimeVal">67.49 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barN8nacTime" style="width: 67%;"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Token Efficiency (25%)</span>
+                  <span id="barN8nacTokVal">86.08 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barN8nacTok" style="width: 86%;"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span>Setup Time (10%)</span>
+                  <span id="barN8nacSetupVal">96.00 / 100</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill" id="barN8nacSetup" style="width: 96%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Aggregated Telemetry Table -->
+      <section>
+        <div class="sec-head">
+          <h2>Mean Operational Metrics</h2>
+          <span class="sec-note">Observed Averages Across Matched Runs</span>
+        </div>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>n8n-as-code</th>
+                <th>n8n Native MCP</th>
+                <th>Mean Advantage</th>
+              </tr>
+            </thead>
+            <tbody id="aggTelemetryTable">
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- INDIVIDUAL RUNS VIEW -->
     <section>
       <div class="sec-head">
-        <h2>Physical Telemetry & Performance Metrics</h2>
-        <span class="sec-note">Stopwatch & Token Telemetry</span>
+        <h2>Individual Runs Explorer</h2>
+        <span class="sec-note">Click any run to inspect complete audit traces</span>
       </div>
+      <p class="prose">
+        Select an execution below to drill down into the live server schema checks, parameter discrepancies, and stopwatch timings:
+      </p>
 
       <div class="tw">
         <table>
           <thead>
             <tr>
-              <th>Operational Metric</th>
-              <th>n8n-as-code (@next)</th>
-              <th>n8n Native MCP</th>
-              <th>Delta</th>
-              <th>Engineering Takeaway</th>
+              <th>Run ID</th>
+              <th>Date</th>
+              <th>Agent</th>
+              <th>Model</th>
+              <th>Scenario</th>
+              <th class="num">n8nac Score</th>
+              <th class="num">MCP Score</th>
+              <th>Winner</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><strong>Setup Latency</strong></td>
-              <td><strong>18s</strong></td>
-              <td>22s</td>
-              <td>-4s</td>
-              <td>n8nac headless CLI setup is 1.2x faster</td>
-            </tr>
-            <tr>
-              <td><strong>Setup CLI Commands</strong></td>
-              <td>3 commands</td>
-              <td>3 commands</td>
-              <td>0</td>
-              <td>Both 100% headless, zero UI navigation</td>
-            </tr>
-            <tr>
-              <td><strong>Creation Duration</strong></td>
-              <td>372s (6m 12s)</td>
-              <td><strong>270s (4m 30s)</strong></td>
-              <td>+102s</td>
-              <td>Native MCP deployed 1.4x faster in Run 3</td>
-            </tr>
-            <tr>
-              <td><strong>Token Consumption</strong></td>
-              <td><strong>55,000 tokens</strong></td>
-              <td>68,000 tokens</td>
-              <td>-13,000</td>
-              <td>n8n-as-code saves 19% tokens via declarative code</td>
-            </tr>
-            <tr>
-              <td><strong>Conversational Turns</strong></td>
-              <td>1 turn</td>
-              <td>1 turn</td>
-              <td>0</td>
-              <td>Both builders finished in a single autonomous turn</td>
-            </tr>
+          <tbody id="runsListTable">
+            <!-- populated by JS -->
           </tbody>
         </table>
       </div>
+
+      <!-- Single Run Detail Inspector -->
+      <div class="run-detail" id="runDetailPanel">
+        <div class="detail-head">
+          <div>
+            <span class="detail-title" id="detailRunTitle">Run 3 Details (@next Sanitized)</span>
+            <div class="sec-note" id="detailRunMeta">2026-09-06 · Antigravity · Gemini 3.8 Flash High</div>
+          </div>
+          <span class="badge win" id="detailRunWinner">🏆 n8n Native MCP Winner (+8.26 pts)</span>
+        </div>
+
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Evaluation Dimension</th>
+                <th>n8n-as-code</th>
+                <th>n8n Native MCP</th>
+                <th>Verification Ground Truth</th>
+              </tr>
+            </thead>
+            <tbody id="detailAuditTable">
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="aside" id="detailPromptBox">
+          <p>
+            <strong>Standardized Prompt Executed:</strong><br>
+            <em id="detailPromptText">"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier..."</em>
+          </p>
+        </div>
+      </div>
     </section>
 
-    <!-- Methodology & Confinement -->
+    <!-- Methodology & Impartiality -->
     <section>
       <div class="sec-head">
-        <h2>Methodology & Impartiality Protocols</h2>
-        <span class="sec-note">Standards for community reproduction</span>
+        <h2>Impartiality & Anti-Contamination Standards</h2>
+        <span class="sec-note">Enforced across all benchmark runs</span>
       </div>
-      <p class="prose">
-        To prevent instance contamination and benchmark gaming on shared instances, workers operate under strict hermetic sandboxes:
-      </p>
       <div class="tw">
         <table>
           <thead>
@@ -693,16 +729,16 @@
               <td><code>INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n.</code></td>
             </tr>
             <tr>
-              <td><strong>Opaque Naming</strong></td>
-              <td>Mandatory generic naming: <code>workflow-&lt;timestamp&gt;</code> (zero leak of task keywords like email or calendar).</td>
+              <td><strong>Opaque Workflow Naming</strong></td>
+              <td>Mandatory format: <code>workflow-&lt;timestamp&gt;</code> (zero task keyword leaks like email, calendar, or multi-agent).</td>
+            </tr>
+            <tr>
+              <td><strong>Deterministic RPC Audit</strong></td>
+              <td>Server-side validation via <code>validate_node_config</code> (zero subjective LLM judge inference).</td>
             </tr>
             <tr>
               <td><strong>Universal Minimax</strong></td>
-              <td><code>Score(X) = 100 × min(A, B) / X</code> applied across latency and tokens. Prevents arbitrary floor-effect collapse.</td>
-            </tr>
-            <tr>
-              <td><strong>Zero Subjectivity</strong></td>
-              <td>100% deterministic code evaluation via <code>validator.mjs</code> and <code>compiler.mjs</code>.</td>
+              <td><code>Score(X) = 100 × min(A, B) / X</code> prevents arbitrary floor collapse on enterprise workflows.</td>
             </tr>
           </tbody>
         </table>
@@ -714,18 +750,393 @@
         n8n Harness Benchmark · Licensed under MIT © 2026 Etienne Lescot
       </div>
       <div>
-        <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">Repository on GitHub</a> · <a href="./results.json">Raw Data</a>
+        <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">Repository on GitHub</a> · <a href="./aggregate.json">Raw Aggregate JSON</a>
       </div>
     </footer>
   </div>
 
   <script>
+    let benchmarkData = null;
+    let filteredRuns = [];
+    let selectedRunId = 'run-003';
+
+    // Embedded initial fallback data for instant offline rendering
+    const fallbackData = {
+      runs: [
+        {
+          id: 'run-003',
+          name: 'Run 3 (@next Sanitized)',
+          timestamp: '2026-09-06T20:21:46.000Z',
+          codingAgent: 'Antigravity',
+          model: 'Gemini 3.8 Flash High',
+          promptId: 'daily-briefing',
+          promptTitle: 'Daily Briefing & Dashboard',
+          promptText: 'Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.',
+          n8nac: {
+            workflowId: 'zFWxpFpUBtn71uA8',
+            setupSec: 18, buildSec: 372, tokens: 55000,
+            scores: { quality: 80.00, creationTime: 72.58, tokenEfficiency: 100.00, setupTime: 100.00, composite: 85.14 },
+            audit: { nodeCount: 12, validNodes: 8, schemaValidityPct: 66.67, graphIntegrityPct: 100 }
+          },
+          nativeMcp: {
+            workflowId: 'vopZrnULIAAWt7Yh',
+            setupSec: 22, buildSec: 270, tokens: 68000,
+            scores: { quality: 100.00, creationTime: 100.00, tokenEfficiency: 80.88, setupTime: 81.82, composite: 93.40 },
+            audit: { nodeCount: 23, validNodes: 23, schemaValidityPct: 100.00, graphIntegrityPct: 100 }
+          },
+          winner: 'nativeMcp', winnerName: 'n8n Native MCP', compositeDelta: 8.26
+        },
+        {
+          id: 'run-002',
+          name: 'Run 2 (@next with Verification Instruction)',
+          timestamp: '2026-09-06T18:35:00.000Z',
+          codingAgent: 'Antigravity',
+          model: 'Gemini 3.8 Flash High',
+          promptId: 'daily-briefing',
+          promptTitle: 'Daily Briefing & Dashboard',
+          promptText: 'Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.',
+          n8nac: {
+            workflowId: 'y7SWIwjXjL8x3mwU',
+            setupSec: 18, buildSec: 474, tokens: 72000,
+            scores: { quality: 85.88, creationTime: 100.00, tokenEfficiency: 100.00, setupTime: 100.00, composite: 94.35 },
+            audit: { nodeCount: 16, validNodes: 13, schemaValidityPct: 76.47, graphIntegrityPct: 100 }
+          },
+          nativeMcp: {
+            workflowId: 'Nr5K7Hhga1nykKT1',
+            setupSec: 22, buildSec: 1525, tokens: 150000,
+            scores: { quality: 100.00, creationTime: 31.08, tokenEfficiency: 48.00, setupTime: 81.82, composite: 67.95 },
+            audit: { nodeCount: 14, validNodes: 14, schemaValidityPct: 100.00, graphIntegrityPct: 100 }
+          },
+          winner: 'n8nac', winnerName: 'n8n-as-code (@next)', compositeDelta: 26.40
+        },
+        {
+          id: 'run-001',
+          name: 'Run 1 (Initial Release)',
+          timestamp: '2026-09-06T12:35:00.000Z',
+          codingAgent: 'Antigravity',
+          model: 'Gemini 3.8 Flash High',
+          promptId: 'daily-briefing',
+          promptTitle: 'Daily Briefing & Dashboard',
+          promptText: 'Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.',
+          n8nac: {
+            workflowId: 'gRDckX2o3M2BtcyK',
+            setupSec: 25, buildSec: 455, tokens: 40985,
+            scores: { quality: 78.00, creationTime: 29.89, tokenEfficiency: 58.23, setupTime: 88.00, composite: 62.03 },
+            audit: { nodeCount: 14, validNodes: 9, schemaValidityPct: 64.28, graphIntegrityPct: 100 }
+          },
+          nativeMcp: {
+            workflowId: 'HakV7bOZlGBwGTre',
+            setupSec: 22, buildSec: 136, tokens: 23864,
+            scores: { quality: 92.00, creationTime: 100.00, tokenEfficiency: 100.00, setupTime: 100.00, composite: 96.80 },
+            audit: { nodeCount: 11, validNodes: 10, schemaValidityPct: 90.90, graphIntegrityPct: 100 }
+          },
+          winner: 'nativeMcp', winnerName: 'n8n Native MCP', compositeDelta: 34.77
+        }
+      ]
+    };
+
+    async function init() {
+      try {
+        const res = await fetch('./aggregate.json');
+        if (res.ok) {
+          benchmarkData = await res.json();
+        } else {
+          benchmarkData = fallbackData;
+        }
+      } catch(e) {
+        benchmarkData = fallbackData;
+      }
+
+      populateFilterOptions();
+      applyFilters();
+    }
+
+    function populateFilterOptions() {
+      const runs = benchmarkData.runs || [];
+      const agents = [...new Set(runs.map(r => r.codingAgent))];
+      const models = [...new Set(runs.map(r => r.model))];
+      const prompts = [...new Set(runs.map(r => r.promptTitle))];
+
+      const populate = (id, list, allText) => {
+        const el = document.getElementById(id);
+        el.innerHTML = `<option value="ALL">${allText}</option>` +
+          list.map(v => `<option value="${v}">${v}</option>`).join('');
+      };
+
+      populate('agentFilter', agents, 'All Agents');
+      populate('modelFilter', models, 'All Models');
+      populate('promptFilter', prompts, 'All Prompts');
+    }
+
+    function applyFilters() {
+      const agent = document.getElementById('agentFilter').value;
+      const model = document.getElementById('modelFilter').value;
+      const prompt = document.getElementById('promptFilter').value;
+
+      filteredRuns = (benchmarkData.runs || []).filter(r => {
+        if (agent !== 'ALL' && r.codingAgent !== agent) return false;
+        if (model !== 'ALL' && r.model !== model) return false;
+        if (prompt !== 'ALL' && r.promptTitle !== prompt) return false;
+        return true;
+      });
+
+      renderAggregate();
+      renderRunsTable();
+
+      // Keep selected run if present in filtered, else select first
+      if (!filteredRuns.some(r => r.id === selectedRunId)) {
+        selectedRunId = filteredRuns.length > 0 ? filteredRuns[0].id : null;
+      }
+      renderRunDetail();
+    }
+
+    function renderAggregate() {
+      const count = filteredRuns.length;
+      document.getElementById('aggSampleCount').textContent = `Across ${count} verified run${count > 1 ? 's' : ''}`;
+      document.getElementById('statRuns').textContent = count;
+
+      if (count === 0) {
+        document.getElementById('scoreMcpAvg').textContent = '—';
+        document.getElementById('scoreN8nacAvg').textContent = '—';
+        return;
+      }
+
+      let mcpWins = 0;
+      let n8nacWins = 0;
+      let mcpCompSum = 0, n8nacCompSum = 0;
+      let mcpQualSum = 0, n8nacQualSum = 0;
+      let mcpTimeSum = 0, n8nacTimeSum = 0;
+      let mcpTokSum = 0, n8nacTokSum = 0;
+      let mcpSetupSum = 0, n8nacSetupSum = 0;
+      let mcpTokRaw = 0, n8nacTokRaw = 0;
+      let mcpSecRaw = 0, n8nacSecRaw = 0;
+
+      filteredRuns.forEach(r => {
+        if (r.winner === 'nativeMcp') mcpWins++; else n8nacWins++;
+        mcpCompSum += r.nativeMcp.scores.composite;
+        n8nacCompSum += r.n8nac.scores.composite;
+        mcpQualSum += r.nativeMcp.scores.quality;
+        n8nacQualSum += r.n8nac.scores.quality;
+        mcpTimeSum += r.nativeMcp.scores.creationTime;
+        n8nacTimeSum += r.n8nac.scores.creationTime;
+        mcpTokSum += r.nativeMcp.scores.tokenEfficiency;
+        n8nacTokSum += r.n8nac.scores.tokenEfficiency;
+        mcpSetupSum += r.nativeMcp.scores.setupTime;
+        n8nacSetupSum += r.n8nac.scores.setupTime;
+
+        mcpTokRaw += r.nativeMcp.tokens;
+        n8nacTokRaw += r.n8nac.tokens;
+        mcpSecRaw += r.nativeMcp.buildSec;
+        n8nacSecRaw += r.n8nac.buildSec;
+      });
+
+      const mcpAvg = (mcpCompSum / count).toFixed(2);
+      const n8nacAvg = (n8nacCompSum / count).toFixed(2);
+      document.getElementById('scoreMcpAvg').textContent = mcpAvg;
+      document.getElementById('scoreN8nacAvg').textContent = n8nacAvg;
+
+      document.getElementById('statWinRatio').textContent = `${mcpWins} : ${n8nacWins}`;
+      document.getElementById('statAvgTokens').textContent = `${Math.round(n8nacTokRaw/count/1000)}k vs ${Math.round(mcpTokRaw/count/1000)}k`;
+      document.getElementById('statAvgTime').textContent = `${Math.round(n8nacSecRaw/count)}s vs ${Math.round(mcpSecRaw/count)}s`;
+
+      const mcpLead = parseFloat(mcpAvg) >= parseFloat(n8nacAvg);
+      const cardM = document.getElementById('cardMcp');
+      const cardN = document.getElementById('cardN8nac');
+      const badgeM = document.getElementById('badgeMcp');
+      const badgeN = document.getElementById('badgeN8nac');
+
+      if (mcpLead) {
+        cardM.className = 'contender-card lead';
+        cardN.className = 'contender-card';
+        badgeM.className = 'badge win';
+        badgeM.textContent = `Leader (${mcpWins}W - ${n8nacWins}L)`;
+        badgeN.className = 'badge';
+        badgeN.textContent = 'Contender';
+      } else {
+        cardN.className = 'contender-card lead';
+        cardM.className = 'contender-card';
+        badgeN.className = 'badge win';
+        badgeN.textContent = `Leader (${n8nacWins}W - ${mcpWins}L)`;
+        badgeM.className = 'badge';
+        badgeM.textContent = 'Contender';
+      }
+
+      // Bar values
+      const mq = (mcpQualSum / count).toFixed(2);
+      const nq = (n8nacQualSum / count).toFixed(2);
+      document.getElementById('barMcpQualVal').textContent = `${mq} / 100`;
+      document.getElementById('barMcpQual').style.width = `${mq}%`;
+      document.getElementById('barN8nacQualVal').textContent = `${nq} / 100`;
+      document.getElementById('barN8nacQual').style.width = `${nq}%`;
+
+      const mt = (mcpTimeSum / count).toFixed(2);
+      const nt = (n8nacTimeSum / count).toFixed(2);
+      document.getElementById('barMcpTimeVal').textContent = `${mt} / 100`;
+      document.getElementById('barMcpTime').style.width = `${mt}%`;
+      document.getElementById('barN8nacTimeVal').textContent = `${nt} / 100`;
+      document.getElementById('barN8nacTime').style.width = `${nt}%`;
+
+      const mk = (mcpTokSum / count).toFixed(2);
+      const nk = (n8nacTokSum / count).toFixed(2);
+      document.getElementById('barMcpTokVal').textContent = `${mk} / 100`;
+      document.getElementById('barMcpTok').style.width = `${mk}%`;
+      document.getElementById('barN8nacTokVal').textContent = `${nk} / 100`;
+      document.getElementById('barN8nacTok').style.width = `${nk}%`;
+
+      const ms = (mcpSetupSum / count).toFixed(2);
+      const ns = (n8nacSetupSum / count).toFixed(2);
+      document.getElementById('barMcpSetupVal').textContent = `${ms} / 100`;
+      document.getElementById('barMcpSetup').style.width = `${ms}%`;
+      document.getElementById('barN8nacSetupVal').textContent = `${ns} / 100`;
+      document.getElementById('barN8nacSetup').style.width = `${ns}%`;
+
+      // Telemetry table
+      const avgN8nacSec = Math.round(n8nacSecRaw / count);
+      const avgMcpSec = Math.round(mcpSecRaw / count);
+      const avgN8nacTok = Math.round(n8nacTokRaw / count);
+      const avgMcpTok = Math.round(mcpTokRaw / count);
+
+      document.getElementById('aggTelemetryTable').innerHTML = `
+        <tr>
+          <td><strong>Creation Duration (s)</strong></td>
+          <td>${avgN8nacSec}s</td>
+          <td>${avgMcpSec}s</td>
+          <td><strong>${avgN8nacSec <= avgMcpSec ? 'n8n-as-code ' + (avgMcpSec/avgN8nacSec).toFixed(1) + 'x faster' : 'Native MCP ' + (avgN8nacSec/avgMcpSec).toFixed(1) + 'x faster'}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Token Consumption (Total)</strong></td>
+          <td>${avgN8nacTok.toLocaleString()}</td>
+          <td>${avgMcpTok.toLocaleString()}</td>
+          <td><strong>${avgN8nacTok <= avgMcpTok ? 'n8n-as-code saves ' + Math.round((1 - avgN8nacTok/avgMcpTok)*100) + '%' : 'Native MCP saves ' + Math.round((1 - avgMcpTok/avgN8nacTok)*100) + '%'}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Workflow Schema Validity</strong></td>
+          <td>${nq}%</td>
+          <td>${mq}%</td>
+          <td><strong>${parseFloat(mq) >= parseFloat(nq) ? 'Native MCP +' + (mq - nq).toFixed(1) + ' pts' : 'n8n-as-code +' + (nq - mq).toFixed(1) + ' pts'}</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Setup Latency (s)</strong></td>
+          <td>18s</td>
+          <td>22s</td>
+          <td><strong>n8n-as-code 1.2x faster</strong></td>
+        </tr>
+      `;
+    }
+
+    function renderRunsTable() {
+      const tbody = document.getElementById('runsListTable');
+      if (filteredRuns.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-3);padding:24px;">No runs match the selected filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredRuns.map(r => {
+        const isSel = r.id === selectedRunId ? 'selected' : '';
+        const d = new Date(r.timestamp);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `
+          <tr class="clickable ${isSel}" onclick="selectRun('${r.id}')">
+            <td><code>${r.id}</code></td>
+            <td>${dateStr}</td>
+            <td>${r.codingAgent}</td>
+            <td>${r.model}</td>
+            <td>${r.promptTitle}</td>
+            <td class="num"><strong>${r.n8nac.scores.composite.toFixed(2)}</strong></td>
+            <td class="num"><strong>${r.nativeMcp.scores.composite.toFixed(2)}</strong></td>
+            <td><span class="badge ${r.winner === 'nativeMcp' ? 'win' : ''}">${r.winnerName} (+${r.compositeDelta.toFixed(1)})</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function selectRun(runId) {
+      selectedRunId = runId;
+      renderRunsTable();
+      renderRunDetail();
+      const el = document.getElementById('runDetailPanel');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderRunDetail() {
+      const panel = document.getElementById('runDetailPanel');
+      const r = (benchmarkData.runs || []).find(x => x.id === selectedRunId);
+      if (!r) {
+        panel.style.display = 'none';
+        return;
+      }
+      panel.style.display = 'block';
+
+      document.getElementById('detailRunTitle').textContent = `${r.name} — Detailed Inspection`;
+      const d = new Date(r.timestamp);
+      document.getElementById('detailRunMeta').textContent = `${d.toISOString()} · Platform: ${r.codingAgent} · Model: ${r.model} (T=${r.temperature})`;
+      document.getElementById('detailRunWinner').textContent = `🏆 ${r.winnerName} (+${r.compositeDelta.toFixed(2)} pts)`;
+      document.getElementById('detailPromptText').textContent = `"${r.promptText}"`;
+
+      document.getElementById('detailAuditTable').innerHTML = `
+        <tr>
+          <td><strong>Deployed Workflow Canvas</strong></td>
+          <td><a href="https://etiennel.app.n8n.cloud/workflow/${r.n8nac.workflowId}" target="_blank"><code>${r.n8nac.workflowId}</code></a></td>
+          <td><a href="https://etiennel.app.n8n.cloud/workflow/${r.nativeMcp.workflowId}" target="_blank"><code>${r.nativeMcp.workflowId}</code></a></td>
+          <td>Direct link to live workflow canvas</td>
+        </tr>
+        <tr>
+          <td><strong>Overall Composite Score</strong></td>
+          <td><strong>${r.n8nac.scores.composite.toFixed(2)} / 100</strong></td>
+          <td><strong>${r.nativeMcp.scores.composite.toFixed(2)} / 100</strong></td>
+          <td>${r.winnerName} wins by ${r.compositeDelta.toFixed(2)} pts</td>
+        </tr>
+        <tr>
+          <td><strong>Workflow Quality (40%)</strong></td>
+          <td>${r.n8nac.scores.quality.toFixed(2)} / 100 (${r.n8nac.audit.validNodes}/${r.n8nac.audit.nodeCount} valid nodes)</td>
+          <td>${r.nativeMcp.scores.quality.toFixed(2)} / 100 (${r.nativeMcp.audit.validNodes}/${r.nativeMcp.audit.nodeCount} valid nodes)</td>
+          <td>Server RPC <code>validate_node_config</code></td>
+        </tr>
+        <tr>
+          <td><strong>Creation Duration (25%)</strong></td>
+          <td>${r.n8nac.scores.creationTime.toFixed(2)} / 100 (${r.n8nac.buildSec}s)</td>
+          <td>${r.nativeMcp.scores.creationTime.toFixed(2)} / 100 (${r.nativeMcp.buildSec}s)</td>
+          <td>${r.n8nac.buildSec <= r.nativeMcp.buildSec ? 'n8n-as-code ' + (r.nativeMcp.buildSec/r.n8nac.buildSec).toFixed(1) + 'x faster' : 'Native MCP ' + (r.n8nac.buildSec/r.nativeMcp.buildSec).toFixed(1) + 'x faster'}</td>
+        </tr>
+        <tr>
+          <td><strong>Token Efficiency (25%)</strong></td>
+          <td>${r.n8nac.scores.tokenEfficiency.toFixed(2)} / 100 (${r.n8nac.tokens.toLocaleString()})</td>
+          <td>${r.nativeMcp.scores.tokenEfficiency.toFixed(2)} / 100 (${r.nativeMcp.tokens.toLocaleString()})</td>
+          <td>${r.n8nac.tokens <= r.nativeMcp.tokens ? 'n8n-as-code saves ' + Math.round((1 - r.n8nac.tokens/r.nativeMcp.tokens)*100) + '% tokens' : 'Native MCP saves tokens'}</td>
+        </tr>
+        <tr>
+          <td><strong>Setup Time (10%)</strong></td>
+          <td>${r.n8nac.scores.setupTime.toFixed(2)} / 100 (${r.n8nac.setupSec}s)</td>
+          <td>${r.nativeMcp.scores.setupTime.toFixed(2)} / 100 (${r.nativeMcp.setupSec}s)</td>
+          <td>Minimax stopwatch ratio</td>
+        </tr>
+      `;
+    }
+
+    function setViewMode(mode) {
+      const aggEl = document.getElementById('aggregateView');
+      const btnAgg = document.getElementById('btnViewAgg');
+      const btnRuns = document.getElementById('btnViewRuns');
+
+      if (mode === 'aggregate') {
+        aggEl.style.display = 'block';
+        btnAgg.className = 'view-btn active';
+        btnRuns.className = 'view-btn';
+      } else {
+        aggEl.style.display = 'none';
+        btnRuns.className = 'view-btn active';
+        btnAgg.className = 'view-btn';
+      }
+    }
+
     function toggleTheme() {
       const current = document.documentElement.getAttribute("data-theme");
       const next = current === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("n8nb-theme", next);
     }
+
+    document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>

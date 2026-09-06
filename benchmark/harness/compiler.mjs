@@ -237,6 +237,85 @@ export async function compileBenchmarkResults(options = {}) {
   MarkdownReporter.writeReport(results, path.join(resultsDir, 'benchmark_report.md'));
   JsonReporter.writeReport(results, path.join(docsDir, 'results.json'));
 
+  // Maintain aggregate.json for multi-run matrix and filters
+  const aggPath = path.join(resultsDir, 'aggregate.json');
+  let agg = { metadata: { totalRuns: 0 }, runs: [] };
+  if (fs.existsSync(aggPath)) {
+    try { agg = JSON.parse(fs.readFileSync(aggPath, 'utf8')); } catch {}
+  }
+
+  const currentRunEntry = {
+    id: `run-${String((agg.runs || []).length + 1).padStart(3, '0')}`,
+    name: `Run ${(agg.runs || []).length + 1} (${results.n8nac.runId})`,
+    timestamp: results.metadata.timestamp,
+    codingAgent: results.metadata.harness || 'Antigravity',
+    model: results.metadata.model || 'Gemini 3.8 Flash High',
+    temperature: results.metadata.temperature ?? 0.2,
+    promptId: 'daily-briefing',
+    promptTitle: 'Multi-Agent Daily Email & Calendar Briefing',
+    promptText: 'Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée.',
+    weights: results.weights,
+    n8nac: {
+      tool: results.n8nac.toolName,
+      workflowId: results.metadata.workflows?.n8nac?.id,
+      workflowName: results.n8nac.qualityAudit?.workflowName || 'Workflow A',
+      setupSec: results.n8nac.rawMetrics?.setupTimeSec,
+      buildSec: results.n8nac.rawMetrics?.totalDurationSec,
+      tokens: results.n8nac.rawMetrics?.tokenUsage?.totalTokens,
+      commands: results.n8nac.rawMetrics?.setupCommandsCount,
+      turns: results.n8nac.rawMetrics?.interactions?.turns,
+      scores: results.n8nac.scores,
+      audit: {
+        nodeCount: results.n8nac.qualityAudit?.metrics?.nodeCount,
+        validNodes: results.n8nac.qualityAudit?.metrics?.validNodeCount,
+        orphanedNodes: results.n8nac.qualityAudit?.metrics?.orphanedNodeCount,
+        schemaValidityPct: results.n8nac.qualityAudit?.scores?.nodeSchemaValidity,
+        graphIntegrityPct: results.n8nac.qualityAudit?.scores?.graphIntegrity
+      }
+    },
+    nativeMcp: {
+      tool: results.nativeMcp.toolName,
+      workflowId: results.metadata.workflows?.nativeMcp?.id,
+      workflowName: results.nativeMcp.qualityAudit?.workflowName || 'Workflow B',
+      setupSec: results.nativeMcp.rawMetrics?.setupTimeSec,
+      buildSec: results.nativeMcp.rawMetrics?.totalDurationSec,
+      tokens: results.nativeMcp.rawMetrics?.tokenUsage?.totalTokens,
+      commands: results.nativeMcp.rawMetrics?.setupCommandsCount,
+      turns: results.nativeMcp.rawMetrics?.interactions?.turns,
+      scores: results.nativeMcp.scores,
+      audit: {
+        nodeCount: results.nativeMcp.qualityAudit?.metrics?.nodeCount,
+        validNodes: results.nativeMcp.qualityAudit?.metrics?.validNodeCount,
+        orphanedNodes: results.nativeMcp.qualityAudit?.metrics?.orphanedNodeCount,
+        schemaValidityPct: results.nativeMcp.qualityAudit?.scores?.nodeSchemaValidity,
+        graphIntegrityPct: results.nativeMcp.qualityAudit?.scores?.graphIntegrity
+      }
+    },
+    winner: results.nativeMcp.scores.composite >= results.n8nac.scores.composite ? 'nativeMcp' : 'n8nac',
+    winnerName: results.nativeMcp.scores.composite >= results.n8nac.scores.composite ? 'n8n Native MCP' : 'n8n-as-code',
+    compositeDelta: parseFloat(Math.abs(results.nativeMcp.scores.composite - results.n8nac.scores.composite).toFixed(2))
+  };
+
+  const existingIdx = (agg.runs || []).findIndex(r => r.n8nac?.workflowId === currentRunEntry.n8nac.workflowId && r.nativeMcp?.workflowId === currentRunEntry.nativeMcp.workflowId);
+  if (existingIdx >= 0) {
+    currentRunEntry.id = agg.runs[existingIdx].id;
+    currentRunEntry.name = agg.runs[existingIdx].name;
+    agg.runs[existingIdx] = currentRunEntry;
+  } else {
+    (agg.runs = agg.runs || []).unshift(currentRunEntry);
+  }
+
+  agg.metadata = {
+    totalRuns: agg.runs.length,
+    availableAgents: [...new Set(agg.runs.map(r => r.codingAgent))],
+    availableModels: [...new Set(agg.runs.map(r => r.model))],
+    availablePrompts: [...new Set(agg.runs.map(r => r.promptTitle))],
+    lastUpdated: new Date().toISOString()
+  };
+
+  fs.writeFileSync(path.join(resultsDir, 'aggregate.json'), JSON.stringify(agg, null, 2), 'utf8');
+  fs.writeFileSync(path.join(docsDir, 'aggregate.json'), JSON.stringify(agg, null, 2), 'utf8');
+
   return {
     results,
     artifacts: { jsonFile, mdFile, htmlFile }

@@ -11,7 +11,7 @@
 | **Evaluation Engine** | **Deterministic n8n API Validator + Universal Minimax (Option B)** |
 | **Host Platform** | win32 (x64) / Node v24.14.0 |
 | **Target n8n Instance** | `https://etiennel.app.n8n.cloud` |
-| **Timestamp** | `2026-09-06T20:47:07.409Z` |
+| **Timestamp** | `2026-09-06T21:03:53.975Z` |
 
 **Standardized Prompt:**  
 > *"Crée sur mon instance n8n un workflow multi-agents qui vérifie quotidiennement mes emails Google et mon calendrier, trie les informations et présente un dashboard HTML de la journée."*
