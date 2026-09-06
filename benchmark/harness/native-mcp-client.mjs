@@ -76,7 +76,28 @@ export class NativeMcpClient {
       throw new Error(`Native MCP server responded with HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // Parse SSE stream format: data: {"jsonrpc": "2.0", ...}
+      for (const line of text.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          try {
+            data = JSON.parse(trimmed.slice(5).trim());
+            break;
+          } catch {
+            // Keep looking
+          }
+        }
+      }
+    }
+
+    if (!data) {
+      throw new Error(`Failed to parse MCP response: ${text.slice(0, 200)}`);
+    }
 
     if (data?.error) {
       throw new Error(`Native MCP RPC error (${data.error.code}): ${data.error.message}`);
