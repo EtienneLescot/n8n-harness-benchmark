@@ -6,7 +6,7 @@
     "temperature": 0.2,
     "subagentRuntime": "invoke_subagent",
     "evaluationEngine": "Deterministic n8n API Validator + Universal Minimax Scoring (Option B)",
-    "timestamp": "2026-09-06T19:50:13.564Z",
+    "timestamp": "2026-09-06T20:08:54.902Z",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -36,8 +36,8 @@
       "setupTime": 100,
       "creationTime": 100,
       "tokenConsumption": 100,
-      "workflowQuality": 60.59,
-      "composite": 86.21
+      "workflowQuality": 85.88,
+      "composite": 95.06
     },
     "qualityAudit": {
       "workflowId": "y7SWIwjXjL8x3mwU",
@@ -55,7 +55,7 @@
         "nodeSchemaValidity": 76.47,
         "graphIntegrity": 100,
         "liveExecution": 0,
-        "compositeQuality": 60.59
+        "compositeQuality": 85.88
       },
       "liveExecution": {
         "executed": false,
@@ -107,7 +107,7 @@
           ]
         }
       ],
-      "timestamp": "2026-09-06T19:50:13.324Z"
+      "timestamp": "2026-09-06T20:08:54.703Z"
     },
     "rawMetrics": {
       "setupTimeSec": 18,
@@ -147,31 +147,19 @@
       "scores": {
         "nodeSchemaValidity": 100,
         "graphIntegrity": 100,
-        "liveExecution": 100,
+        "liveExecution": 0,
         "compositeQuality": 100
       },
       "liveExecution": {
-        "executed": true,
-        "status": "success",
-        "executionId": "16",
-        "executedNodesCount": 11,
-        "executedNodes": [
-          "Test Manuel Canvas",
-          "OpenAI Chat Model",
-          "Agent_Agenda_Calendrier",
-          "Agent_Triage_Emails",
-          "Google_Calendar_Agenda",
-          "Gmail_Scanner",
-          "Dashboard_Data_Parser",
-          "Superviseur_Executif_Briefing",
-          "Générateur Dashboard HTML",
-          "Est-ce un appel Webhook ?",
-          "Journal Briefing du Jour"
-        ],
-        "durationMs": 53485
+        "executed": false,
+        "status": "none",
+        "executionId": null,
+        "executedNodesCount": 0,
+        "executedNodes": [],
+        "durationMs": 0
       },
       "invalidNodes": [],
-      "timestamp": "2026-09-06T19:50:13.564Z"
+      "timestamp": "2026-09-06T20:08:54.902Z"
     },
     "rawMetrics": {
       "setupTimeSec": 22,

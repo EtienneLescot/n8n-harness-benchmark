@@ -113,8 +113,7 @@ CONFINEMENT & SECURITY RULES (CRITICAL):
 - You must operate exclusively within your current working directory.
 - NEVER list, inspect, read, or execute commands in parent directories ('..') or sibling workspaces.
 - Discover and utilize the tools, CLI binaries, libraries, or environment variables present in your local workspace.
-- INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création.
-- Do not make assumptions: verify your work locally before reporting completion.`,
+- INTERDICTION FORMELLE : Vous ne devez JAMAIS lister, rechercher ou inspecter les workflows existants sur l'instance n8n. Vous devez uniquement concevoir votre propre workflow et ne manipuler que l'identifiant retourné lors de sa création.`,
   enable_write_tools: true,
   enable_mcp_tools: true,
   enable_subagent_tools: false

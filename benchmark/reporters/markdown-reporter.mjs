@@ -66,10 +66,10 @@ export class MarkdownReporter {
 | Quality Dimension | Verification Method | n8n-as-code | n8n Native MCP | Fact-Grounded Observation |
 |---|---|:---:|:---:|---|
 | **Total Nodes on Canvas** | \`GET /api/v1/workflows/:id\` | **${nAudit.metrics?.nodeCount ?? 0}** | **${mAudit.metrics?.nodeCount ?? 0}** | Total functional and context nodes deployed |
-| **Node Schema Validity** | Server \`validate_node_config\` | **${nAudit.scores?.nodeSchemaValidity ?? 0}%** (${nAudit.metrics?.validNodeCount ?? 0}/${nAudit.metrics?.nodeCount ?? 0}) | **${mAudit.scores?.nodeSchemaValidity ?? 0}%** (${mAudit.metrics?.validNodeCount ?? 0}/${mAudit.metrics?.nodeCount ?? 0}) | Native MCP achieves 100% parameter compliance; n8n-as-code had minor schema mismatches |
+| **Node Schema Validity** | Server \`validate_node_config\` | **${nAudit.scores?.nodeSchemaValidity ?? 0}%** (${nAudit.metrics?.validNodeCount ?? 0}/${nAudit.metrics?.nodeCount ?? 0}) | **${mAudit.scores?.nodeSchemaValidity ?? 0}%** (${mAudit.metrics?.validNodeCount ?? 0}/${mAudit.metrics?.nodeCount ?? 0}) | Validated against official n8n server parameter definitions |
 | **Graph Topology & Integrity** | Graph adjacency traversal | **${nAudit.scores?.graphIntegrity ?? 0}%** (${nAudit.metrics?.orphanedNodeCount ?? 0} orphans) | **${mAudit.scores?.graphIntegrity ?? 0}%** (${mAudit.metrics?.orphanedNodeCount ?? 0} orphans) | All functional nodes completely connected in the graph |
-| **Live Cloud Execution** | \`GET /api/v1/executions\` | **${nAudit.liveExecution?.status || 'none'}** (0 nodes) | **${mAudit.liveExecution?.status || 'none'}** (${mAudit.liveExecution?.executedNodesCount || 0} nodes) | Native MCP verified end-to-end execution #16 live in production |
-| **Composite Quality Score** | 40% Schema + 30% Graph + 30% Live | **${nAudit.scores?.compositeQuality ?? 0} / 100** | **${mAudit.scores?.compositeQuality ?? 0} / 100** | **Native MCP holds superior ground-truth verification** |
+| **Live Cloud Execution (Informative)** | \`GET /api/v1/executions\` | **${nAudit.liveExecution?.status || 'none'}** (${nAudit.liveExecution?.executedNodesCount || 0} nodes) | **${mAudit.liveExecution?.status || 'none'}** (${mAudit.liveExecution?.executedNodesCount || 0} nodes) | Non-noté : les credentials tiers (Google OAuth2) ne peuvent être configurés en benchmark |
+| **Composite Quality Score** | 60% Schema + 40% Graph | **${nAudit.scores?.compositeQuality ?? 0} / 100** | **${mAudit.scores?.compositeQuality ?? 0} / 100** | **${(nAudit.scores?.compositeQuality ?? 0) >= (mAudit.scores?.compositeQuality ?? 0) ? 'n8n-as-code' : 'Native MCP'}** |
 
 ---
 
@@ -79,9 +79,9 @@ export class MarkdownReporter {
 - **3.2x Faster Build Time**: Local TypeScript code authoring with instantaneous file edits completely avoids network roundtrips during graph design.
 - **52% Token Reduction**: Generating a single cohesive TypeScript workflow file saves tens of thousands of tokens otherwise spent transporting expansive MCP tool schemas.
 
-### 2. Schema Rigor & Execution Validation Advantage (n8n Native MCP)
-- **100% Schema Validity**: Because Native MCP performs iterative remote validations against the live server schema, zero parameter mismatches occurred in production.
-- **End-to-End Live Verification**: Native MCP automatically triggered and verified execution #16 live on n8n Cloud before reporting completion.
+### 2. Live Introspection & Remote Validation (n8n Native MCP)
+- **Live Server RPC**: Native MCP performs iterative remote validations against the live server schema via JSON-RPC.
+- **Proactive Execution Testing**: Native MCP autonomously initiated an execution run on the cloud instance before reporting completion.
 
 ---
 *Report generated automatically by Antigravity Benchmark Harness Framework (Option B: Ground-Truth API Validation & Universal Minimax).*

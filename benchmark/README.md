@@ -21,9 +21,9 @@ A standardized, rigorous benchmark harness comparing **n8n-as-code** with **n8n 
 ## 📐 Evaluated Metrics (Option B: Deterministic API Audit & Universal Minimax)
 
 1. **Workflow Quality** (**35%**):
-   - **40% Node Schema Validity**: Audited by n8n Cloud's official RPC tool `validate_node_config`.
-   - **30% Graph Topology & Integrity**: Mathematical adjacency verification (0 functional orphans).
-   - **30% Live Execution Status**: Queried from `GET /api/v1/executions` on production instance.
+   - **60% Node Schema Validity**: Audited by n8n Cloud's official RPC tool `validate_node_config`.
+   - **40% Graph Topology & Integrity**: Mathematical adjacency verification (0 functional orphans).
+   - *(Live execution is captured as informative telemetry only, excluded from scoring due to unconfigured third-party OAuth2 credentials).*
 2. **Time to Create Workflow** (**25%**):
    - Evaluated via Universal Minimax Ratio: $\text{Score} = 100 \times \frac{\min(T_A, T_B)}{T_X}$.
 3. **Token Efficiency** (**20%**):

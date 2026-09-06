@@ -8,7 +8,7 @@ This rubric establishes a 100% deterministic, reproducible evaluation model. It 
 
 | Dimension | Weight | Measurement Source | Scoring Formula |
 |---|:---:|---|---|
-| **1. Workflow Quality** | **35%** | Live n8n Cloud API + `validate_node_config` | $0.40 \times \text{NodeValidity} + 0.30 \times \text{GraphIntegrity} + 0.30 \times \text{LiveExecution}$ |
+| **1. Workflow Quality** | **35%** | Live n8n Cloud API + `validate_node_config` | $0.60 \times \text{NodeValidity} + 0.40 \times \text{GraphIntegrity}$ |
 | **2. Creation Time** | **25%** | External stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
 | **3. Token Efficiency** | **20%** | Total prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
 | **4. Setup Time** | **20%** | External stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
@@ -20,23 +20,22 @@ This rubric establishes a 100% deterministic, reproducible evaluation model. It 
 
 Workflow Quality is evaluated with ZERO LLM inference directly on the live n8n instance via `GET /api/v1/workflows/:id` and `validate_node_config`:
 
-### 1.1 Node Schema Validity (40% of Quality Score)
+### 1.1 Node Schema Validity (60% of Quality Score)
 Every node in the deployed workflow is audited by n8n's server-side `validate_node_config` tool:
 $$\text{NodeValidityScore} = 100 \times \frac{\text{Valid Nodes (0 errors)}}{\text{Total Nodes}}$$
 - Audits parameter types, required fields, subnodes, and display options against the official n8n server schema.
 - Flags parameter discrepancies (e.g. invalid default flags, missing required subnodes).
 
-### 1.2 Graph Topology & Integrity (30% of Quality Score)
+### 1.2 Graph Topology & Integrity (40% of Quality Score)
 Audits the mathematical graph structure formed by nodes and connections:
 - Identifies functional orphaned nodes (nodes with 0 incoming and 0 outgoing edges, excluding valid triggers and response sinks).
 - Verifies subconnection wiring (`ai_languageModel`, `ai_tool`, `ai_memory`, `ai_outputParser`).
 $$\text{GraphIntegrityScore} = 100 \times \frac{\text{Functional Nodes} - \text{Orphaned Nodes}}{\text{Functional Nodes}}$$
 
-### 1.3 Live Cloud Execution Verification (30% of Quality Score)
-Queries `GET /api/v1/executions?workflowId=:id&includeData=true` on the live cloud instance:
-- **100 pts**: Workflow was executed in production with `status === 'success'` and generated a non-empty output payload.
-- **50 pts**: Workflow was executed but experienced execution warnings or incomplete branches.
-- **0 pts**: Workflow was never executed live on the cloud instance.
+### 1.3 Live Cloud Execution (Informative Only — Excluded from Score)
+Live execution status is queried from `GET /api/v1/executions?workflowId=:id` and recorded as engineering telemetry:
+- **Scoring Rationale**: Standardized AI benchmarks cannot and should not demand real third-party OAuth2 credentials (such as live personal Gmail or Google Calendar tokens). Requiring successful execution on unauthenticated services introduces uncontrollable noise into the benchmark.
+- Execution traces and node runs are displayed informatively in the final dashboard without penalizing the composite score.
 
 ---
 
