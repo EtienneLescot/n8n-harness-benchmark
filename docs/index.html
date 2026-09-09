@@ -7,303 +7,201 @@
 <meta name="description" content="A deterministic, zero-LLM-judge benchmark comparing n8n-as-code with n8n's native MCP server on the same workflow brief.">
 <style>
   :root {
-    --bg: #fbfaf8;
-    --surface: #ffffff;
-    --line: #e6e2dc;
-    --ink: #1c1a17;
-    --muted: #6b6560;
-    --faint: #96908a;
-    --accent: #b8562f;
-    --accent-soft: #f4e6df;
-    --rival: #5a6b7a;
-    --ok: #3f7d58;
-    --shadow: 0 1px 2px rgba(28,26,23,.05), 0 8px 24px -12px rgba(28,26,23,.12);
-    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --bg:#fbfaf8; --surface:#fff; --line:#e6e2dc; --ink:#1c1a17; --muted:#6b6560; --faint:#96908a;
+    --accent:#b8562f; --accent-soft:#f4e6df; --rival:#5a6b7a;
+    --shadow:0 1px 2px rgba(28,26,23,.05),0 8px 24px -12px rgba(28,26,23,.12);
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #141310; --surface: #1c1a17; --line: #2e2a25; --ink: #f0ece6;
-      --muted: #a49d95; --faint: #7d766e; --accent: #e08256; --accent-soft: #33231b;
-      --rival: #93a6b8; --ok: #6aab84;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
-    }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#141310;--surface:#1c1a17;--line:#2e2a25;--ink:#f0ece6;--muted:#a49d95;--faint:#7d766e;
+      --accent:#e08256;--accent-soft:#33231b;--rival:#93a6b8;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);}
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
-  a { color: var(--accent); text-underline-offset: 2px; }
-
-  header { padding: 72px 0 44px; border-bottom: 1px solid var(--line); }
-  .eyebrow {
-    font: 600 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase;
-    color: var(--faint); margin-bottom: 18px;
-  }
-  h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.1; margin: 0 0 16px; letter-spacing: -.02em; }
-  h1 .vs { color: var(--faint); font-weight: 400; }
-  .lede { font-size: 18px; color: var(--muted); max-width: 62ch; margin: 0; }
-
-  section { padding: 52px 0; border-bottom: 1px solid var(--line); }
-  h2 { font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
-       color: var(--faint); margin: 0 0 22px; font-family: var(--mono); }
-  h3 { font-size: 19px; margin: 32px 0 10px; letter-spacing: -.01em; }
-  p { max-width: 68ch; }
-
-  .board { display: grid; gap: 14px; }
-  .row {
-    display: grid; grid-template-columns: 190px 1fr auto; gap: 18px; align-items: center;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-    padding: 16px 18px; box-shadow: var(--shadow);
-  }
-  .row.total { border-color: var(--accent); }
-  .axis { font-weight: 600; font-size: 15px; }
-  .axis small { display: block; font-weight: 400; color: var(--faint); font-size: 12px;
-                font-family: var(--mono); letter-spacing: .03em; }
-  .bars { display: grid; gap: 7px; min-width: 0; }
-  .bar { display: grid; grid-template-columns: 92px 1fr 58px; gap: 10px; align-items: center; }
-  .bar .who { color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .track { height: 9px; border-radius: 5px; background: var(--line); overflow: hidden; }
-  .fill { height: 100%; border-radius: 5px; }
-  .fill.a { background: var(--accent); }
-  .fill.b { background: var(--rival); }
-  .val { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--muted); }
-  .verdict { font-family: var(--mono); font-size: 12px; color: var(--faint); white-space: nowrap; }
-  .verdict.win { color: var(--ok); }
-
-  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 460px; }
-  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-  th { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
-  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
-  tr:last-child td { border-bottom: 0; }
-  .a-col { color: var(--accent); font-weight: 600; }
-  .b-col { color: var(--rival); font-weight: 600; }
-
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-          padding: 18px 20px; box-shadow: var(--shadow); }
-  .card h4 { margin: 0 0 6px; font-size: 14px; }
-  .card p { margin: 0; font-size: 14px; color: var(--muted); }
-  .stat { font: 600 26px/1 var(--mono); letter-spacing: -.02em; margin-bottom: 4px; }
-  .stat.a { color: var(--accent); } .stat.b { color: var(--rival); }
-
-  ul.findings { list-style: none; padding: 0; margin: 0; }
-  ul.findings li { padding: 12px 0 12px 26px; border-bottom: 1px solid var(--line); position: relative;
-                   font-size: 14.5px; max-width: 74ch; }
-  ul.findings li:last-child { border-bottom: 0; }
-  ul.findings li::before { content: "\2192"; position: absolute; left: 0; color: var(--faint); font-family: var(--mono); }
-  code { font-family: var(--mono); font-size: .89em; background: var(--accent-soft);
-         padding: .12em .38em; border-radius: 4px; }
-
-  .note { border-left: 2px solid var(--accent); padding: 2px 0 2px 18px; color: var(--muted);
-          font-size: 14.5px; max-width: 70ch; }
-
-  footer { padding: 40px 0 64px; color: var(--faint); font-size: 13px; }
-  footer a { color: var(--muted); }
-
-  @media (max-width: 620px) {
-    .row { grid-template-columns: 1fr; gap: 12px; }
-    .verdict { justify-self: start; }
-    .bar { grid-template-columns: 78px 1fr 52px; }
-  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px}
+  a{color:var(--accent);text-underline-offset:2px}
+  header{padding:72px 0 44px;border-bottom:1px solid var(--line)}
+  .eyebrow{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:18px}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.1;margin:0 0 16px;letter-spacing:-.02em}
+  h1 .vs{color:var(--faint);font-weight:400}
+  .lede{font-size:18px;color:var(--muted);max-width:62ch;margin:0}
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+     margin:0 0 8px;font-family:var(--mono)}
+  .sub{color:var(--muted);font-size:14.5px;margin:0 0 22px;max-width:66ch}
+  h3{font-size:19px;margin:34px 0 10px;letter-spacing:-.01em}
+  p{max-width:68ch}
+  .board{display:grid;gap:14px}
+  .row{display:grid;grid-template-columns:210px 1fr;gap:20px;align-items:center;background:var(--surface);
+       border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow)}
+  .row.total{border-color:var(--accent)}
+  .axis{font-weight:600;font-size:15px}
+  .axis small{display:block;font-weight:400;color:var(--faint);font-size:12px;font-family:var(--mono);letter-spacing:.02em;margin-top:3px}
+  .bars{display:grid;gap:8px;min-width:0}
+  .bar{display:grid;grid-template-columns:96px 1fr 76px;gap:12px;align-items:center}
+  .bar .who{color:var(--muted);font-size:12.5px;white-space:nowrap}
+  .track{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+  .fill{height:100%;border-radius:5px}
+  .fill.a{background:var(--accent)} .fill.b{background:var(--rival)}
+  .val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:460px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  th{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+  tr:last-child td{border-bottom:0}
+  .a-col{color:var(--accent);font-weight:600} .b-col{color:var(--rival);font-weight:600}
+  ul.notes{list-style:none;padding:0;margin:0}
+  ul.notes li{padding:12px 0 12px 26px;border-bottom:1px solid var(--line);position:relative;font-size:14.5px;max-width:74ch}
+  ul.notes li:last-child{border-bottom:0}
+  ul.notes li::before{content:"\2192";position:absolute;left:0;color:var(--faint);font-family:var(--mono)}
+  code{font-family:var(--mono);font-size:.89em;background:var(--accent-soft);padding:.12em .38em;border-radius:4px}
+  .note{border-left:2px solid var(--accent);padding:2px 0 2px 18px;color:var(--muted);font-size:14.5px;max-width:70ch}
+  footer{padding:40px 0 64px;color:var(--faint);font-size:13px}
+  footer a{color:var(--muted)}
+  @media (max-width:620px){.row{grid-template-columns:1fr;gap:12px}.bar{grid-template-columns:82px 1fr 68px}}
 </style>
 </head>
 <body>
 
 <header>
   <div class="wrap">
-    <div class="eyebrow">Deterministic benchmark &middot; zero LLM judges</div>
+    <div class="eyebrow">Deterministic benchmark · zero LLM judges</div>
     <h1>n8n-as-code <span class="vs">vs</span> n8n Native MCP</h1>
     <p class="lede">
       Two AI agents get the same one-sentence brief, the same model, and the same n8n Cloud
       instance. One drives the <strong>n8n-as-code</strong> CLI, the other drives n8n's own
-      <strong>native MCP server</strong>. Every score below is computed from the deployed
-      workflow by the n8n server's own validation RPC &mdash; no model grades anything.
+      <strong>native MCP server</strong>. Every figure below is computed from the deployed
+      workflow by the n8n server's own validation RPC — no model grades anything.
     </p>
   </div>
 </header>
 
 <section>
   <div class="wrap">
-    <h2>Result &mdash; run_10</h2>
+    <h2>Composite</h2>
+    <p class="sub">Mean across 1 submitted run, scored 0–100, longer is better.</p>
     <div class="board">
-
-      <div class="row">
-        <div class="axis">Correctness<small>35 % &middot; server audit</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100%"></div></div><span class="val">100</span></div>
-        </div>
-        <div class="verdict">tie</div>
-      </div>
-
-      <div class="row">
-        <div class="axis">Token efficiency<small>35 % &middot; builder tokens</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:76.64%"></div></div><span class="val">76.6</span></div>
-        </div>
-        <div class="verdict win">1.30&times; fewer</div>
-      </div>
-
-      <div class="row">
-        <div class="axis">Build time<small>30 % &middot; external stopwatch</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:76.92%"></div></div><span class="val">76.9</span></div>
-        </div>
-        <div class="verdict win">1.30&times; faster</div>
-      </div>
-
       <div class="row total">
         <div class="axis">Composite<small>weighted total</small></div>
         <div class="bars">
           <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100.0</span></div>
           <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:84.9%"></div></div><span class="val">84.9</span></div>
         </div>
-        <div class="verdict win">+15.1</div>
       </div>
+    </div>
+  </div>
+</section>
 
+<section>
+  <div class="wrap">
+    <h2>What was measured</h2>
+    <p class="sub">Correctness is a score, so a longer bar is a better result. The two cost
+      axes are not: their bar length is the measured quantity itself, scaled against the
+      larger of the two, so a longer bar means more tokens or more seconds.</p>
+    <div class="board">
+      <div class="row">
+        <div class="axis">Correctness<small>35 % of the composite · score, more is better</small></div>
+        <div class="bars">
+          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100.0</span></div>
+          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100%"></div></div><span class="val">100.0</span></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="axis">Builder tokens<small>35 % of the composite · less is better</small></div>
+        <div class="bars">
+          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:76.6%"></div></div><span class="val">118 001</span></div>
+          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100.0%"></div></div><span class="val">153 971</span></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="axis">Build time<small>30 % of the composite · less is better</small></div>
+        <div class="bars">
+          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:76.9%"></div></div><span class="val">346 s</span></div>
+          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100.0%"></div></div><span class="val">450 s</span></div>
+        </div>
+      </div>
     </div>
 
-    <p class="note" style="margin-top:26px">
-      Both branches produced a valid 10-node workflow with three LangChain agents and a
-      shared chat model: 0 invalid nodes, 0 orphans, all six required capabilities covered.
-      <strong>Correctness is a genuine tie</strong> &mdash; the gap is entirely in what the
-      workflow cost to produce.
+    <h3>Correctness, in detail</h3>
+    <div class="scroll">
+      <table>
+        <tr><th>Component</th><th>Share</th><th>Source</th></tr>
+        <tr><td>Requirement coverage</td><td class="num">40 %</td><td>Required capabilities checked on node types and wiring, never on node names</td></tr>
+        <tr><td>Node schema validity</td><td class="num">40 %</td><td>n8n server RPC <code>validate_node_config</code>, per node</td></tr>
+        <tr><td>Graph integrity</td><td class="num">20 %</td><td>Adjacency traversal, orphan detection, AI sub-connections</td></tr>
+      </table>
+    </div>
+
+    <h3>Telemetry, not scored</h3>
+    <div class="scroll">
+      <table>
+        <tr><th></th><th class="num">n8n-as-code</th><th class="num">Native MCP</th></tr>
+        <tr><td>Install friction events</td><td class="num a-col">2</td><td class="num b-col">0</td></tr>
+        <tr><td>Install commands</td><td class="num a-col">14</td><td class="num b-col">7</td></tr>
+        <tr><td>Build friction events</td><td class="num a-col">4</td><td class="num b-col">4</td></tr>
+        <tr><td>Acquisition</td><td class="num a-col">47.8 s</td><td class="num b-col">0.05 s</td></tr>
+      </table>
+    </div>
+    <p class="note" style="margin-top:18px">
+      Installation is paid once and amortises away, while build time and tokens are paid on
+      every workflow, so setup is measured and reported but kept out of the score.
+      Acquisition is excluded on both sides: each carries a benchmark artefact —
+      n8n-as-code installs from local tarballs because the build under test is unpublished,
+      and Native MCP has its worker hand-roll an HTTP client because the runtime ships no
+      wired MCP client.
     </p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <h2>What each axis measures</h2>
-
-    <h3>Correctness &mdash; 35 %</h3>
-    <p>Does it work, and does it do what was asked. Three deterministic components, audited
-      against the live instance:</p>
+    <h2>Runs</h2>
+    <p class="sub">Each submitted run, with its own composite. The mean above is the mean of
+      these, not a score recomputed from pooled measurements: the minimax ratio is defined
+      between the two branches <em>within</em> a run, and runs from different harnesses and
+      models have no common absolute scale.</p>
     <div class="scroll">
       <table>
-        <tr><th>Component</th><th>Share</th><th>Source</th></tr>
-        <tr><td>Requirement coverage</td><td class="num">40 %</td><td>Six capabilities checked on node types and wiring &mdash; never on node names</td></tr>
-        <tr><td>Node schema validity</td><td class="num">40 %</td><td>n8n server RPC <code>validate_node_config</code>, per node</td></tr>
-        <tr><td>Graph integrity</td><td class="num">20 %</td><td>Adjacency traversal, orphan detection, AI sub-connections</td></tr>
+        <tr><th>Run</th><th>Harness</th><th>Model</th><th class="num">n8n-as-code</th><th class="num">Native MCP</th></tr>
+        <tr><td><code>run_10</code></td><td>Claude Code</td><td>claude-opus-5</td><td class="num a-col">100</td><td class="num b-col">84.9</td></tr>
       </table>
     </div>
-    <p class="note" style="margin-top:18px">
-      Coverage exists because the other two are normalised by the workflow's own node count,
-      which made doing less free: an earlier run scored a 4-node workflow with no triage step
-      100/100 against a 15-node one that fulfilled the brief.
-    </p>
-
-    <h3>Token efficiency &mdash; 35 % &middot; Build time &mdash; 30 %</h3>
-    <p>Both are Universal Minimax ratios: the better branch scores 100, the other degrades
-      proportionally &mdash; <code>Score(X) = 100 &times; min(A,B) / X</code>. No arbitrary
-      thresholds, no floor effect.</p>
-
-    <h3>Setup &mdash; measured, not scored</h3>
-    <p>Installation is paid once and amortises away; build time and tokens are paid on every
-      workflow. Keeping setup in the score let a one-off cost decide the ranking &mdash; at
-      10 % it moved 6.07 points on a gap of 5.54. It is still reported:</p>
-    <div class="scroll">
-      <table>
-        <tr><th>Telemetry</th><th class="num">n8n-as-code</th><th class="num">Native MCP</th></tr>
-        <tr><td>Friction events (install)</td><td class="num a-col">2</td><td class="num b-col">0</td></tr>
-        <tr><td>Install commands</td><td class="num a-col">14</td><td class="num b-col">7</td></tr>
-        <tr><td>Setup ease (friction 70 / commands 30)</td><td class="num a-col">39.3</td><td class="num b-col">100</td></tr>
-        <tr><td>Acquisition</td><td class="num a-col">47.8 s</td><td class="num b-col">0.05 s</td></tr>
-      </table>
-    </div>
-    <p class="note" style="margin-top:18px">
-      Acquisition is excluded on <em>both</em> sides: each carries a benchmark artefact.
-      n8n-as-code installs from local tarballs because the build under test is unpublished;
-      Native MCP has its worker hand-roll an HTTP client because the runtime ships no wired
-      MCP client. A real user of either does neither.
-    </p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
     <h2>How contamination is prevented</h2>
-    <div class="cards">
-      <div class="card">
-        <h4>Sequenced, not parallel</h4>
-        <p>Branch A builds alone, is audited, and its workflow is <strong>deleted from the
-          instance</strong> before branch B is dispatched. Copying is impossible, not merely
-          forbidden.</p>
-      </div>
-      <div class="card">
-        <h4>Opaque names</h4>
-        <p>Each branch gets an unguessable token (<code>bench-3f9a1c72</code>), never a shared
-          predictable format that would let the two workflows recognise each other.</p>
-      </div>
-      <div class="card">
-        <h4>Fixed, archived prompt</h4>
-        <p>The builder prompt is the confinement block plus the verbatim brief. The
-          orchestrator adds nothing, and the exact text is written to disk before dispatch.</p>
-      </div>
-      <div class="card">
-        <h4>No rubric in the sandbox</h4>
-        <p>Scoring documents stay out of the workers' reach. An agent that can read how it is
-          graded optimises for the grader.</p>
-      </div>
-    </div>
-    <p class="note" style="margin-top:26px">
-      These rules are not precautionary boilerplate &mdash; each replaces a defect found in an
-      earlier run, including an orchestrator-improvised prompt clause that silently deleted
-      the AI-agent capability from <em>both</em> branches at once.
-    </p>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <h2>What the run surfaced</h2>
-    <div class="cards" style="margin-bottom:30px">
-      <div class="card"><div class="stat a">118 001</div><p>builder tokens, n8n-as-code</p></div>
-      <div class="card"><div class="stat b">153 971</div><p>builder tokens, Native MCP</p></div>
-      <div class="card"><div class="stat a">346 s</div><p>build, n8n-as-code</p></div>
-      <div class="card"><div class="stat b">450 s</div><p>build, Native MCP</p></div>
-    </div>
-
-    <h3>Against n8n-as-code</h3>
-    <ul class="findings">
-      <li><code>node-info --compact</code> omits per-parameter option values, so it is not sufficient to author a node alone &mdash; the third run to report it.</li>
-      <li><code>push</code> rewrote the local file and dropped the per-node <code>notes</code> fields set in the decorators. Silent data loss on a round-trip.</li>
-      <li><code>workspace status --json</code> exposes <code>accessStatus: "unknown"</code> without the pointer to <code>env status</code> that the text output already carries.</li>
-    </ul>
-
-    <h3>Against Native MCP</h3>
-    <ul class="findings">
-      <li>The server <strong>auto-assigned an existing user credential</strong> to the agent nodes during <code>create_workflow_from_code</code>, although the builder never requested one.</li>
-      <li><code>validate_node_config</code> reports <code>Required field subnodes is missing</code> for Agent nodes whose sub-connections are correctly wired.</li>
-      <li><code>search_nodes</code> takes <code>queries</code> (array), not <code>query</code>; <code>get_workflow_best_practices</code> requires an argument not discoverable from the tool name.</li>
+    <ul class="notes">
+      <li><strong>Sequenced, not parallel.</strong> One branch builds alone, is audited, and its workflow is deleted from the instance before the other is dispatched.</li>
+      <li><strong>Opaque names.</strong> Each branch gets an unguessable token, never a shared predictable format that would let the two workflows recognise each other.</li>
+      <li><strong>Fixed, archived prompt.</strong> The builder prompt is the confinement block plus the verbatim brief; the orchestrator adds nothing, and the exact text is written to disk before dispatch.</li>
+      <li><strong>No rubric in the sandbox.</strong> An agent that can read how it is graded optimises for the grader.</li>
     </ul>
   </div>
 </section>
 
 <section>
   <div class="wrap">
-    <h2>Honest limits</h2>
-    <ul class="findings">
-      <li><strong>One run per branch.</strong> The 1.30&times; build and token gaps are single observations, not separated from run-to-run variance.</li>
-      <li><strong>Correctness did not discriminate.</strong> Both branches scored 100, so 35 % of the composite is constant here and the ranking is decided by the cost axes alone.</li>
-      <li><strong>Ambition is not measured.</strong> Correctness asks whether a workflow works and covers the brief. Whether it is elegant or inventive is a separate judgement, not yet implemented.</li>
-      <li>Not numerically comparable to earlier runs: the worker runtime and model changed.</li>
+    <h2>Limits</h2>
+    <ul class="notes">
+      <li><strong>One run.</strong> Every figure on this page comes from a single pair of builds, so none of the gaps are separated from run-to-run variance.</li>
+      <li>Correctness is a tie whenever both branches deploy a valid workflow that covers the brief, in which case the ranking is decided by the cost axes alone.</li>
+      <li><strong>Ambition is not measured.</strong> Correctness asks whether a workflow works and covers the brief. Whether it is elegant or inventive is a separate judgement, not implemented.</li>
+      <li>Runs from different harnesses and models are not numerically comparable to each other; only the two branches within a run are.</li>
     </ul>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    Full report, raw server audits and both deployed workflows:
-    <a href="https://github.com/EtienneLescot/n8n-harness-benchmark/tree/main/results/history/run_10">results/history/run_10</a>
-    &middot; <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">repository</a>
-    &middot; <a href="https://github.com/EtienneLescot/n8n-as-code">n8n-as-code</a>
+    Latest run: <code>run_10</code> ·
+    <a href="https://github.com/EtienneLescot/n8n-harness-benchmark/tree/main/results/history">full reports, server audits and deployed workflows</a> ·
+    <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">repository</a> ·
+    <a href="https://github.com/EtienneLescot/n8n-as-code">n8n-as-code</a>
   </div>
 </footer>
 
