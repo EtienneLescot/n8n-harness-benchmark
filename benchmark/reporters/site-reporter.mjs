@@ -93,27 +93,28 @@ function aggregate(runs) {
 }
 
 /**
- * The six radar axes.
+ * The scored radar axes.
  *
  * A radar is the honest shape for this data: every axis is already normalised 0-100 and
  * every one points the same way, so "further from the centre is better" holds everywhere,
  * without the reader having to remember that fewer tokens is good. The bar version could
  * not do that — it drew a long bar for a large cost and a long bar for a high score.
  *
- * `scored` marks the five axes that feed the composite. Setup is drawn because it is worth
- * seeing beside the rest, and labelled so nobody reads it as part of the total.
+ * Only scored axes are drawn. Setup ease was removed rather than annotated: an axis on
+ * the chart that does not count reads as though it does, whatever the caption says.
  */
 const AXES = [
-    { lines: ['Requirement', 'coverage'], pick: (b) => b.correctnessBreakdown?.requirementCoverage, scored: true },
-    { lines: ['Node', 'validity'], pick: (b) => b.correctnessBreakdown?.nodeSchemaValidity, scored: true },
-    { lines: ['Graph', 'integrity'], pick: (b) => b.correctnessBreakdown?.graphIntegrity, scored: true },
-    { lines: ['Token', 'efficiency'], pick: (b) => b.scores?.tokenEfficiency, scored: true },
-    { lines: ['Build', 'speed'], pick: (b) => b.scores?.buildTime, scored: true },
-    { lines: ['Setup', 'ease'], pick: (b) => b.scores?.setupEaseTelemetry, scored: false },
+    {
+        lines: ['Correctness'],
+        sub: ['requirement coverage,', 'node validity,', 'graph integrity'],
+        pick: (b) => b.scores?.correctness,
+    },
+    { lines: ['Token', 'efficiency'], pick: (b) => b.scores?.tokenEfficiency },
+    { lines: ['Workflow', 'build speed'], pick: (b) => b.scores?.buildTime },
 ];
 
 const R = 130;              // outer radius
-const CX = 250, CY = 200;   // centre of a 500x400 viewBox
+const CX = 250, CY = 216;   // centre of a 500x420 viewBox, low enough that a stacked
 const NEWLINE = String.fromCharCode(10);
 
 /** Axis i sits at -90deg + i*60deg, so the first axis points straight up. */
@@ -159,11 +160,16 @@ function radarSvg(runs) {
             // Push the label outward along its own spoke, then anchor by which side it lands on.
             const [lx, ly] = polarPoint(i, R + 30);
             const anchor = lx > CX + 8 ? "start" : lx < CX - 8 ? "end" : "middle";
-            const dy = ly < CY - 40 ? -4 : ly > CY + 40 ? 12 : 4;
+            // A label above the chart grows downward from its first line, so lift the whole
+            // block by its sub-lines or the last one lands on the vertex it labels.
+            const subLift = (a.sub || []).length * 12;
+            const dy = ly < CY - 40 ? -8 - subLift : ly > CY + 40 ? 14 : 4;
             const tspans = a.lines
                 .map((line, k) => `<tspan x="${lx.toFixed(1)}" dy="${k === 0 ? 0 : 12}">${esc(line)}</tspan>`)
                 .join("");
-            const note = a.scored ? "" : `<tspan class="axis-note" x="${lx.toFixed(1)}" dy="12">not scored</tspan>`;
+            const note = (a.sub || [])
+                .map((line) => `<tspan class="axis-note" x="${lx.toFixed(1)}" dy="12">${esc(line)}</tspan>`)
+                .join("");
             return `<text class="axis-label" text-anchor="${anchor}" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}">${tspans}${note}</text>`;
         })
         .join(joiner);
@@ -182,7 +188,7 @@ function radarSvg(runs) {
         .join(joiner);
 
     const svg = [
-        `<svg viewBox="0 0 500 400" role="img" aria-label="Six-axis comparison; further from the centre is better on every axis">`,
+        `<svg viewBox="0 0 500 420" role="img" aria-label="Comparison across the three scored axes; further from the centre is better on every axis">`,
         rings, spokes, shapes, dots, labels,
         `</svg>`,
     ].join(joiner);
@@ -364,23 +370,16 @@ function render(runs) {
 <section>
   <div class="wrap">
     <h2>Where each one gains and loses</h2>
-    <p class="sub">Six axes, each normalised 0-100. Further from the centre is better on
+    <p class="sub">The three scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
       Mean across ${n} submitted ${plural}.</p>
     <div class="legend">${legend}</div>
     <div class="radar">
       ${radar.svg}
       <div class="side">
-        <div class="cell total"><div class="k">Composite</div>
+        <div class="cell total"><div class="k">Overall score</div>
           <div class="v a">${agg.n8nac.composite.toFixed(1)}</div>
-          <div class="v b">${agg.nativeMcp.composite.toFixed(1)}</div></div>
-        <div class="cell"><div class="k">Builder tokens</div>
-          <div class="v a" style="font-size:19px">${MEASURES[0].format(mean(runs.map((r) => MEASURES[0].pick(r.n8nac) ?? 0)))}</div>
-          <div class="v b" style="font-size:19px">${MEASURES[0].format(mean(runs.map((r) => MEASURES[0].pick(r.nativeMcp) ?? 0)))}</div></div>
-        <div class="cell"><div class="k">Build time</div>
-          <div class="v a" style="font-size:19px">${MEASURES[1].format(mean(runs.map((r) => MEASURES[1].pick(r.n8nac) ?? 0)))}</div>
-          <div class="v b" style="font-size:19px">${MEASURES[1].format(mean(runs.map((r) => MEASURES[1].pick(r.nativeMcp) ?? 0)))}</div></div>
-      </div>
+          <div class="v b">${agg.nativeMcp.composite.toFixed(1)}</div></div>      </div>
     </div>
     <h3>Correctness, in detail</h3>
     <div class="scroll">
@@ -392,20 +391,6 @@ function render(runs) {
       </table>
     </div>
 
-    <h3>Telemetry, not scored</h3>
-    <div class="scroll">
-      <table>
-        <tr><th></th><th class="num">n8n-as-code</th><th class="num">Native MCP</th></tr>
-${telemetryRows}
-      </table>
-    </div>
-    <p class="note" style="margin-top:18px">
-      Installation is paid once and amortises away, while build time and tokens are paid on
-      every workflow, so setup is measured and reported but kept out of the score.
-      Acquisition is excluded on both sides: each carries a benchmark artefact —
-      n8n-as-code installs from local tarballs because the build under test is unpublished,
-      and Native MCP has its worker hand-roll an HTTP client because the runtime ships no
-      wired MCP client.
     </p>
   </div>
 </section>
