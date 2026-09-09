@@ -74,7 +74,7 @@ Scores are calculated across four standardized dimensions:
 | **1. Workflow Quality** | **40%** | Live n8n Cloud API + server `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
 | **2. Creation Time** | **25%** | External harness stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
 | **3. Token Efficiency** | **25%** | Prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
-| **4. Setup Time** | **10%** | External harness stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
+| **4. Setup Ease** | **10%** | Installer log: friction events (70%) and command count (30%) | Universal Minimax on each, blended. Acquisition seconds are reported but not scored. |
 
 ### 1. Zero Subjective LLM Judges (Ground-Truth Server RPC)
 Instead of asking an LLM judge to guess code quality, the benchmark queries the live n8n Cloud server's official `validate_node_config` RPC tool:

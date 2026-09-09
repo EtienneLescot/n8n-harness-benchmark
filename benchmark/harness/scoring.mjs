@@ -45,8 +45,28 @@ export const COMPOSITE_WEIGHTS = {
     quality: 0.40,
     buildTime: 0.25,
     tokenEfficiency: 0.25,
-    setupTime: 0.10,
+    setupEase: 0.10,
 };
+
+/**
+ * Setup is scored on friction, not on seconds.
+ *
+ * Installation is paid once and amortises to nothing; build time and tokens are paid on
+ * every workflow. And most of the wall clock was never a product property anyway — it was
+ * bandwidth and registry latency.
+ *
+ * What IS a product property is what the installer ran into: dead ends (a command that
+ * answered wrongly, a documented path that did not exist) are reproducible, attributable
+ * to code, and fixable. Command count matters too, but less: a branch can be terse and
+ * still misleading.
+ *
+ * Acquisition seconds are excluded outright, on BOTH branches, because both carry a
+ * benchmark artefact and only one of them was ever being discounted: n8n-as-code installs
+ * from local tarballs because the build under test is unpublished, and native MCP has its
+ * workers hand-roll an HTTP client because the benchmark's runtime has no wired MCP client.
+ * A real user of either does neither. Seconds stay in the report as telemetry.
+ */
+export const SETUP_WEIGHTS = { friction: 0.70, commands: 0.30 };
 
 /** Universal Minimax: the better contender scores 100, the other degrades proportionally. */
 export function minimax(value, otherValue) {
@@ -76,12 +96,42 @@ function isProcessingNode(node) {
         .some((suffix) => t.endsWith(suffix));
 }
 
+/**
+ * Keys by which an n8n node declares that what it emits is HTML, rather than containing
+ * HTML literally: `emailType`, `contentType`, `responseContentType`, `mimeType`, `format`,
+ * `respondWith`. Checked as a key/value pair, never as a substring of the whole parameter
+ * blob — "html" appears inside plenty of unrelated strings.
+ */
+const HTML_FORMAT_KEYS = new Set([
+    'emailtype', 'contenttype', 'responsecontenttype', 'mimetype', 'format', 'respondwith', 'outputformat',
+]);
+
+function declaresHtmlOutput(value) {
+    if (value === null || typeof value !== 'object') return false;
+    for (const [key, entry] of Object.entries(value)) {
+        if (HTML_FORMAT_KEYS.has(key.toLowerCase())
+            && typeof entry === 'string'
+            && entry.toLowerCase().includes('html')) return true;
+        if (declaresHtmlOutput(entry)) return true;
+    }
+    return false;
+}
+
+/**
+ * The workflow presents HTML.
+ *
+ * Three ways, because a workflow can satisfy this without any HTML being visible in its
+ * static parameters: run_10's branch A had an agent instructed to emit a dashboard and a
+ * Gmail node set to `emailType: html`, so the document only exists at execution time. A
+ * detector that looked for a literal `<html` scored that as a miss.
+ */
 function emitsHtml(node) {
     const type = String(node.type || '').toLowerCase();
     if (type.endsWith('.html')) return true;
     // A Code or Set node that writes a document is an HTML output too.
     const params = JSON.stringify(node.parameters || {}).toLowerCase();
-    return params.includes('<!doctype html') || params.includes('<html');
+    if (params.includes('<!doctype html') || params.includes('<html')) return true;
+    return declaresHtmlOutput(node.parameters);
 }
 
 /**
@@ -155,6 +205,28 @@ export function scoreRequirementCoverage(workflow) {
         })),
         agentNodeCount: agentNodes.length,
         hasLanguageModelPin,
+    };
+}
+
+/**
+ * Score the setup axis for both branches at once, on friction and command count.
+ *
+ * Both components are minimax ratios like every other cost axis, so the easier branch gets
+ * 100 and the other degrades proportionally. Zero friction on both sides is a tie at 100
+ * rather than a division by zero — the ratio is taken on `count + 1`.
+ */
+export function scoreSetupEase(a, b) {
+    const pair = (x, y) => {
+        const [p, q] = [Number(x) + 1, Number(y) + 1];
+        return [minimax(p, q), minimax(q, p)];
+    };
+    const [frictionA, frictionB] = pair(a.frictionCount, b.frictionCount);
+    const [commandsA, commandsB] = pair(a.commandCount, b.commandCount);
+    const blend = (f, c) => round(f * SETUP_WEIGHTS.friction + c * SETUP_WEIGHTS.commands);
+    return {
+        a: { score: blend(frictionA, commandsA), friction: frictionA, commands: commandsA },
+        b: { score: blend(frictionB, commandsB), friction: frictionB, commands: commandsB },
+        weights: SETUP_WEIGHTS,
     };
 }
 

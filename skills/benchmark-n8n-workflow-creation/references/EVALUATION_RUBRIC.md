@@ -11,7 +11,7 @@ This rubric establishes a 100% deterministic, reproducible evaluation model. It 
 | **1. Workflow Quality** | **40%** | Live n8n Cloud API + `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
 | **2. Creation Time** | **25%** | External stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
 | **3. Token Efficiency** | **25%** | Total prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
-| **4. Setup Time** | **10%** | External stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |
+| **4. Setup Ease** | **10%** | Installer log: friction events and command count | $0.70 \times \text{FrictionScore} + 0.30 \times \text{CommandScore}$, each a Universal Minimax ratio |
 | **Composite Score** | **100%** | Weighted combination of 4 dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
 
 ---
@@ -64,7 +64,31 @@ Live execution status is queried from `GET /api/v1/executions?workflowId=:id` an
 
 ---
 
-## ⚡ Dimensions 2, 3 & 4: Universal Minimax Scaling
+## 🧰 Dimension 4: Setup Ease (10% Weight — friction, not seconds)
+
+Setup is scored on what the installer ran into, never on wall clock:
+
+$$	ext{SetupEase}(X) = 0.70 	imes 	ext{FrictionScore}(X) + 0.30 	imes 	ext{CommandScore}(X)$$
+
+Both components are Universal Minimax ratios on `count + 1`, so zero friction on both sides
+is a tie at 100 rather than a division by zero.
+
+**Why friction and not seconds.** Installation is paid once and amortises to nothing, while
+build time and tokens are paid on every workflow. And most of the wall clock was never a
+product property: it was bandwidth and registry latency. A dead end — a command that
+answers wrongly, a documented path that does not exist — is reproducible, attributable to
+code, and fixable. Command count carries the smaller share because a branch can be terse
+and still misleading.
+
+**Acquisition seconds are excluded from the score on BOTH branches**, and reported as
+telemetry. Each branch carries a benchmark artefact and only one of them was being
+discounted: n8n-as-code installs from local tarballs because the build under test is
+unpublished, and native MCP has its workers hand-roll an HTTP client because the benchmark
+runtime ships no wired MCP client. A real user of either does neither.
+
+---
+
+## ⚡ Dimensions 2 & 3: Universal Minimax Scaling
 
 To eliminate arbitrary cut-off thresholds (floor effect where both contenders get 0 pts despite 3x performance differences), all cost and latency metrics are evaluated using the **Universal Minimax Ratio**:
 

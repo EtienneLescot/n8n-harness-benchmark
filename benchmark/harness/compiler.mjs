@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { validateWorkflowOnInstance } from './validator.mjs';
-import { compositeScore, COMPOSITE_WEIGHTS, QUALITY_WEIGHTS } from './scoring.mjs';
+import { compositeScore, scoreSetupEase, COMPOSITE_WEIGHTS, QUALITY_WEIGHTS, SETUP_WEIGHTS } from './scoring.mjs';
 import { MarkdownReporter } from '../reporters/markdown-reporter.mjs';
 import { DashboardReporter } from '../reporters/dashboard-reporter.mjs';
 import { JsonReporter } from '../reporters/json-reporter.mjs';
@@ -102,7 +102,7 @@ export async function compileBenchmarkResults(options = {}) {
   const n8nacTokens = num(n8nacBuilder.tokenUsage?.totalTokens ?? n8nacBuilder.tokensUsed?.totalTokens);
   const mcpTokens = num(mcpBuilder.tokenUsage?.totalTokens ?? mcpBuilder.tokensUsed?.totalTokens);
 
-  const missing = Object.entries({ n8nacSetupSec, mcpSetupSec, n8nacBuildSec, mcpBuildSec, n8nacTokens, mcpTokens })
+  const missing = Object.entries({ n8nacBuildSec, mcpBuildSec, n8nacTokens, mcpTokens })
     .filter(([, v]) => v === null).map(([k]) => k);
   if (missing.length > 0) {
     console.warn(`⚠️  Unmeasured telemetry (reported as null, excluded from the composite): ${missing.join(', ')}`);
@@ -119,7 +119,27 @@ export async function compileBenchmarkResults(options = {}) {
   const pairMinimax = (a, b) => (a === null || b === null)
     ? { scoreA: null, scoreB: null }
     : calculateMinimax(a, b);
-  const setupTimeMinimax = pairMinimax(n8nacSetupSec, mcpSetupSec);
+  // Setup is scored on friction and command count, not on seconds — see SETUP_WEIGHTS.
+  // Acquisition seconds stay in the report as telemetry on both branches.
+  const countOf = (log, ...keys) => {
+    for (const k of keys) {
+      const v = k.split('.').reduce((o, part) => (o ?? {})[part], log);
+      if (Array.isArray(v)) return v.length;
+      if (typeof v === 'number') return v;
+    }
+    return 0;
+  };
+  const setupEase = scoreSetupEase(
+    {
+      frictionCount: countOf(n8nacInstaller, 'friction_events', 'frictionEvents', 'friction_count'),
+      commandCount: countOf(n8nacInstaller, 'command_count', 'commands', 'commandCount'),
+    },
+    {
+      frictionCount: countOf(mcpInstaller, 'friction_events', 'frictionEvents', 'friction_count'),
+      commandCount: countOf(mcpInstaller, 'command_count', 'commands', 'commandCount', 'command_list'),
+    },
+  );
+  const setupTimeMinimax = { scoreA: setupEase.a.score, scoreB: setupEase.b.score };
   const buildTimeMinimax = pairMinimax(n8nacBuildSec, mcpBuildSec);
   const tokensMinimax = pairMinimax(n8nacTokens, mcpTokens);
 
@@ -147,7 +167,7 @@ export async function compileBenchmarkResults(options = {}) {
       quality: qualityScore,
       buildTime: buildScore,
       tokenEfficiency: tokenScore,
-      setupTime: setupScore,
+      setupEase: setupScore,
     }).score;
 
   const n8nacComposite = computeComposite(
@@ -187,7 +207,8 @@ export async function compileBenchmarkResults(options = {}) {
         }
       }
     },
-    weights: { ...COMPOSITE_WEIGHTS, qualityComponents: QUALITY_WEIGHTS },
+    weights: { ...COMPOSITE_WEIGHTS, qualityComponents: QUALITY_WEIGHTS, setupComponents: SETUP_WEIGHTS },
+    setupEase,
     n8nac: {
       runId: path.basename(n8nacSandbox),
       toolName: 'n8n-as-code',
