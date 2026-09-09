@@ -54,12 +54,14 @@
       "n8n-nodes-base.html"
     ],
     "expectedCapabilities": [
-      "Daily trigger (schedule or manual)",
-      "Gmail message retrieval / search",
-      "Google Calendar event retrieval",
-      "Multi-agent triage (classification, prioritization, conflict detection)",
-      "HTML summary dashboard generation"
-    ]
+      { "id": "daily_trigger", "name": "Daily trigger (schedule or cron)" },
+      { "id": "gmail_retrieval", "name": "Gmail message retrieval / search" },
+      { "id": "calendar_retrieval", "name": "Google Calendar event retrieval" },
+      { "id": "triage_step", "name": "Information triage / sorting step (any implementation)" },
+      { "id": "multi_agent", "name": "Multi-agent architecture (real LangChain agent nodes with a language model pinned)" },
+      { "id": "html_dashboard", "name": "HTML summary dashboard generation" }
+    ],
+    "capabilityNote": "Scored by benchmark/harness/scoring.mjs on node types and wiring only, never on node names, equal share each. Builders are never shown this list."
   },
   "sandbox": {
     "baseDir": "./benchmark/sandboxes",

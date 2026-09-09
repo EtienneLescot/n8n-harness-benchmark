@@ -116,14 +116,25 @@ async function handleEvaluate(filePath) {
   const evaluator = new WorkflowEvaluator();
   const result = await evaluator.evaluate(content);
 
+  if (result.error) {
+    console.error(`❌ ${result.error}`);
+    process.exit(1);
+  }
+
   console.log('═══════════════════════════════════════════════════════');
-  console.log(`🏆 OVERALL QUALITY SCORE: ${result.totalScore} / 100`);
+  console.log(`🏆 PARTIAL QUALITY SCORE: ${result.partialQuality} / 100`);
   console.log('═══════════════════════════════════════════════════════');
-  console.log(`  1. Brief Following:      ${result.breakdown.briefFollowing.score} / 25`);
-  console.log(`  2. Nodes & Wiring:       ${result.breakdown.nodesCorrectness.score} / 25`);
-  console.log(`  3. Wow Effect & Style:   ${result.breakdown.wowEffect.score} / 25`);
-  console.log(`  4. Execution Readiness:  ${result.breakdown.workflowExecution.score} / 25`);
-  console.log('═══════════════════════════════════════════════════════\n');
+  console.log(`  Requirement coverage:  ${result.scores.requirementCoverage} / 100`);
+  for (const check of result.requirementChecks) {
+    const mark = check.points === check.maxPoints ? '✔' : check.points > 0 ? '~' : '✘';
+    console.log(`     ${mark} ${check.label.padEnd(42)} ${check.points} / ${check.maxPoints}`);
+  }
+  console.log(`  Graph integrity:       ${result.scores.graphIntegrity} / 100`);
+  if (result.metrics.orphanedNodes.length > 0) {
+    console.log(`     orphans: ${result.metrics.orphanedNodes.join(', ')}`);
+  }
+  console.log('═══════════════════════════════════════════════════════');
+  console.log(`⚠️  Not measured offline: ${result.missingComponent}\n`);
 }
 
 import { compileBenchmarkResults } from './harness/compiler.mjs';

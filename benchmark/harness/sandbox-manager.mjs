@@ -47,13 +47,11 @@ export class SandboxManager {
   initSandbox(toolName, runId = null, options = {}) {
     const sandbox = this.createSandbox(toolName, runId);
 
-    // Copy rubric if available
-    const rubricSource = options.rubricPath || path.resolve('./skills/benchmark-n8n-workflow-creation/references/EVALUATION_RUBRIC.md');
-    if (fs.existsSync(rubricSource)) {
-      const rubricDestDir = path.join(sandbox.sandboxPath, 'references');
-      fs.mkdirSync(rubricDestDir, { recursive: true });
-      fs.copyFileSync(rubricSource, path.join(rubricDestDir, 'EVALUATION_RUBRIC.md'));
-    }
+    // The rubric is deliberately NOT seeded into the sandbox. A worker that can read how it
+    // is graded optimises for the grader: every builder sandbox from run_1 to run_9 carried
+    // EVALUATION_RUBRIC.md at its root, so both branches could read "0 orphaned nodes" and
+    // "valid nodes / total nodes" and shape a minimal graph to satisfy them. Scoring
+    // documents stay in the repository, outside every sandbox.
 
     // Write partitioned or provided .env
     if (options.envContent) {

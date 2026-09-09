@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { validateWorkflowOnInstance } from './validator.mjs';
+import { compositeScore, COMPOSITE_WEIGHTS, QUALITY_WEIGHTS } from './scoring.mjs';
 import { MarkdownReporter } from '../reporters/markdown-reporter.mjs';
 import { DashboardReporter } from '../reporters/dashboard-reporter.mjs';
 import { JsonReporter } from '../reporters/json-reporter.mjs';
@@ -84,14 +85,28 @@ export async function compileBenchmarkResults(options = {}) {
   };
 
   // 3. Extract Physical Telemetry
-  const n8nacSetupSec = n8nacInstaller.setup_time_seconds || n8nacInstaller.setupTimeSeconds || 18;
-  const mcpSetupSec = mcpInstaller.telemetry?.setupTimeSeconds || mcpInstaller.setupTimeSeconds || 22;
+  // Every field is null when its log is missing. This block used to end each chain with a
+  // literal (`|| 474` seconds, `|| 55000` tokens, `toolCalls * 1000` as a token estimate),
+  // so a run with an unwritten log compiled into a complete-looking report built on
+  // invented numbers. A missing measurement is now absent, and the composite renormalises
+  // over the axes that were actually observed.
+  const num = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
-  const n8nacBuildSec = n8nacBuilder.durationSeconds || (n8nacBuilder.durationMs ? n8nacBuilder.durationMs / 1000 : 474);
-  const mcpBuildSec = mcpBuilder.durationSeconds || (mcpBuilder.durationMs ? mcpBuilder.durationMs / 1000 : 1525);
+  const n8nacSetupSec = num(n8nacInstaller.setup_time_seconds ?? n8nacInstaller.setupTimeSeconds);
+  const mcpSetupSec = num(mcpInstaller.telemetry?.setupTimeSeconds ?? mcpInstaller.setupTimeSeconds);
 
-  const n8nacTokens = n8nacBuilder.tokenUsage?.totalTokens || n8nacBuilder.tokensUsed?.totalTokens || (n8nacBuilder.toolCalls ? n8nacBuilder.toolCalls * 1000 : 55000);
-  const mcpTokens = mcpBuilder.tokenUsage?.totalTokens || mcpBuilder.tokensUsed?.totalTokens || (mcpBuilder.toolCalls ? mcpBuilder.toolCalls * 1000 : 68000);
+  const n8nacBuildSec = num(n8nacBuilder.durationSeconds ?? (n8nacBuilder.durationMs ? n8nacBuilder.durationMs / 1000 : null));
+  const mcpBuildSec = num(mcpBuilder.durationSeconds ?? (mcpBuilder.durationMs ? mcpBuilder.durationMs / 1000 : null));
+
+  // Never derive tokens from tool-call count: that is a guess wearing a measurement's clothes.
+  const n8nacTokens = num(n8nacBuilder.tokenUsage?.totalTokens ?? n8nacBuilder.tokensUsed?.totalTokens);
+  const mcpTokens = num(mcpBuilder.tokenUsage?.totalTokens ?? mcpBuilder.tokensUsed?.totalTokens);
+
+  const missing = Object.entries({ n8nacSetupSec, mcpSetupSec, n8nacBuildSec, mcpBuildSec, n8nacTokens, mcpTokens })
+    .filter(([, v]) => v === null).map(([k]) => k);
+  if (missing.length > 0) {
+    console.warn(`⚠️  Unmeasured telemetry (reported as null, excluded from the composite): ${missing.join(', ')}`);
+  }
 
   const n8nacCommands = n8nacInstaller.command_count || (n8nacInstaller.commands ? n8nacInstaller.commands.length : 3);
   const mcpCommands = mcpInstaller.telemetry?.commandCount || (mcpInstaller.telemetry?.commands ? mcpInstaller.telemetry.commands.length : 3);
@@ -99,14 +114,23 @@ export async function compileBenchmarkResults(options = {}) {
   const n8nacTurns = n8nacBuilder.interactionTurns || n8nacBuilder.turns || 1;
   const mcpTurns = mcpBuilder.interactionTurns || mcpBuilder.turns || 1;
 
-  // 4. Calculate Minimax Scores
-  const setupTimeMinimax = calculateMinimax(n8nacSetupSec, mcpSetupSec);
-  const buildTimeMinimax = calculateMinimax(n8nacBuildSec, mcpBuildSec);
-  const tokensMinimax = calculateMinimax(n8nacTokens, mcpTokens);
+  // 4. Calculate Minimax Scores. Minimax is a ratio between two branches, so an axis
+  // missing on either side has no score for either — not a default one.
+  const pairMinimax = (a, b) => (a === null || b === null)
+    ? { scoreA: null, scoreB: null }
+    : calculateMinimax(a, b);
+  const setupTimeMinimax = pairMinimax(n8nacSetupSec, mcpSetupSec);
+  const buildTimeMinimax = pairMinimax(n8nacBuildSec, mcpBuildSec);
+  const tokensMinimax = pairMinimax(n8nacTokens, mcpTokens);
 
   // 5. Run Deterministic Ground-Truth API Validation for both workflows
-  const n8nacWfId = n8nacBuilder.workflowId || 'y7SWIwjXjL8x3mwU';
-  const mcpWfId = mcpBuilder.workflowId || 'Nr5K7Hhga1nykKT1';
+  // No fallback workflow id: auditing a stale workflow from an earlier run and reporting it
+  // as this run's result is worse than failing.
+  const n8nacWfId = n8nacBuilder.workflowId;
+  const mcpWfId = mcpBuilder.workflowId;
+  if (!n8nacWfId || !mcpWfId) {
+    throw new Error(`Cannot compile: missing workflowId in a builder log (n8nac=${n8nacWfId ?? 'absent'}, nativeMcp=${mcpWfId ?? 'absent'}).`);
+  }
 
   console.log(`Auditing Branch A workflow (${n8nacWfId}) on n8n Cloud...`);
   const n8nacQualityAudit = await validateWorkflowOnInstance(n8nacWfId);
@@ -114,16 +138,17 @@ export async function compileBenchmarkResults(options = {}) {
   console.log(`Auditing Branch B workflow (${mcpWfId}) on n8n Cloud...`);
   const mcpQualityAudit = await validateWorkflowOnInstance(mcpWfId);
 
-  // 6. Calculate Composite Overall Scores
-  // Standardized weights: Quality (40%), Build Time (25%), Token Efficiency (25%), Setup Time (10%)
-  const computeComposite = (qualityScore, buildScore, tokenScore, setupScore) => {
-    return parseFloat((
-      qualityScore * 0.40 +
-      buildScore * 0.25 +
-      tokenScore * 0.25 +
-      setupScore * 0.10
-    ).toFixed(2));
-  };
+  // 6. Calculate Composite Overall Scores — weights come from scoring.mjs, never restated here.
+  // Pass null for an axis this runtime cannot observe (run_8 and run_9 had no per-worker
+  // token telemetry): compositeScore renormalises over the measured axes and flags the
+  // result partial, instead of scoring an unobserved axis as zero.
+  const computeComposite = (qualityScore, buildScore, tokenScore, setupScore) =>
+    compositeScore({
+      quality: qualityScore,
+      buildTime: buildScore,
+      tokenEfficiency: tokenScore,
+      setupTime: setupScore,
+    }).score;
 
   const n8nacComposite = computeComposite(
     n8nacQualityAudit.scores.compositeQuality,
@@ -162,15 +187,7 @@ export async function compileBenchmarkResults(options = {}) {
         }
       }
     },
-    weights: {
-      workflowQuality: 0.40,
-      quality: 0.40,
-      buildTime: 0.25,
-      creationTime: 0.25,
-      tokenEfficiency: 0.25,
-      tokenConsumption: 0.25,
-      setupTime: 0.10
-    },
+    weights: { ...COMPOSITE_WEIGHTS, qualityComponents: QUALITY_WEIGHTS },
     n8nac: {
       runId: path.basename(n8nacSandbox),
       toolName: 'n8n-as-code',

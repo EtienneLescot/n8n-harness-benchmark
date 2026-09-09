@@ -15,10 +15,43 @@ No worker agent may ever evaluate, score, or comment qualitatively on its own pe
 When running on a shared n8n Cloud instance with common API credentials:
 - **Universal System Prompt Instruction**:
   > **“STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.”**
-- **Workflow Naming Rule**:
-  > **“Mandatory workflow naming format: workflow-<timestamp> (e.g., workflow-1741300000).”**
-- This instruction is strictly generic: it contains no tool-specific keywords (`n8nac`, `search_workflows`, etc.) to prevent context leakage across sandboxes.
+- **Opaque Naming Rule** — the orchestrator generates one unguessable token per branch
+  (e.g. `bench-3f9a1c72`) and passes it in that branch's task prompt:
+  > **“Mandatory workflow name: use exactly the opaque token supplied to you. Do not derive a name from the request, and do not use a shared or guessable format.”**
+- The tokens must be **independent random values**, never a shared prefix plus a timestamp.
+  `run_9` used `workflow-<timestamp>` on both branches, which made each workflow trivially
+  recognisable to the other on the shared instance — it replaced the anti-recognition rule
+  with a rule that defeats it. n8n Cloud has no read audit, so a recognition channel that
+  exists cannot be shown afterwards to have gone unused.
+- **Never name the sibling sandbox.** Confinement is expressed as “operate only inside your
+  own working directory”, never as “do not read `<the other branch's path>`”, which tells
+  the worker exactly where its counterpart is.
+- **Never place the rubric, the requirement list, or any scoring document inside a sandbox.**
+  A worker that can read how it is graded optimises for the grader.
 - Any attempt to list or inspect existing workflows on the cloud instance is audited and flagged as a toolchain isolation violation.
+
+### 🧪 Principle 2b: The Builder Prompt Is Fixed, Not Composed Per Run
+The builder's task prompt is the confinement block plus the verbatim user request, and
+nothing else. The orchestrator may not add design guidance of any kind.
+
+This is not hypothetical. In `run_9` the orchestrator invented, at dispatch time, a clause
+that appears nowhere in this repository:
+
+> `NEVER fabricate, create, or assign OAuth credentials (Gmail/Google/OpenAI); leave credential slots empty.`
+
+Both builders read the parenthesis as a ban on the OpenAI-backed **Agent node** and replaced
+it with plain Code nodes named “… Agent”. The benchmark's own
+`requirements.expectedNodeTypes` asks for `@n8n/n8n-nodes-langchain.agent`, so an
+improvised prompt clause silently deleted the capability under test — on both branches at
+once, which also manufactured the design convergence the run then had to investigate.
+
+Rules that follow from it:
+- Any constraint given to a builder **must exist in this repository** before the run.
+- A scoring caveat is never restated as a design constraint. “Execution is not scored
+  because OAuth cannot be provisioned” must not become “do not use nodes that need OAuth”.
+- The exact dispatched prompt is written to the run directory **verbatim** before the
+  workers start. `run_9` wrote only a timestamp, which is why its prompt had to be
+  recovered from a conversation export.
 
 ### 📋 Principle 3: Concrete Execution Manifest (Never Inferred)
 Because benchmark results can be contributed by multiple developers and agent runtimes into a shared public leaderboard:

@@ -22,7 +22,7 @@ Clone https://github.com/EtienneLescot/n8n-harness-benchmark.git, read the bench
 **What the Orchestrator will do automatically:**
 1. **Credentials Gate**: Reads `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, and `N8N_NATIVE_MCP_TOKEN` (prompting you in chat if anything is missing).
 2. **Lock Parameters**: Standardizes model IDs (`Gemini 3.8 Flash High`, `Claude 3.7 Sonnet`, etc.) and temperature (`0.2`).
-3. **Partition Sandboxes**: Spawns isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`) with universal confinement and opaque naming (`workflow-<timestamp>`).
+3. **Partition Sandboxes**: Spawns isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`) with universal confinement and a distinct unguessable workflow token per branch (e.g. `bench-3f9a1c72`). Sandboxes contain no rubric and no requirement list, and neither prompt names the other branch's directory.
 4. **Deploy & Time**: Dispatches subagents to install dependencies and author the multi-agent workflow under external stopwatch timing.
 5. **Deterministic API Audit**: Queries the n8n Cloud server's official `validate_node_config` RPC, calculates universal minimax scores, and updates `results/` and `docs/`.
 
@@ -71,7 +71,7 @@ Scores are calculated across four standardized dimensions:
 
 | Dimension | Weight | Measurement Source | Scoring Formula |
 |---|:---:|---|---|
-| **1. Workflow Quality** | **40%** | Live n8n Cloud API + server `validate_node_config` | $0.60 \times \text{NodeValidity} + 0.40 \times \text{GraphIntegrity}$ |
+| **1. Workflow Quality** | **40%** | Live n8n Cloud API + server `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
 | **2. Creation Time** | **25%** | External harness stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
 | **3. Token Efficiency** | **25%** | Prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
 | **4. Setup Time** | **10%** | External harness stopwatch ($T_{\text{inst}}$) | $100 \times \frac{\min(T_{\text{inst},A}, T_{\text{inst},B})}{T_{\text{inst},X}}$ (Universal Minimax) |

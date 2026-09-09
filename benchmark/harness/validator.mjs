@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { scoreRequirementCoverage, compositeQuality, QUALITY_WEIGHTS } from './scoring.mjs';
 
 function loadEnv() {
   const envPaths = ['.env', 'benchmark/sandboxes/run_next_2_native_mcp/.env', 'benchmark/sandboxes/run_next_2_n8nac/.env'];
@@ -246,14 +247,21 @@ export async function validateWorkflowOnInstance(workflowId) {
     ? 100
     : (liveExecution.executed ? 50 : 0);
 
-  // 5. Composite Quality Score (Deterministic)
-  // Weights: 60% Node Schema Validity, 40% Graph Integrity
-  // Note: Live execution is excluded from scoring because external service credentials
-  // (Google OAuth2 / Gmail / Calendar) cannot be populated in benchmark test instances.
-  const compositeQualityScore = parseFloat((
-    nodeValidityScore * 0.60 +
-    graphIntegrityScore * 0.40
-  ).toFixed(2));
+  // 5. Requirement coverage — does the workflow do what the brief asked?
+  // Node validity and graph integrity are both normalised by the workflow's own node
+  // count, so under the old 60/40 formula a workflow that skipped half the brief scored
+  // the same as one that did all of it: run_8 gave 100/100 to a 4-node workflow with no
+  // triage against a 15-node one. Coverage is the component that is not self-normalising.
+  const requirementCoverage = scoreRequirementCoverage(wfData);
+
+  // 6. Composite Quality Score (Deterministic, weights from scoring.mjs)
+  // Live execution stays excluded: the benchmark cannot provision third-party OAuth, so
+  // scoring it would measure credential availability. It is reported as telemetry below.
+  const compositeQualityScore = compositeQuality({
+    requirementCoverage: requirementCoverage.score,
+    nodeSchemaValidity: nodeValidityScore,
+    graphIntegrity: graphIntegrityScore
+  });
 
   return {
     workflowId,
@@ -264,14 +272,18 @@ export async function validateWorkflowOnInstance(workflowId) {
       connectionCount: Object.keys(connections).length,
       orphanedNodeCount: orphanedNodes.length,
       validNodeCount: validNodesCount,
-      invalidNodeCount: invalidNodes.length
+      invalidNodeCount: invalidNodes.length,
+      agentNodeCount: requirementCoverage.agentNodeCount
     },
     scores: {
+      requirementCoverage: requirementCoverage.score,
       nodeSchemaValidity: nodeValidityScore,
       graphIntegrity: graphIntegrityScore,
       liveExecution: liveExecutionScore,
       compositeQuality: compositeQualityScore
     },
+    qualityWeights: QUALITY_WEIGHTS,
+    requirementChecks: requirementCoverage.checks,
     liveExecution,
     invalidNodes: invalidNodes.map(i => ({
       name: i.name,

@@ -114,7 +114,8 @@ CONFINEMENT & SECURITY RULES (CRITICAL):
 - NEVER list, inspect, read, or execute commands in parent directories ('..') or sibling workspaces.
 - Discover and utilize the tools, CLI binaries, libraries, or environment variables present in your local workspace.
 - STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.
-- Mandatory workflow naming format: workflow-<timestamp> (e.g., workflow-1741300000).`,
+- Mandatory workflow name: use exactly the opaque token supplied to you in your task prompt. Do not derive a name from the request, and do not use a shared or guessable format.
+- Credentials: never create, assign, or fabricate any credential, and never invent a secret value. This is a rule about SECRETS ONLY. It is NOT a restriction on which nodes you may use: nodes that require credentials are expected, and you add them with their credential slot left empty.`,
   enable_write_tools: true,
   enable_mcp_tools: true,
   enable_subagent_tools: false
@@ -151,13 +152,32 @@ Spawn two independent installer subagents in their respective clean sandboxes us
 Spawn two independent builder subagents in their respective configured sandboxes using `TypeName: "hermetic_worker"` and `Workspace: "branch"`.
 
 > [!IMPORTANT]
-> **100% Natural User Request**:
-> Both builders receive **strictly and exclusively** the authentic user request. Zero filesystem paths, zero system role preamble, zero technical micro-management, zero formatting overhead.
-> 
+> **The builder prompt is fixed, not composed per run.**
+> It is exactly two blocks: the `hermetic_worker` confinement text registered in Step 2,
+> plus the verbatim user request below. **The orchestrator adds nothing else** — no
+> deliverables list, no toolchain steps, no design guidance, no restatement of a scoring
+> rule. Only two per-run values are substituted: the sandbox path and the opaque workflow
+> token.
+>
 > **Exact User Prompt Sent to Both Builders**:
 > ```text
 > Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.
 > ```
+
+> [!CAUTION]
+> **Why this is a hard rule.** In `run_9` the orchestrator improvised a clause that exists
+> nowhere in this repository — `NEVER fabricate, create, or assign OAuth credentials
+> (Gmail/Google/OpenAI)` — by restating a *scoring* caveat as a *design* constraint. Both
+> builders read the parenthesis as a ban on the OpenAI-backed Agent node and replaced it
+> with Code nodes named “… Agent”. `requirements.expectedNodeTypes` asks for
+> `@n8n/n8n-nodes-langchain.agent`, so one improvised sentence deleted the capability under
+> test from both branches at once — and manufactured a design convergence that then had to
+> be investigated as suspected contamination.
+>
+> Before dispatching, the orchestrator **must** write the exact prompt it is about to send
+> to `benchmark/sandboxes/<runId>_builder_prompt_<branch>.txt`, verbatim. `run_9` wrote only
+> a timestamp, so its prompt was unrecoverable from the repository and had to be extracted
+> from a conversation export.
 
 - **How Builders Discover Their Toolchain**:
   - **Branch A (`n8n-as-code`)**: Discovers its environment through its local sandbox setup (`AGENTS.md`, `.agents/skills/n8n-architect/`, `n8nac` commands).
@@ -178,10 +198,23 @@ node benchmark/harness/validator.mjs <workflowId>
 npm run validate <workflowId>
 ```
 
-The validator performs:
-1. **Node Schema Validity (40% of Quality)**: Calls n8n server RPC `validate_node_config` for each node (parameters, required subnodes, credentials).
-2. **Graph Topology & Integrity (30% of Quality)**: Graph adjacency check verifying all functional nodes are connected with 0 orphaned nodes.
-3. **Live Execution Verification (30% of Quality)**: Queries `GET /api/v1/executions` to verify live cloud execution status and output payloads.
+The validator performs, with weights read from `benchmark/harness/scoring.mjs` (the single
+source of truth — do not restate weights anywhere else):
+
+1. **Requirement Coverage (40% of Quality)**: Checks the deployed graph against
+   `requirements.expectedCapabilities`, on node TYPES and wiring only, never on node names.
+2. **Node Schema Validity (40% of Quality)**: Calls n8n server RPC `validate_node_config`
+   for each node (parameters, required subnodes, credentials).
+3. **Graph Topology & Integrity (20% of Quality)**: Graph adjacency check verifying all
+   functional nodes are connected with 0 orphaned nodes.
+
+**Live execution is telemetry, not score.** The benchmark cannot provision third-party
+OAuth, so scoring a successful run would measure credential availability. This exclusion is
+about scoring only: it never licenses a builder to omit nodes that need credentials.
+
+Requirement coverage exists because components 2 and 3 are both normalised by the
+workflow's own node count, so on their own they make doing less free. In `run_8` a 4-node
+workflow with no triage step scored 100/100 against a 15-node one that fulfilled the brief.
 
 ---
 
