@@ -947,6 +947,7 @@
       let mcpSetupSum = 0, n8nacSetupSum = 0;
       let mcpTokRaw = 0, n8nacTokRaw = 0;
       let mcpSecRaw = 0, n8nacSecRaw = 0;
+      let mcpSetupRaw = 0, n8nacSetupRaw = 0;
 
       filteredRuns.forEach(r => {
         if (r.winner === 'nativeMcp') mcpWins++; else n8nacWins++;
@@ -965,6 +966,8 @@
         n8nacTokRaw += Number(r.n8nac?.tokens) || 0;
         mcpSecRaw += Number(r.nativeMcp?.buildSec) || 0;
         n8nacSecRaw += Number(r.n8nac?.buildSec) || 0;
+        mcpSetupRaw += Number(r.nativeMcp?.setupSec) || 0;
+        n8nacSetupRaw += Number(r.n8nac?.setupSec) || 0;
       });
 
       const mcpAvg = (mcpCompSum / count).toFixed(2);
@@ -1046,6 +1049,13 @@
       const qualDiff = Math.abs(parseFloat(mq) - parseFloat(nq)).toFixed(1);
       const qualWinner = parseFloat(mq) >= parseFloat(nq) ? 'Native MCP' : 'n8n-as-code';
 
+      const avgN8nacSetup = Math.round(n8nacSetupRaw / count);
+      const avgMcpSetup = Math.round(mcpSetupRaw / count);
+      const setupRatio = avgN8nacSetup <= avgMcpSetup
+        ? (avgMcpSetup / Math.max(1, avgN8nacSetup)).toFixed(1) + 'x faster'
+        : (avgN8nacSetup / Math.max(1, avgMcpSetup)).toFixed(1) + 'x faster';
+      const setupWinner = avgN8nacSetup <= avgMcpSetup ? 'n8n-as-code' : 'Native MCP';
+
       document.getElementById('aggTelemetryTable').innerHTML = `
         <tr>
           <td><strong>Creation Duration (s)</strong></td>
@@ -1067,9 +1077,9 @@
         </tr>
         <tr>
           <td><strong>Setup Latency (s)</strong></td>
-          <td>18s</td>
-          <td>22s</td>
-          <td><strong>n8n-as-code 1.2x faster</strong></td>
+          <td>${avgN8nacSetup}s</td>
+          <td>${avgMcpSetup}s</td>
+          <td><strong>${setupWinner} ${setupRatio}</strong></td>
         </tr>
       `;
     }
