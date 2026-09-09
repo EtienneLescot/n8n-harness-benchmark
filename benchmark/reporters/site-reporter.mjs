@@ -92,6 +92,104 @@ function aggregate(runs) {
     return out;
 }
 
+/**
+ * The six radar axes.
+ *
+ * A radar is the honest shape for this data: every axis is already normalised 0-100 and
+ * every one points the same way, so "further from the centre is better" holds everywhere,
+ * without the reader having to remember that fewer tokens is good. The bar version could
+ * not do that — it drew a long bar for a large cost and a long bar for a high score.
+ *
+ * `scored` marks the five axes that feed the composite. Setup is drawn because it is worth
+ * seeing beside the rest, and labelled so nobody reads it as part of the total.
+ */
+const AXES = [
+    { lines: ['Requirement', 'coverage'], pick: (b) => b.correctnessBreakdown?.requirementCoverage, scored: true },
+    { lines: ['Node', 'validity'], pick: (b) => b.correctnessBreakdown?.nodeSchemaValidity, scored: true },
+    { lines: ['Graph', 'integrity'], pick: (b) => b.correctnessBreakdown?.graphIntegrity, scored: true },
+    { lines: ['Token', 'efficiency'], pick: (b) => b.scores?.tokenEfficiency, scored: true },
+    { lines: ['Build', 'speed'], pick: (b) => b.scores?.buildTime, scored: true },
+    { lines: ['Setup', 'ease'], pick: (b) => b.scores?.setupEaseTelemetry, scored: false },
+];
+
+const R = 130;              // outer radius
+const CX = 250, CY = 200;   // centre of a 500x400 viewBox
+const NEWLINE = String.fromCharCode(10);
+
+/** Axis i sits at -90deg + i*60deg, so the first axis points straight up. */
+/** Polar placement with no 0-100 clamp, so labels can sit outside the outer ring. */
+function polarPoint(i, radius) {
+    const angle = (-90 + i * (360 / AXES.length)) * (Math.PI / 180);
+    return [CX + radius * Math.cos(angle), CY + radius * Math.sin(angle)];
+}
+
+function axisPoint(i, value) {
+    const angle = (-90 + i * (360 / AXES.length)) * (Math.PI / 180);
+    const r = (Math.max(0, Math.min(100, value)) / 100) * R;
+    return [CX + r * Math.cos(angle), CY + r * Math.sin(angle)];
+}
+
+const polygonPoints = (values) =>
+    values.map((v, i) => axisPoint(i, v).map((n) => n.toFixed(1)).join(",")).join(" ");
+
+function radarSvg(runs) {
+    const series = BRANCHES.map(({ key, label, cls }) => ({
+        label,
+        cls,
+        values: AXES.map((a) => mean(runs.map((r) => a.pick(r[key]) ?? 0))),
+    }));
+
+    const joiner = NEWLINE + "      ";
+
+    // Rings at 25/50/75/100 give a scale without numbering every axis.
+    const rings = [25, 50, 75, 100]
+        .map((pct) => `<polygon class="ring" points="${polygonPoints(AXES.map(() => pct))}"/>`)
+        .join(joiner);
+
+    const spokes = AXES
+        .map((_, i) => {
+            const [x, y] = axisPoint(i, 100);
+            return `<line class="spoke" x1="${CX}" y1="${CY}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+        })
+        .join(joiner);
+
+    const labels = AXES
+        .map((a, i) => {
+            const [x, y] = axisPoint(i, 100);
+            // Push the label outward along its own spoke, then anchor by which side it lands on.
+            const [lx, ly] = polarPoint(i, R + 30);
+            const anchor = lx > CX + 8 ? "start" : lx < CX - 8 ? "end" : "middle";
+            const dy = ly < CY - 40 ? -4 : ly > CY + 40 ? 12 : 4;
+            const tspans = a.lines
+                .map((line, k) => `<tspan x="${lx.toFixed(1)}" dy="${k === 0 ? 0 : 12}">${esc(line)}</tspan>`)
+                .join("");
+            const note = a.scored ? "" : `<tspan class="axis-note" x="${lx.toFixed(1)}" dy="12">not scored</tspan>`;
+            return `<text class="axis-label" text-anchor="${anchor}" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}">${tspans}${note}</text>`;
+        })
+        .join(joiner);
+
+    const shapes = series
+        .map((s) => `<polygon class="shape ${s.cls}" points="${polygonPoints(s.values)}"/>`)
+        .join(joiner);
+
+    const dots = series
+        .map((s) => s.values
+            .map((v, i) => {
+                const [x, y] = axisPoint(i, v);
+                return `<circle class="dot ${s.cls}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"/>`;
+            })
+            .join(""))
+        .join(joiner);
+
+    const svg = [
+        `<svg viewBox="0 0 500 400" role="img" aria-label="Six-axis comparison; further from the centre is better on every axis">`,
+        rings, spokes, shapes, dots, labels,
+        `</svg>`,
+    ].join(joiner);
+
+    return { svg, series };
+}
+
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** A score bar: 0-100, longer is better. Used for the composite and nothing else. */
@@ -152,6 +250,11 @@ function render(runs) {
         return `        <tr><td><code>${esc(m.run || '?')}</code></td><td>${esc(m.harness || '?')}</td><td>${esc(m.model || '?')}</td>${cells}</tr>`;
     }).join('\n');
 
+    const radar = radarSvg(runs);
+    const legend = radar.series
+        .map((entry) => `<span class="key"><i class="swatch ${entry.cls}"></i>${esc(entry.label)}</span>`)
+        .join("");
+
     const plural = n === 1 ? 'run' : 'runs';
 
     return `<!doctype html>
@@ -202,6 +305,28 @@ function render(runs) {
   .fill{height:100%;border-radius:5px}
   .fill.a{background:var(--accent)} .fill.b{background:var(--rival)}
   .val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .radar{display:grid;grid-template-columns:minmax(0,1fr) 232px;gap:28px;align-items:center;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 20px 20px;box-shadow:var(--shadow)}
+  .radar svg{width:100%;height:auto;display:block;overflow:visible}
+  .ring{fill:none;stroke:var(--line);stroke-width:1}
+  .spoke{stroke:var(--line);stroke-width:1}
+  .shape{fill-opacity:.16;stroke-width:2.5;stroke-linejoin:round}
+  .shape.a{fill:var(--accent);stroke:var(--accent)}
+  .shape.b{fill:var(--rival);stroke:var(--rival)}
+  .dot.a{fill:var(--accent)} .dot.b{fill:var(--rival)}
+  .axis-label{font:600 11.5px var(--mono);fill:var(--muted)}
+  .axis-note{font:400 10px var(--mono);fill:var(--faint)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 14px}
+  .key{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .swatch.a{background:var(--accent)} .swatch.b{background:var(--rival)}
+  .side{display:grid;gap:12px}
+  .side .cell{border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .side .cell.total{border-color:var(--accent)}
+  .side .k{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .side .v{font:600 25px/1.15 var(--mono);font-variant-numeric:tabular-nums;margin-top:5px}
+  .side .v.a{color:var(--accent)} .side .v.b{color:var(--rival)}
+  @media (max-width:760px){.radar{grid-template-columns:1fr}}
   .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{border-collapse:collapse;width:100%;font-size:14px;min-width:460px}
   th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -235,37 +360,28 @@ function render(runs) {
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <h2>Composite</h2>
-    <p class="sub">Mean across ${n} submitted ${plural}, scored 0–100, longer is better.</p>
-    <div class="board">
-      <div class="row total">
-        <div class="axis">Composite<small>weighted total</small></div>
-        <div class="bars">
-          ${compositeRows}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section>
   <div class="wrap">
-    <h2>What was measured</h2>
-    <p class="sub">Correctness is a score, so a longer bar is a better result. The two cost
-      axes are not: their bar length is the measured quantity itself, scaled against the
-      larger of the two, so a longer bar means more tokens or more seconds.</p>
-    <div class="board">
-      <div class="row">
-        <div class="axis">Correctness<small>${Math.round(COMPOSITE_WEIGHTS.correctness * 100)} % of the composite · score, more is better</small></div>
-        <div class="bars">
-          ${correctnessBars}
-        </div>
+    <h2>Where each one gains and loses</h2>
+    <p class="sub">Six axes, each normalised 0-100. Further from the centre is better on
+      every one of them, tokens and seconds included: the axis is efficiency, not cost.
+      Mean across ${n} submitted ${plural}.</p>
+    <div class="legend">${legend}</div>
+    <div class="radar">
+      ${radar.svg}
+      <div class="side">
+        <div class="cell total"><div class="k">Composite</div>
+          <div class="v a">${agg.n8nac.composite.toFixed(1)}</div>
+          <div class="v b">${agg.nativeMcp.composite.toFixed(1)}</div></div>
+        <div class="cell"><div class="k">Builder tokens</div>
+          <div class="v a" style="font-size:19px">${MEASURES[0].format(mean(runs.map((r) => MEASURES[0].pick(r.n8nac) ?? 0)))}</div>
+          <div class="v b" style="font-size:19px">${MEASURES[0].format(mean(runs.map((r) => MEASURES[0].pick(r.nativeMcp) ?? 0)))}</div></div>
+        <div class="cell"><div class="k">Build time</div>
+          <div class="v a" style="font-size:19px">${MEASURES[1].format(mean(runs.map((r) => MEASURES[1].pick(r.n8nac) ?? 0)))}</div>
+          <div class="v b" style="font-size:19px">${MEASURES[1].format(mean(runs.map((r) => MEASURES[1].pick(r.nativeMcp) ?? 0)))}</div></div>
       </div>
-${measureBlocks}
     </div>
-
     <h3>Correctness, in detail</h3>
     <div class="scroll">
       <table>

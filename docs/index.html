@@ -46,6 +46,28 @@
   .fill{height:100%;border-radius:5px}
   .fill.a{background:var(--accent)} .fill.b{background:var(--rival)}
   .val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+  .radar{display:grid;grid-template-columns:minmax(0,1fr) 232px;gap:28px;align-items:center;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 20px 20px;box-shadow:var(--shadow)}
+  .radar svg{width:100%;height:auto;display:block;overflow:visible}
+  .ring{fill:none;stroke:var(--line);stroke-width:1}
+  .spoke{stroke:var(--line);stroke-width:1}
+  .shape{fill-opacity:.16;stroke-width:2.5;stroke-linejoin:round}
+  .shape.a{fill:var(--accent);stroke:var(--accent)}
+  .shape.b{fill:var(--rival);stroke:var(--rival)}
+  .dot.a{fill:var(--accent)} .dot.b{fill:var(--rival)}
+  .axis-label{font:600 11.5px var(--mono);fill:var(--muted)}
+  .axis-note{font:400 10px var(--mono);fill:var(--faint)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 14px}
+  .key{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .swatch.a{background:var(--accent)} .swatch.b{background:var(--rival)}
+  .side{display:grid;gap:12px}
+  .side .cell{border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .side .cell.total{border-color:var(--accent)}
+  .side .k{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .side .v{font:600 25px/1.15 var(--mono);font-variant-numeric:tabular-nums;margin-top:5px}
+  .side .v.a{color:var(--accent)} .side .v.b{color:var(--rival)}
+  @media (max-width:760px){.radar{grid-template-columns:1fr}}
   .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   table{border-collapse:collapse;width:100%;font-size:14px;min-width:460px}
   th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -79,52 +101,49 @@
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <h2>Composite</h2>
-    <p class="sub">Mean across 1 submitted run, scored 0–100, longer is better.</p>
-    <div class="board">
-      <div class="row total">
-        <div class="axis">Composite<small>weighted total</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100.0</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:84.9%"></div></div><span class="val">84.9</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section>
   <div class="wrap">
-    <h2>What was measured</h2>
-    <p class="sub">Correctness is a score, so a longer bar is a better result. The two cost
-      axes are not: their bar length is the measured quantity itself, scaled against the
-      larger of the two, so a longer bar means more tokens or more seconds.</p>
-    <div class="board">
-      <div class="row">
-        <div class="axis">Correctness<small>35 % of the composite · score, more is better</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:100%"></div></div><span class="val">100.0</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100%"></div></div><span class="val">100.0</span></div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="axis">Builder tokens<small>35 % of the composite · less is better</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:76.6%"></div></div><span class="val">118 001</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100.0%"></div></div><span class="val">153 971</span></div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="axis">Build time<small>30 % of the composite · less is better</small></div>
-        <div class="bars">
-          <div class="bar"><span class="who">n8n-as-code</span><div class="track"><div class="fill a" style="width:76.9%"></div></div><span class="val">346 s</span></div>
-          <div class="bar"><span class="who">Native MCP</span><div class="track"><div class="fill b" style="width:100.0%"></div></div><span class="val">450 s</span></div>
-        </div>
+    <h2>Where each one gains and loses</h2>
+    <p class="sub">Six axes, each normalised 0-100. Further from the centre is better on
+      every one of them, tokens and seconds included: the axis is efficiency, not cost.
+      Mean across 1 submitted run.</p>
+    <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
+    <div class="radar">
+      <svg viewBox="0 0 500 400" role="img" aria-label="Six-axis comparison; further from the centre is better on every axis">
+      <polygon class="ring" points="250.0,167.5 278.1,183.8 278.1,216.3 250.0,232.5 221.9,216.3 221.9,183.8"/>
+      <polygon class="ring" points="250.0,135.0 306.3,167.5 306.3,232.5 250.0,265.0 193.7,232.5 193.7,167.5"/>
+      <polygon class="ring" points="250.0,102.5 334.4,151.3 334.4,248.8 250.0,297.5 165.6,248.8 165.6,151.3"/>
+      <polygon class="ring" points="250.0,70.0 362.6,135.0 362.6,265.0 250.0,330.0 137.4,265.0 137.4,135.0"/>
+      <line class="spoke" x1="250" y1="200" x2="250.0" y2="70.0"/>
+      <line class="spoke" x1="250" y1="200" x2="362.6" y2="135.0"/>
+      <line class="spoke" x1="250" y1="200" x2="362.6" y2="265.0"/>
+      <line class="spoke" x1="250" y1="200" x2="250.0" y2="330.0"/>
+      <line class="spoke" x1="250" y1="200" x2="137.4" y2="265.0"/>
+      <line class="spoke" x1="250" y1="200" x2="137.4" y2="135.0"/>
+      <polygon class="shape a" points="250.0,70.0 362.6,135.0 362.6,265.0 250.0,330.0 137.4,265.0 205.7,174.4"/>
+      <polygon class="shape b" points="250.0,70.0 362.6,135.0 362.6,265.0 250.0,299.6 163.4,250.0 137.4,135.0"/>
+      <circle class="dot a" cx="250.0" cy="70.0" r="3.5"/><circle class="dot a" cx="362.6" cy="135.0" r="3.5"/><circle class="dot a" cx="362.6" cy="265.0" r="3.5"/><circle class="dot a" cx="250.0" cy="330.0" r="3.5"/><circle class="dot a" cx="137.4" cy="265.0" r="3.5"/><circle class="dot a" cx="205.7" cy="174.4" r="3.5"/>
+      <circle class="dot b" cx="250.0" cy="70.0" r="3.5"/><circle class="dot b" cx="362.6" cy="135.0" r="3.5"/><circle class="dot b" cx="362.6" cy="265.0" r="3.5"/><circle class="dot b" cx="250.0" cy="299.6" r="3.5"/><circle class="dot b" cx="163.4" cy="250.0" r="3.5"/><circle class="dot b" cx="137.4" cy="135.0" r="3.5"/>
+      <text class="axis-label" text-anchor="middle" x="250.0" y="36.0"><tspan x="250.0" dy="0">Requirement</tspan><tspan x="250.0" dy="12">coverage</tspan></text>
+      <text class="axis-label" text-anchor="start" x="388.6" y="116.0"><tspan x="388.6" dy="0">Node</tspan><tspan x="388.6" dy="12">validity</tspan></text>
+      <text class="axis-label" text-anchor="start" x="388.6" y="292.0"><tspan x="388.6" dy="0">Graph</tspan><tspan x="388.6" dy="12">integrity</tspan></text>
+      <text class="axis-label" text-anchor="middle" x="250.0" y="372.0"><tspan x="250.0" dy="0">Token</tspan><tspan x="250.0" dy="12">efficiency</tspan></text>
+      <text class="axis-label" text-anchor="end" x="111.4" y="292.0"><tspan x="111.4" dy="0">Build</tspan><tspan x="111.4" dy="12">speed</tspan></text>
+      <text class="axis-label" text-anchor="end" x="111.4" y="116.0"><tspan x="111.4" dy="0">Setup</tspan><tspan x="111.4" dy="12">ease</tspan><tspan class="axis-note" x="111.4" dy="12">not scored</tspan></text>
+      </svg>
+      <div class="side">
+        <div class="cell total"><div class="k">Composite</div>
+          <div class="v a">100.0</div>
+          <div class="v b">84.9</div></div>
+        <div class="cell"><div class="k">Builder tokens</div>
+          <div class="v a" style="font-size:19px">118 001</div>
+          <div class="v b" style="font-size:19px">153 971</div></div>
+        <div class="cell"><div class="k">Build time</div>
+          <div class="v a" style="font-size:19px">346 s</div>
+          <div class="v b" style="font-size:19px">450 s</div></div>
       </div>
     </div>
-
     <h3>Correctness, in detail</h3>
     <div class="scroll">
       <table>
