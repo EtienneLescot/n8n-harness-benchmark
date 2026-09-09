@@ -1,0 +1,50 @@
+{
+  "build": {
+    "a": 100,
+    "b": 76.92
+  },
+  "tokens": {
+    "a": 100,
+    "b": 76.64
+  },
+  "setup": {
+    "a": {
+      "score": 39.33,
+      "friction": 33.33,
+      "commands": 53.33
+    },
+    "b": {
+      "score": 100,
+      "friction": 100,
+      "commands": 100
+    },
+    "weights": {
+      "friction": 0.7,
+      "commands": 0.3
+    }
+  },
+  "composite": {
+    "a": {
+      "score": 93.93,
+      "partial": false,
+      "measuredAxes": [
+        "quality",
+        "buildTime",
+        "tokenEfficiency",
+        "setupEase"
+      ],
+      "totalWeight": 1
+    },
+    "b": {
+      "score": 88.39,
+      "partial": false,
+      "measuredAxes": [
+        "quality",
+        "buildTime",
+        "tokenEfficiency",
+        "setupEase"
+      ],
+      "totalWeight": 1
+    }
+  }
+}

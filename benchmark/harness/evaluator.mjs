@@ -13,7 +13,7 @@
  * partial — use `npm run validate <workflowId>` for the scored number.
  */
 
-import { scoreRequirementCoverage, QUALITY_WEIGHTS } from './scoring.mjs';
+import { scoreRequirementCoverage, CORRECTNESS_WEIGHTS } from './scoring.mjs';
 
 /** Orphan detection, same rule as validator.mjs: a trigger needs an outgoing edge, others need any edge. */
 function graphIntegrity(workflow) {
@@ -64,15 +64,15 @@ export class WorkflowEvaluator {
 
         const coverage = scoreRequirementCoverage(workflow);
         const graph = graphIntegrity(workflow);
-        const measuredWeight = QUALITY_WEIGHTS.requirementCoverage + QUALITY_WEIGHTS.graphIntegrity;
-        const partialQuality = parseFloat((
-            (coverage.score * QUALITY_WEIGHTS.requirementCoverage
-                + graph.score * QUALITY_WEIGHTS.graphIntegrity) / measuredWeight
+        const measuredWeight = CORRECTNESS_WEIGHTS.requirementCoverage + CORRECTNESS_WEIGHTS.graphIntegrity;
+        const partialCorrectness = parseFloat((
+            (coverage.score * CORRECTNESS_WEIGHTS.requirementCoverage
+                + graph.score * CORRECTNESS_WEIGHTS.graphIntegrity) / measuredWeight
         ).toFixed(2));
 
         return {
             partial: true,
-            partialQuality,
+            partialCorrectness,
             missingComponent: 'nodeSchemaValidity (needs the live validate_node_config RPC — run `npm run validate <workflowId>`)',
             scores: {
                 requirementCoverage: coverage.score,
@@ -84,8 +84,8 @@ export class WorkflowEvaluator {
                 orphanedNodes: graph.orphanedNodes,
             },
             requirementChecks: coverage.checks,
-            qualityWeights: QUALITY_WEIGHTS,
-            summary: `Partial quality ${partialQuality}/100 (coverage ${coverage.score}, graph ${graph.score}; node validity not measured offline)`,
+            correctnessWeights: CORRECTNESS_WEIGHTS,
+            summary: `Partial correctness ${partialCorrectness}/100 (coverage ${coverage.score}, graph ${graph.score}; node validity not measured offline)`,
         };
     }
 }

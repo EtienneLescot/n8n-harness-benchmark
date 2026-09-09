@@ -14,3 +14,10 @@ benchmark/sandboxes/*
 .DS_Store
 Thumbs.db
 *.log
+
+# Probe sandboxes and packed artifacts: run debris, never source
+benchmark/install-probe/sandboxes/
+benchmark/artifacts/
+
+# Generated reports live in results/ and docs/, not here
+benchmark/reports/

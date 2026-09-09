@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { validateWorkflowOnInstance } from './validator.mjs';
-import { compositeScore, scoreSetupEase, COMPOSITE_WEIGHTS, QUALITY_WEIGHTS, SETUP_WEIGHTS } from './scoring.mjs';
+import { compositeScore, scoreSetupEase, COMPOSITE_WEIGHTS, CORRECTNESS_WEIGHTS, SETUP_WEIGHTS } from './scoring.mjs';
 import { MarkdownReporter } from '../reporters/markdown-reporter.mjs';
 import { DashboardReporter } from '../reporters/dashboard-reporter.mjs';
 import { JsonReporter } from '../reporters/json-reporter.mjs';
@@ -162,26 +162,24 @@ export async function compileBenchmarkResults(options = {}) {
   // Pass null for an axis this runtime cannot observe (run_8 and run_9 had no per-worker
   // token telemetry): compositeScore renormalises over the measured axes and flags the
   // result partial, instead of scoring an unobserved axis as zero.
-  const computeComposite = (qualityScore, buildScore, tokenScore, setupScore) =>
+  // Setup is telemetry now and takes no argument: a cost paid once must not move a ranking.
+  const computeComposite = (correctnessScore, buildScore, tokenScore) =>
     compositeScore({
-      quality: qualityScore,
+      correctness: correctnessScore,
       buildTime: buildScore,
       tokenEfficiency: tokenScore,
-      setupEase: setupScore,
     }).score;
 
   const n8nacComposite = computeComposite(
-    n8nacQualityAudit.scores.compositeQuality,
+    n8nacQualityAudit.scores.compositeCorrectness,
     buildTimeMinimax.scoreA,
-    tokensMinimax.scoreA,
-    setupTimeMinimax.scoreA
+    tokensMinimax.scoreA
   );
 
   const mcpComposite = computeComposite(
-    mcpQualityAudit.scores.compositeQuality,
+    mcpQualityAudit.scores.compositeCorrectness,
     buildTimeMinimax.scoreB,
-    tokensMinimax.scoreB,
-    setupTimeMinimax.scoreB
+    tokensMinimax.scoreB
   );
 
   const results = {
@@ -207,13 +205,13 @@ export async function compileBenchmarkResults(options = {}) {
         }
       }
     },
-    weights: { ...COMPOSITE_WEIGHTS, qualityComponents: QUALITY_WEIGHTS, setupComponents: SETUP_WEIGHTS },
+    weights: { ...COMPOSITE_WEIGHTS, correctnessComponents: CORRECTNESS_WEIGHTS, setupTelemetryComponents: SETUP_WEIGHTS },
     setupEase,
     n8nac: {
       runId: path.basename(n8nacSandbox),
       toolName: 'n8n-as-code',
       scores: {
-        setupTime: setupTimeMinimax.scoreA,
+        setupEaseTelemetry: setupTimeMinimax.scoreA,
         creationTime: buildTimeMinimax.scoreA,
         buildTime: buildTimeMinimax.scoreA,
         tokenConsumption: tokensMinimax.scoreA,
@@ -240,7 +238,7 @@ export async function compileBenchmarkResults(options = {}) {
       runId: path.basename(mcpSandbox),
       toolName: 'n8n-native-mcp',
       scores: {
-        setupTime: setupTimeMinimax.scoreB,
+        setupEaseTelemetry: setupTimeMinimax.scoreB,
         creationTime: buildTimeMinimax.scoreB,
         buildTime: buildTimeMinimax.scoreB,
         tokenConsumption: tokensMinimax.scoreB,

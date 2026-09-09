@@ -122,7 +122,7 @@ async function handleEvaluate(filePath) {
   }
 
   console.log('═══════════════════════════════════════════════════════');
-  console.log(`🏆 PARTIAL QUALITY SCORE: ${result.partialQuality} / 100`);
+  console.log(`🏆 PARTIAL CORRECTNESS SCORE: ${result.partialCorrectness} / 100`);
   console.log('═══════════════════════════════════════════════════════');
   console.log(`  Requirement coverage:  ${result.scores.requirementCoverage} / 100`);
   for (const check of result.requirementChecks) {
@@ -149,10 +149,15 @@ async function handleValidate(workflowId) {
   const result = await validateWorkflowOnInstance(workflowId);
 
   console.log('═══════════════════════════════════════════════════════');
-  console.log(`🏆 DETERMINISTIC QUALITY SCORE: ${result.scores.compositeQuality} / 100`);
+  console.log(`🏆 DETERMINISTIC CORRECTNESS SCORE: ${result.scores.compositeCorrectness} / 100`);
   console.log('═══════════════════════════════════════════════════════');
   console.log(`  • Workflow Name:         ${result.workflowName}`);
-  console.log(`  • Total Nodes:           ${result.metrics.nodeCount}`);
+  console.log(`  • Requirement Coverage:  ${result.scores.requirementCoverage}%`);
+  for (const check of result.requirementChecks || []) {
+    const mark = check.points === check.maxPoints ? '✔' : check.points > 0 ? '~' : '✘';
+    console.log(`      ${mark} ${check.label}`);
+  }
+  console.log(`  • Nodes (telemetry):     ${result.metrics.nodeCount}`);
   console.log(`  • Valid Nodes (RPC):     ${result.metrics.validNodeCount} / ${result.metrics.nodeCount} (${result.scores.nodeSchemaValidity}%)`);
   console.log(`  • Graph Integrity:       ${result.scores.graphIntegrity}% (${result.metrics.orphanedNodeCount} orphans)`);
   console.log(`  • Live Execution:        ${result.liveExecution.executed ? result.liveExecution.status + ' (' + result.liveExecution.executedNodesCount + ' nodes)' : 'None'} (${result.scores.liveExecution} pts)`);

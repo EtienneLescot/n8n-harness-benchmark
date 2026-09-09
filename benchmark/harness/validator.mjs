@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { scoreRequirementCoverage, compositeQuality, QUALITY_WEIGHTS } from './scoring.mjs';
+import { scoreRequirementCoverage, compositeCorrectness, CORRECTNESS_WEIGHTS } from './scoring.mjs';
 
 function loadEnv() {
   const envPaths = ['.env', 'benchmark/sandboxes/run_next_2_native_mcp/.env', 'benchmark/sandboxes/run_next_2_n8nac/.env'];
@@ -254,10 +254,10 @@ export async function validateWorkflowOnInstance(workflowId) {
   // triage against a 15-node one. Coverage is the component that is not self-normalising.
   const requirementCoverage = scoreRequirementCoverage(wfData);
 
-  // 6. Composite Quality Score (Deterministic, weights from scoring.mjs)
+  // 6. Composite Correctness Score (Deterministic, weights from scoring.mjs)
   // Live execution stays excluded: the benchmark cannot provision third-party OAuth, so
   // scoring it would measure credential availability. It is reported as telemetry below.
-  const compositeQualityScore = compositeQuality({
+  const compositeCorrectnessScore = compositeCorrectness({
     requirementCoverage: requirementCoverage.score,
     nodeSchemaValidity: nodeValidityScore,
     graphIntegrity: graphIntegrityScore
@@ -266,6 +266,8 @@ export async function validateWorkflowOnInstance(workflowId) {
   return {
     workflowId,
     workflowName: wfData.name,
+    // nodeCount is raw telemetry: correctness asks whether the nodes are valid and whether
+    // the brief is covered, never how many nodes there are.
     metrics: {
       nodeCount: nodes.length,
       functionalNodeCount: functionalNodes.length,
@@ -280,9 +282,9 @@ export async function validateWorkflowOnInstance(workflowId) {
       nodeSchemaValidity: nodeValidityScore,
       graphIntegrity: graphIntegrityScore,
       liveExecution: liveExecutionScore,
-      compositeQuality: compositeQualityScore
+      compositeCorrectness: compositeCorrectnessScore
     },
-    qualityWeights: QUALITY_WEIGHTS,
+    correctnessWeights: CORRECTNESS_WEIGHTS,
     requirementChecks: requirementCoverage.checks,
     liveExecution,
     invalidNodes: invalidNodes.map(i => ({

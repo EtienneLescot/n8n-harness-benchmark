@@ -21,8 +21,12 @@ const configPath = path.resolve(
 export const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 /**
- * Quality = does it do the job (requirements), is it correct (server schema audit),
+ * Correctness = does it do the job (requirements), is it correct (server schema audit),
  * is it wired (graph).
+ *
+ * Named correctness, not quality, because it answers "does this work and does it do what
+ * was asked" and nothing else. Whether a workflow is ambitious, elegant or well-composed is
+ * a separate judgement that does not belong on the same axis and is not implemented here.
  *
  * Requirement coverage carries the largest share because its absence is what broke
  * run_8: a 4-node workflow with no triage and no agent scored 100/100 against a 15-node
@@ -34,26 +38,34 @@ export const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
  * reported as telemetry. That exclusion is about SCORING ONLY — it is not a licence to
  * omit nodes that need credentials, which is how run_9's builders lost their agents.
  */
-export const QUALITY_WEIGHTS = {
+export const CORRECTNESS_WEIGHTS = {
     requirementCoverage: 0.40,
     nodeSchemaValidity: 0.40,
     graphIntegrity: 0.20,
 };
 
-/** Composite weights across the four measured axes. */
-export const COMPOSITE_WEIGHTS = {
-    quality: 0.40,
-    buildTime: 0.25,
-    tokenEfficiency: 0.25,
-    setupEase: 0.10,
-};
+/**
+ * Composite weights across the three scored axes. Setup is not one of them — it is
+ * telemetry, see SETUP_WEIGHTS below.
+ *
+ * Correctness and token efficiency are equal at 35 and build time takes 30: what a
+ * workflow costs to produce is paid on every workflow, so the two cost axes together
+ * outweigh correctness, while neither alone does.
+ */
+const STATED = { correctness: 35, tokenEfficiency: 35, buildTime: 30 };
+const STATED_TOTAL = Object.values(STATED).reduce((a, b) => a + b, 0);
+export const COMPOSITE_WEIGHTS = Object.fromEntries(
+    Object.entries(STATED).map(([k, v]) => [k, parseFloat((v / STATED_TOTAL).toFixed(4))]),
+);
 
 /**
- * Setup is scored on friction, not on seconds.
+ * Setup is TELEMETRY, not a scored axis.
  *
- * Installation is paid once and amortises to nothing; build time and tokens are paid on
- * every workflow. And most of the wall clock was never a product property anyway — it was
- * bandwidth and registry latency.
+ * Installation is paid once and amortises to nothing, while build time and tokens are paid
+ * on every workflow. Scoring it let a one-off cost decide a ranking: in run_10 the setup
+ * axis moved 6.07 points on a final gap of 5.54, so a cost paid once outweighed the gap it
+ * was being added to. It is still measured and reported, on friction rather than seconds —
+ * most of the wall clock was bandwidth and registry latency, not a product property.
  *
  * What IS a product property is what the installer ran into: dead ends (a command that
  * answered wrongly, a documented path that did not exist) are reproducible, attributable
@@ -230,18 +242,23 @@ export function scoreSetupEase(a, b) {
     };
 }
 
-/** Combine the three quality components under QUALITY_WEIGHTS. */
-export function compositeQuality({ requirementCoverage, nodeSchemaValidity, graphIntegrity }) {
+/** Combine the three correctness components under CORRECTNESS_WEIGHTS. */
+export function compositeCorrectness({ requirementCoverage, nodeSchemaValidity, graphIntegrity }) {
     return round(
-        (Number(requirementCoverage) || 0) * QUALITY_WEIGHTS.requirementCoverage
-        + (Number(nodeSchemaValidity) || 0) * QUALITY_WEIGHTS.nodeSchemaValidity
-        + (Number(graphIntegrity) || 0) * QUALITY_WEIGHTS.graphIntegrity,
+        (Number(requirementCoverage) || 0) * CORRECTNESS_WEIGHTS.requirementCoverage
+        + (Number(nodeSchemaValidity) || 0) * CORRECTNESS_WEIGHTS.nodeSchemaValidity
+        + (Number(graphIntegrity) || 0) * CORRECTNESS_WEIGHTS.graphIntegrity,
     );
 }
 
 /** Combine the four axes under COMPOSITE_WEIGHTS. Pass null for an axis this run cannot measure. */
-export function compositeScore({ quality, buildTime, tokenEfficiency, setupTime }) {
-    const axes = { quality, buildTime, tokenEfficiency, setupTime };
+export function compositeScore({ correctness, buildTime, tokenEfficiency }) {
+    const axes = { correctness, buildTime, tokenEfficiency };
+    // Guard the rename: an axis whose name is not in COMPOSITE_WEIGHTS would be silently
+    // dropped and the composite would quietly renormalise without it.
+    for (const key of Object.keys(axes)) {
+        if (!(key in COMPOSITE_WEIGHTS)) throw new Error(`compositeScore: unknown axis "${key}"`);
+    }
     const measured = Object.entries(axes).filter(([, v]) => v !== null && v !== undefined);
     // Renormalise over what was measurable rather than scoring an unobserved axis as zero,
     // and say so: run_8 and run_9 had no token telemetry and reported a partial composite.

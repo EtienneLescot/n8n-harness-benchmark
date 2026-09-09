@@ -1,0 +1,472 @@
+{
+  "iterations": [
+    {
+      "label": "iter0-baseline",
+      "commandCount": 20,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 8,
+        "configuration": 6,
+        "reconnaissance": 5
+      },
+      "frictionEvents": 11,
+      "seconds": 392,
+      "tokens": 75260,
+      "toolCalls": 26,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter0-baseline"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cat .env (read with sed to redact the API key) && ls -la workflows && node -v && npm -v"
+        },
+        {
+          "bucket": "acquisition",
+          "command": "npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls .toolchain && ls .toolchain/*.cmd .toolchain/bin"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd --help | head -60"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd --help | sed -n '60,140p'"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd workspace --help && ./.toolchain/n8nac.cmd setup --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd workspace status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "set -a && . ./.env && set +a && printf '%s' \"$N8N_API_KEY\" | ./.toolchain/n8nac.cmd setup --mode connect-existing --host \"$N8N_HOST\" --api-key-stdin --json"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd workspace status && ./.toolchain/n8nac.cmd env --help && ./.toolchain/n8nac.cmd skills --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd env status --json && ./.toolchain/n8nac.cmd env list"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd env auth --help && ./.toolchain/n8nac.cmd credentials --help"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd env status --help"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd credential --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd credential list   [BLOCKED by the sandbox permission classifier, never executed]"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd update-ai --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd update-ai --cli-cmd \"$(pwd)/.toolchain/n8nac.cmd\""
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "grep -niE 'ready|status|doctor|verify|health' AGENTS.md"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "sed -n '35,70p' AGENTS.md"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd skills node-schema n8n-nodes-base.webhook && ./.toolchain/n8nac.cmd env status --json"
+        }
+      ]
+    },
+    {
+      "label": "iter1-readiness",
+      "commandCount": 14,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 5,
+        "configuration": 5,
+        "reconnaissance": 3
+      },
+      "frictionEvents": 5,
+      "seconds": 239,
+      "tokens": 65174,
+      "toolCalls": 16,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "pwd && ls -la"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "sed (redact key) .env && ls -la workflows && node -v && npm -v"
+        },
+        {
+          "bucket": "acquisition",
+          "command": "npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls .toolchain && ls .toolchain/node_modules"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd --help | head -60"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd --help | sed -n '60,200p'"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd workspace --help && ./.toolchain/n8nac.cmd setup --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd workspace status"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd skills --help && ./.toolchain/n8nac.cmd credentials --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd setup --mode connect-existing --json"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac.cmd env --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd env status --json | head -40"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd env status --json | sed -n '40,80p'"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac.cmd update-ai"
+        }
+      ]
+    },
+    {
+      "label": "iter2-status-signposting",
+      "commandCount": 8,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 2,
+        "configuration": 2,
+        "reconnaissance": 3
+      },
+      "frictionEvents": 3,
+      "seconds": 215,
+      "tokens": 59367,
+      "toolCalls": 11,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\""
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && ls -la workflows && node -v && npm -v"
+        },
+        {
+          "bucket": "acquisition",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && ls -la ./.toolchain"
+        },
+        {
+          "bucket": "discovery",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && ./.toolchain/n8nac --help"
+        },
+        {
+          "bucket": "discovery",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && ./.toolchain/n8nac workspace --help && echo \"=== SETUP ===\" && ./.toolchain/n8nac setup --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && ./.toolchain/n8nac workspace status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter2-status-signposting\" && ./.toolchain/n8nac env status"
+        }
+      ]
+    },
+    {
+      "label": "iter3-setup-help",
+      "commandCount": 10,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 4,
+        "configuration": 3,
+        "reconnaissance": 2
+      },
+      "frictionEvents": 4,
+      "seconds": 272,
+      "tokens": 60733,
+      "toolCalls": 15,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la \"G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter3-setup-help\""
+        },
+        {
+          "bucket": "acquisition",
+          "command": "npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la .toolchain && ls -la .toolchain/bin"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac --help | head -60"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac --help | tail -40"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac setup --help | head -40 && ./.toolchain/n8nac workspace --help | head -30"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac setup --mode connect-existing --json"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac workspace status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac env status"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac skills --help | head -25"
+        }
+      ]
+    },
+    {
+      "label": "iter4-help-a",
+      "commandCount": 11,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 2,
+        "configuration": 5,
+        "reconnaissance": 3
+      },
+      "frictionEvents": 6,
+      "seconds": 333,
+      "tokens": 64153,
+      "toolCalls": 13,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ls -la && cat .env"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ls -la workflows && node -v && npm -v"
+        },
+        {
+          "bucket": "acquisition",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ls -la .toolchain && ls .toolchain/node_modules"
+        },
+        {
+          "bucket": "discovery",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ./.toolchain/n8nac --help"
+        },
+        {
+          "bucket": "discovery",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ./.toolchain/n8nac workspace --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ./.toolchain/n8nac workspace status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ./.toolchain/n8nac env status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && sed -n '1,120p' .toolchain/node_modules/n8nac/README.md"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ./.toolchain/n8nac env status --json && grep -n -A 20 -i 'AI Context' .toolchain/node_modules/n8nac/README.md"
+        },
+        {
+          "bucket": "configuration",
+          "command": "cd G:/repos/n8n-harness-benchmark/benchmark/install-probe/sandboxes/iter4-help-a && ./.toolchain/n8nac update-ai"
+        }
+      ]
+    },
+    {
+      "label": "iter4-help-b",
+      "commandCount": 12,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 2,
+        "configuration": 3,
+        "reconnaissance": 6
+      },
+      "frictionEvents": 5,
+      "seconds": 287,
+      "tokens": 58413,
+      "toolCalls": 13,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cat .env && ls -la workflows && node -v && npm -v"
+        },
+        {
+          "bucket": "acquisition",
+          "command": "npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls .toolchain && ls .toolchain/*.cmd"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac --help"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac workspace --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac workspace status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac env status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac update-ai"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cat > installer_log.json <<EOF ... EOF && node -e JSON.parse(...)  (heredoc write + validate, failed: backslashes unescaped)"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "sed -i (rewrite binDir with forward slashes) && node -e JSON.parse(...)  (failed: left a doubled comma)"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "sed -i (remove doubled comma) && node -e JSON.parse(...)  (valid)"
+        }
+      ]
+    },
+    {
+      "label": "iter4-help-c",
+      "commandCount": 14,
+      "buckets": {
+        "acquisition": 1,
+        "discovery": 2,
+        "configuration": 2,
+        "reconnaissance": 9
+      },
+      "frictionEvents": 3,
+      "seconds": 255,
+      "tokens": 56425,
+      "toolCalls": 9,
+      "classified": [
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cat .env"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls -la workflows"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "node -v"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "npm -v"
+        },
+        {
+          "bucket": "acquisition",
+          "command": "npm install -g --prefix ./.toolchain ./n8nac-2.5.0.tgz ./n8n-as-code-mcp-2.1.2.tgz ./n8n-as-code-skills-2.3.2.tgz"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls .toolchain"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls .toolchain/bin"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "ls .toolchain/*.cmd"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac --help"
+        },
+        {
+          "bucket": "discovery",
+          "command": "./.toolchain/n8nac workspace --help"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac workspace status"
+        },
+        {
+          "bucket": "configuration",
+          "command": "./.toolchain/n8nac env status"
+        },
+        {
+          "bucket": "reconnaissance",
+          "command": "cat > installer_log.json <<'EOF' ... EOF"
+        }
+      ]
+    }
+  ]
+}

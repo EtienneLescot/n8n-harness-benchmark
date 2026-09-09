@@ -21,7 +21,7 @@ Clone https://github.com/EtienneLescot/n8n-harness-benchmark.git, read the bench
 
 **What the Orchestrator will do automatically:**
 1. **Credentials Gate**: Reads `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, and `N8N_NATIVE_MCP_TOKEN` (prompting you in chat if anything is missing).
-2. **Lock Parameters**: Standardizes model IDs (`Gemini 3.8 Flash High`, `Claude 3.7 Sonnet`, etc.) and temperature (`0.2`).
+2. **Lock Parameters**: Records the exact model and temperature used, identically for both branches.
 3. **Partition Sandboxes**: Spawns isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`) with universal confinement and a distinct unguessable workflow token per branch (e.g. `bench-3f9a1c72`). Sandboxes contain no rubric and no requirement list, and neither prompt names the other branch's directory.
 4. **Deploy & Time**: Dispatches subagents to install dependencies and author the multi-agent workflow under external stopwatch timing.
 5. **Deterministic API Audit**: Queries the n8n Cloud server's official `validate_node_config` RPC, calculates universal minimax scores, and updates `results/` and `docs/`.
@@ -45,7 +45,7 @@ npm run validate <workflowId>
 # 3. Evaluate a local workflow JSON file against the rubric
 npm run evaluate -- results/history/run_3/workflow_n8n_as_code.json
 
-# 4. Compile reports, update aggregate.json, and refresh dashboard
+# 4. Compile the report from the two builder logs and the live server audits
 npm run report
 ```
 
@@ -67,19 +67,30 @@ Both toolchains receive **strictly and exclusively** the authentic user prompt w
 
 ## 🔬 What a result means
 
-Scores are calculated across four standardized dimensions:
+Every weight and every check below is defined in exactly one place,
+[`benchmark/harness/scoring.mjs`](benchmark/harness/scoring.mjs). Nothing restates them.
 
 | Dimension | Weight | Measurement Source | Scoring Formula |
 |---|:---:|---|---|
-| **1. Workflow Quality** | **40%** | Live n8n Cloud API + server `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
-| **2. Creation Time** | **25%** | External harness stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
-| **3. Token Efficiency** | **25%** | Prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
-| **4. Setup Ease** | **10%** | Installer log: friction events (70%) and command count (30%) | Universal Minimax on each, blended. Acquisition seconds are reported but not scored. |
+| **1. Correctness** | **35%** | Live n8n Cloud API + server `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
+| **2. Token Efficiency** | **35%** | Prompt + completion tokens | Universal Minimax |
+| **3. Build Time** | **30%** | External harness stopwatch | Universal Minimax |
+| *Setup ease* | *telemetry* | Installer log: friction (70%) and command count (30%) | Reported, not scored |
+
+**Correctness**, not quality: the axis answers whether the workflow works and whether it does
+what was asked. Whether it is ambitious or elegant is a separate judgement, not implemented.
+
+**Setup is measured but not scored.** Installation is paid once and amortises away, while
+build time and tokens are paid on every workflow. `run_10` measured the cost of keeping it:
+at 10% the setup axis moved 6.07 points on a final gap of 5.54, so a once-paid cost decided
+the ranking. Acquisition seconds are excluded on both branches, each carrying a benchmark
+artefact: unpublished tarballs on one side, a hand-rolled HTTP client on the other.
 
 ### 1. Zero Subjective LLM Judges (Ground-Truth Server RPC)
 Instead of asking an LLM judge to guess code quality, the benchmark queries the live n8n Cloud server's official `validate_node_config` RPC tool:
-- **Node Schema Validity (60% of Quality)**: Validates parameter types, required fields, and conditional display options against official server schemas.
-- **Graph Topology (40% of Quality)**: Traverses connection adjacency to verify all functional nodes are fully connected (0 orphaned nodes).
+- **Requirement Coverage (40% of Correctness)**: Checks the deployed graph against the six required capabilities, on node types and wiring only, never on node names.
+- **Node Schema Validity (40% of Correctness)**: Validates parameter types, required fields, and conditional display options against official server schemas.
+- **Graph Topology (20% of Correctness)**: Traverses connection adjacency to verify all functional nodes are fully connected (0 orphaned nodes).
 - **Live Cloud Execution (Informative Only)**: Standardized benchmarks cannot and should not require real third-party OAuth2 credentials (such as personal Google tokens) on automated instances. Execution history is tracked informatively without distorting the score.
 
 ### 2. Universal Minimax Scaling
@@ -119,11 +130,11 @@ This benchmark is cross-platform and portable. Whether running in **Antigravity*
 Submissions must **explicitly declare execution facts** in `benchmark_results.json` (never inferred):
 ```json
 "metadata": {
-  "harness": "Antigravity",
-  "primaryAgent": "Antigravity Orchestrator",
-  "model": "Gemini 3.8 Flash High",
+  "harness": "Claude-Code",
+  "primaryAgent": "Claude Code Orchestrator",
+  "model": "claude-opus-5",
   "temperature": 0.2,
-  "subagentRuntime": "Antigravity invoke_subagent",
+  "subagentRuntime": "Claude Code Agent tool",
   "environment": {
     "os": "Windows 11 (win32-x64)",
     "nodeVersion": "v24.14.0",
@@ -140,18 +151,22 @@ Pull Requests containing inferred or missing model/harness specifications will n
 
 ```
 .
-├── docs/                 # GitHub Pages website (etiennelescot.github.io/n8n-harness-benchmark)
-│   ├── index.html        # Interactive results presentation (Newsreader + IBM Plex Mono)
-│   └── results.json      # Latest compiled benchmark data
-├── results/              # Historical benchmark runs & artifacts
-│   ├── benchmark_report.md
+├── docs/
+│   └── index.html        # GitHub Pages presentation, self-contained, no build step
+├── results/
+│   ├── benchmark_report.md      # the current run
 │   ├── benchmark_results.json
-│   └── history/          # Archived runs with deployed workflow JSONs
-├── benchmark/            # Core benchmark engine
-│   ├── harness/          # compiler.mjs, validator.mjs, runner.mjs
-│   ├── reporters/        # markdown, json, and html dashboard generators
-│   └── sandboxes/        # Partitioned worker sandboxes
-└── skills/               # Reusable Antigravity benchmark skill
+│   └── history/run_10/          # per-run archive: report, audits, both deployed workflows
+├── benchmark/
+│   ├── harness/
+│   │   ├── scoring.mjs   # THE definition of every weight and check — nothing restates it
+│   │   ├── validator.mjs # live server audit (validate_node_config + graph)
+│   │   ├── compiler.mjs  # minimax + composite from the two builder logs
+│   │   └── evaluator.mjs # offline view of scoring.mjs for an undeployed workflow
+│   ├── reporters/        # markdown, json, html generators
+│   ├── config/           # benchmark.config.json + the native MCP helper reference
+│   └── sandboxes/        # partitioned worker sandboxes (gitignored)
+└── skills/               # the orchestration skill: protocol, rubric, isolation rules
 ```
 
 ---
