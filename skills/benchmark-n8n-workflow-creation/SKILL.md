@@ -265,22 +265,50 @@ The judge itself runs only after both builds are frozen and archived, reads the 
 JSON through `blindWorkflow()`, and scores nothing an agent merely asserted: a finding
 enters the Latent Defects axis only when a predicate over the artefact returns true.
 
-> [!CAUTION]
-> **Branch B must actually exercise the MCP server. Verify it, do not assume it.**
->
-> The requirement is not that the runtime hands the worker wired MCP tools. No run has ever
-> had those: `run_10` built its own PowerShell client and called `initialize`, `tools/list`
-> and `tools/call` against the MCP endpoint, and that is the documented normal.
-> `EVALUATION_RUBRIC.md` compensates for the client-building cost by excluding acquisition
-> seconds on both branches. Writing `.mcp.json` into the sandbox does not by itself give a
-> worker anything: that file is read by an MCP client at startup, and a sub-agent created
-> inside a running session inherits its parent tool list.
->
-> What voids a run is branch B **bypassing MCP altogether**. In `run_11` its builder
-> created the workflow through the plain REST API and built node parameters from general
-> knowledge with no schema lookup, so the cost axes compared n8n-as-code against a client
-> that consults nothing. Fewer tokens is what looking nothing up costs.
->
-> **Postcondition, checked before scoring:** branch B's `builder_log.json` must show at
-> least one `tools/call` against the MCP endpoint. If it shows only REST traffic, the run
-> is void on the cost axes and must be redone, not published with a caveat.
+### Step 8: The two toolchain gates
+
+A builder handed a toolchain it cannot discover does not fail loudly. It writes the
+workflow JSON by hand, POSTs it to `/api/v1/workflows` with curl, produces a valid
+workflow, and spends far fewer tokens than a builder that actually looked things up. The
+run then reports that the tool under test is expensive, when what it measured is the price
+of consulting nothing. This has voided three branches:
+
+| Branch | What was in the sandbox | What the builder did |
+|---|---|---|
+| `run_11` native MCP | `.mcp.json`, no MCP client anywhere | curl to REST |
+| `run_12` n8n-as-code | the CLI, no `AGENTS.md` | curl to REST |
+| `run_12` native MCP | `.mcp.json`, no MCP client anywhere | curl to REST |
+
+In every case the credentials were valid and the service was reachable. `run_12` branch B
+even had an installer log showing a successful handshake, and a single `tools/list` POST
+with its own token returns 38 tools. Nothing was broken. Nothing said the toolchain was
+there.
+
+```bash
+npm run ready -- run_N     # before dispatching builders
+npm run used -- run_N      # after they return, before scoring
+```
+
+**Gate 1, readiness.** Each sandbox must carry something that makes its toolchain
+discoverable, and each branch needs a different thing:
+
+- **n8n-as-code** needs `AGENTS.md`, written by `npx n8nac update-ai`. That is the fourth
+  of four commands in the README quick start and the easiest to skip, because the first
+  three already report success. `run_12` skipped it and the branch was void.
+- **n8n Native MCP** needs a usable caller seeded from
+  `benchmark/config/native-mcp-windows-helper/`. This is a harness artefact and it is
+  deliberate: n8n documents only how to configure an existing MCP client, with no HTTP or
+  JSON-RPC example, so an agent without a client has no documented path at all. `run_10`
+  worked because its installer copied that helper. Nothing else changed since.
+
+Seed the helper into branch B before its installer runs. `EVALUATION_RUBRIC.md` already
+excludes acquisition seconds on both branches to compensate for artefacts like this one.
+
+**Gate 2, usage.** Each `builder_log.json` must show the branch driving its own toolchain:
+an `n8nac` invocation on A, a `tools/call` against the MCP endpoint on B. A log that shows
+only REST traffic voids the cost axes. Redo the branch; do not publish it with a caveat.
+
+**Report the install asymmetry separately.** That one product ships a command which makes
+its workspace self-describing to an agent, and the other ships a config file for a client
+that may not exist, is a real finding. It belongs in the report as telemetry, not diluted
+into the build numbers.

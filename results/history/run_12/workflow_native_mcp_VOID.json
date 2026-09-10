@@ -1,0 +1,449 @@
+{
+  "id": "teus9aDu3sgUadEu",
+  "name": "bench-7e3c2f4d",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T16:42:02.412Z",
+  "updatedAt": "2026-09-10T16:42:02.412Z",
+  "isArchived": false,
+  "versionId": "f12c65bc-d50c-4acb-84e6-99d1b01bd1eb",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "n1",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1400,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Fetch Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1160,
+        180
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      },
+      "webhookId": "93a8deb9-6f21-4104-8b27-8cf983541300"
+    },
+    {
+      "id": "n3",
+      "name": "Fetch Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1160,
+        420
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary",
+          "cachedResultName": "primary"
+        },
+        "returnAll": false,
+        "limit": 50,
+        "options": {
+          "timeMin": "={{ $now.startOf('day').toISO() }}",
+          "timeMax": "={{ $now.endOf('day').toISO() }}"
+        }
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Aggregate Emails",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -920,
+        180
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "items"
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Aggregate Calendar Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -920,
+        420
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "items"
+      }
+    },
+    {
+      "id": "n6",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -680,
+        650
+      ],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      }
+    },
+    {
+      "id": "n7",
+      "name": "Email Sorter Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -680,
+        180
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.items) }}",
+        "options": {
+          "systemMessage": "You are an email triage assistant. You receive today's Gmail messages as JSON (subject, sender, snippet, date). Sort them into categories: Urgent, Action Needed, FYI, and Newsletters/Promotions. Return a concise categorized summary in markdown, with the sender and subject for each item."
+        }
+      }
+    },
+    {
+      "id": "n8",
+      "name": "Calendar Sorter Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -680,
+        420
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.items) }}",
+        "options": {
+          "systemMessage": "You are a calendar assistant. You receive today's Google Calendar events as JSON. Sort them chronologically, flag any overlapping or back-to-back meetings, and return a concise summary in markdown with start time, end time, and title for each event."
+        }
+      }
+    },
+    {
+      "id": "n9",
+      "name": "Rename Email Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -440,
+        180
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "emailSummary",
+              "type": "string",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "includeOtherFields": false
+        }
+      }
+    },
+    {
+      "id": "n10",
+      "name": "Rename Calendar Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -440,
+        420
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "calendarSummary",
+              "type": "string",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "includeOtherFields": false
+        }
+      }
+    },
+    {
+      "id": "n11",
+      "name": "Merge Sorted Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -200,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "n12",
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        40,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'EMAIL SUMMARY:\\n' + $json.emailSummary + '\\n\\nCALENDAR SUMMARY:\\n' + $json.calendarSummary }}",
+        "options": {
+          "systemMessage": "You are a dashboard designer. You receive a sorted email summary and a sorted calendar summary. Combine them into a single, self-contained HTML page (inline CSS, no external assets) titled 'Daily Briefing'. Include today's date, a calendar section listing the day's events in order, and an email section broken out by category. Output ONLY the raw HTML document, nothing else, no markdown code fences."
+        }
+      }
+    },
+    {
+      "id": "n13",
+      "name": "Daily Briefing Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        280,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "dashboardHtml",
+              "type": "string",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "includeOtherFields": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Gmail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Gmail": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Calendar": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Calendar Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Sorter Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Sorter Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Sorter Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Sorter Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sorter Agent": {
+      "main": [
+        [
+          {
+            "node": "Rename Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Sorter Agent": {
+      "main": [
+        [
+          {
+            "node": "Rename Calendar Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge Sorted Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Calendar Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge Sorted Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Sorted Data": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Daily Briefing Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "teus9aDu3sgUadEu",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-10T16:42:02.414Z",
+      "updatedAt": "2026-09-10T16:42:02.414Z"
+    }
+  ],
+  "activeVersion": null
+}

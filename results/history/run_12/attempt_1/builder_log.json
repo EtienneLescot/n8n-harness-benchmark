@@ -1,0 +1,66 @@
+{
+  "startedAt": "2026-09-10T16:06:30Z",
+  "completedAt": "2026-09-10T16:07:01Z",
+  "workflowId": "YWQnHZJGMNmJU6cq",
+  "workflowName": "bench-1c7cdd99",
+  "nodeCount": 11,
+  "active": false,
+  "nodes": [
+    "Daily Trigger (scheduleTrigger)",
+    "Get Emails (gmail, getAll)",
+    "Get Calendar Events (googleCalendar, getAll)",
+    "Combine Emails (code)",
+    "Combine Events (code)",
+    "OpenAI Chat Model (lmChatOpenAi, shared by all 3 agents)",
+    "Email Triage Agent (langchain.agent)",
+    "Calendar Agent (langchain.agent)",
+    "Combine Agent Outputs (code)",
+    "Briefing Composer Agent (langchain.agent)",
+    "Send Daily Briefing (gmail, send)"
+  ],
+  "design": "Schedule Trigger (daily 07:00) fans out to Gmail getAll and Google Calendar getAll. Each feeds a small Code node that batches its items into one array field, then a dedicated AI Agent (Email Triage Agent, Calendar Agent) sorts/summarizes that branch. A Code node merges both agents' text output, and a third AI Agent (Briefing Composer Agent) turns the two summaries into a single self-contained HTML dashboard. A Gmail send node emails that HTML to the account owner. All three agent nodes share one OpenAI Chat Model node via ai_languageModel connections.",
+  "commandsAndToolCalls": [
+    {
+      "step": "Bash: cd into workspace and list contents",
+      "command": "cd \"G:\\repos\\n8n-harness-benchmark\\benchmark\\sandboxes\\run_12_n8nac\" && pwd && ls -la"
+    },
+    {
+      "step": "Bash: read README.md for n8n-as-code workspace context",
+      "command": "cat README.md"
+    },
+    {
+      "step": "Bash: read .env for n8n host and API key",
+      "command": "cat .env"
+    },
+    {
+      "step": "Bash: read n8nac-config.json and package.json",
+      "command": "cat n8nac-config.json && echo --- && cat package.json"
+    },
+    {
+      "step": "Bash: confirm curl availability and capture start timestamp",
+      "command": "which curl; curl --version | head -1; date -u +%Y-%m-%dT%H:%M:%SZ"
+    },
+    {
+      "step": "Write: authored workflow.json (11 nodes, connections, settings) in scratchpad, not in workspace",
+      "path": "scratchpad/workflow.json"
+    },
+    {
+      "step": "Bash: POST workflow.json to n8n public REST API to create the workflow",
+      "command": "curl -sS -w \"HTTP_STATUS:%{http_code}\" -X POST \"$N8N_HOST/api/v1/workflows\" -H \"X-N8N-API-KEY: $N8N_API_KEY\" -H \"Content-Type: application/json\" --data-binary @workflow.json",
+      "result": "HTTP 200, id=YWQnHZJGMNmJU6cq, active=false"
+    },
+    {
+      "step": "Bash: capture completion timestamp",
+      "command": "date -u +%Y-%m-%dT%H:%M:%SZ"
+    },
+    {
+      "step": "Write: this builder_log.json"
+    }
+  ],
+  "credentials": "No credential was invented or created. Get Emails, Get Calendar Events, Send Daily Briefing (all Gmail/Google Calendar OAuth2) and OpenAI Chat Model (OpenAI API) require credentials but were created with the credentials slot omitted/empty, as instructed.",
+  "friction": [
+    "Task forbids listing/inspecting existing workflows on the instance, so the workflow was created directly via a single POST to /api/v1/workflows using the n8n public REST API (with the API key from .env) rather than via n8nac CLI push/list, since the CLI's normal flow implies environment/workflow listing.",
+    "n8n's public API rejects an 'active' field on workflow creation, so it was omitted; the workflow was created inactive by default, satisfying the 'leave inactive' requirement without an extra step.",
+    "Exact node typeVersions for the LangChain Agent and Chat Model nodes were set from general knowledge of the current n8n schema (1.7 / 1) since workflow listing/inspection of the instance's installed node versions was out of scope; the API accepted them without validation error."
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "startedAt": "2026-09-10T15:18:00Z",
+  "completedAt": "2026-09-10T15:21:31Z",
+  "target": {
+    "project": "n8n-as-code",
+    "requestedRelease": "latest prerelease",
+    "resolvedGitHubTag": "v2.6.0-rc.6",
+    "resolvedNpmPackage": "n8nac",
+    "resolvedNpmDistTag": "next",
+    "resolvedNpmVersion": "2.6.0-rc.6"
+  },
+  "commands": [
+    {
+      "command": "pwd && ls -la",
+      "purpose": "confirm workspace directory and inspect its contents",
+      "exitStatus": 0
+    },
+    {
+      "command": "sed 's/=.*/=<REDACTED>/' .env",
+      "purpose": "enumerate .env keys without exposing values",
+      "exitStatus": 0,
+      "result": "keys present: N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN"
+    },
+    {
+      "command": "node -v && npm -v",
+      "purpose": "confirm toolchain availability",
+      "exitStatus": 0
+    },
+    {
+      "command": "npm view n8n-as-code dist-tags --json",
+      "purpose": "look up package on npm registry using the repo name",
+      "exitStatus": 1,
+      "result": "E404 Not Found - 'n8n-as-code' is not a published npm package name"
+    },
+    {
+      "command": "curl -s https://api.github.com/repos/EtienneLescot/n8n-as-code/releases?per_page=20",
+      "purpose": "list GitHub releases to find the latest prerelease",
+      "exitStatus": 0,
+      "result": "latest prerelease found: v2.6.0-rc.6 (prerelease: true, published 2026-09-10T15:04:17Z)"
+    },
+    {
+      "command": "curl -s https://api.github.com/repos/EtienneLescot/n8n-as-code/releases/tags/v2.6.0-rc.6 -o release.json && node -e \"...\" (print body + assets)",
+      "purpose": "inspect release notes and attached assets",
+      "exitStatus": 0,
+      "result": "release has no downloadable assets; body implies npm-based distribution"
+    },
+    {
+      "command": "curl -s https://raw.githubusercontent.com/EtienneLescot/n8n-as-code/main/README.md -o README.md && grep -n -i install README.md",
+      "purpose": "find documented install method since GitHub release has no binary assets",
+      "exitStatus": 0,
+      "result": "README documents CLI package name as 'n8nac' (not 'n8n-as-code'), prerelease channel is npm dist-tag '@next': npm install -g n8nac@next"
+    },
+    {
+      "command": "npm view n8nac dist-tags --json",
+      "purpose": "confirm the 'next' dist-tag matches the resolved GitHub prerelease tag",
+      "exitStatus": 0,
+      "result": "next=2.6.0-rc.6, rc=2.6.0-rc.1, latest=2.5.0, legacy-v1=1.8.1 -- next matches GitHub v2.6.0-rc.6"
+    },
+    {
+      "command": "npm init -y",
+      "purpose": "create a local package.json so the CLI installs scoped to the workspace instead of globally",
+      "exitStatus": 0
+    },
+    {
+      "command": "npm install n8nac@next",
+      "purpose": "install the resolved latest prerelease locally within the workspace",
+      "exitStatus": 0,
+      "result": "added 299 packages; 7 moderate npm audit advisories reported (not addressed, out of scope)"
+    },
+    {
+      "command": "npx --no-install n8nac --version",
+      "purpose": "verify the installed CLI binary and version",
+      "exitStatus": 0,
+      "result": "2.6.0-rc.6"
+    },
+    {
+      "command": "source .env; case \"$N8N_HOST\" in http*) ... ; esac",
+      "purpose": "check N8N_HOST already carries a URL scheme before use, without printing its value",
+      "exitStatus": 0,
+      "result": "starts-with-http"
+    },
+    {
+      "command": "npx --no-install n8nac env add Bench --base-url \"$N8N_HOST\" --workflows-path workflows/bench",
+      "purpose": "register a workspace environment pointing at the credentialed n8n instance from .env",
+      "exitStatus": 0
+    },
+    {
+      "command": "printf '%s' \"$N8N_API_KEY\" | npx --no-install n8nac env auth set Bench --api-key-stdin",
+      "purpose": "store the API key from .env for the Bench environment via stdin (key never appears in argv or logs)",
+      "exitStatus": 0
+    },
+    {
+      "command": "npx --no-install n8nac env use Bench",
+      "purpose": "activate the Bench environment",
+      "exitStatus": 0
+    },
+    {
+      "command": "npx --no-install n8nac env status --json",
+      "purpose": "verify connectivity/auth to the n8n instance without listing or inspecting any workflows",
+      "exitStatus": 0,
+      "result": "accessStatus: ready, apiKeyAvailable: true, host matches N8N_HOST"
+    }
+  ],
+  "deadEnds": [
+    {
+      "attempted": "npm view n8n-as-code dist-tags --json",
+      "outcome": "404 Not Found",
+      "reason": "the npm package is not published under the GitHub repo name 'n8n-as-code'; the actual CLI package is 'n8nac', discovered via the repo README"
+    },
+    {
+      "attempted": "python3 -c \"...\" to parse release.json",
+      "outcome": "exit 127, cannot execute: required file not found",
+      "reason": "no python3 interpreter available in this environment (only a Windows App Execution Alias stub); switched to 'node -e' instead, which is available"
+    },
+    {
+      "attempted": "look for an installable binary/tarball attached to GitHub release v2.6.0-rc.6",
+      "outcome": "release has zero assets",
+      "reason": "this project distributes prereleases via the npm 'next' dist-tag, not GitHub release binaries; confirmed by cross-checking README install docs"
+    }
+  ],
+  "outcome": {
+    "installed": true,
+    "package": "n8nac",
+    "version": "2.6.0-rc.6",
+    "installScope": "local (workspace node_modules, via npm install, not global)",
+    "environmentConfigured": "Bench (external-instance, points at N8N_HOST from .env)",
+    "connectivityVerified": true,
+    "workflowsListedOrInspected": false
+  }
+}

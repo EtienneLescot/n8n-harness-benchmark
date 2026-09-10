@@ -24,5 +24,30 @@
     "wrongCall": "I halted this run claiming the orchestrator was unfit because it cannot hand a worker wired MCP tools. No run ever had those. run_10 branch B built its own PowerShell client and called initialize, tools/list and tools/call against the MCP endpoint, and the rubric already compensates for that client-building cost by excluding acquisition seconds on both branches.",
     "actualRule": "Branch B must exercise the MCP server. Hand-rolling the client is precedented and accepted. Bypassing MCP for the plain REST API, as run_11 did, is what voids the cost axes.",
     "check": "After the branch B builder returns, its builder_log.json must show at least one tools/call against the MCP endpoint."
-  }
+  },
+  "branchAAttempts": [
+    {
+      "attempt": 1,
+      "voided": true,
+      "at": "2026-09-10T16:26:39.194Z",
+      "installer": {
+        "tokens": 78964,
+        "durationMs": 223003,
+        "toolUses": 23,
+        "whatItRan": "npm install n8nac@next, then env add / env auth set / env use / env status",
+        "whatItSkipped": "npx n8nac update-ai, the fourth of four commands in the README CLI Quick Start, whose help reads \"Update AI Context (AGENTS.md and snippets)\""
+      },
+      "builder": {
+        "tokens": 85935,
+        "durationMs": 181879,
+        "toolUses": 9,
+        "workflowId": "YWQnHZJGMNmJU6cq",
+        "whatItDid": "never invoked the n8nac CLI; read n8nac-config.json, README.md and package.json, then POSTed hand-written JSON to /api/v1/workflows with curl"
+      },
+      "builderStatedReason": "Claimed the no-listing rule forced it off the CLI because the CLI flow implies listing. False: n8nac push <path> uploads one local workflow and lists nothing; list is a separate command.",
+      "actualCause": "The workspace carried no AGENTS.md and no agent skills, because update-ai never ran. run_10 had both and its builder used the CLI. Nothing regressed between 2.5.0 and 2.6.0-rc.6.",
+      "evidence": "results/history/run_12/workflow_n8nac_VOID.json, benchmark/sandboxes/run_12_n8nac/{installer,builder}_log.json archived under attempt_1/",
+      "docsFinding": "The README presents the four Quick Start lines as equals. The first three configure an environment; the fourth is what makes the toolkit usable by an agent. Nothing says so."
+    }
+  ]
 }

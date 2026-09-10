@@ -13,8 +13,10 @@
     "validate": "node benchmark/harness/validator.mjs",
     "report": "node benchmark/harness/compiler.mjs",
     "guard": "node benchmark/harness/isolation-guard.mjs",
-    "test": "node benchmark/harness/isolation-guard.mjs --self-check && node benchmark/harness/predicates.mjs --self-check",
-    "facts": "node benchmark/harness/predicates.mjs"
+    "test": "node benchmark/harness/isolation-guard.mjs --self-check && node benchmark/harness/predicates.mjs --self-check && node benchmark/harness/toolchain-check.mjs --self-check",
+    "facts": "node benchmark/harness/predicates.mjs",
+    "ready": "node benchmark/harness/toolchain-check.mjs --ready",
+    "used": "node benchmark/harness/toolchain-check.mjs --used"
   },
   "keywords": [
     "n8n",
