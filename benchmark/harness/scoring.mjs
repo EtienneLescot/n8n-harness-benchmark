@@ -106,6 +106,34 @@ export function relativeScore(value, otherValue) {
     return parseFloat((100 * Math.exp(-DECAY * overage)).toFixed(2));
 }
 
+/**
+ * Strip everything that identifies which toolchain produced a workflow.
+ *
+ * The n8n server stamps its own provenance: run_10 native MCP carries
+ * `meta: { aiBuilderAssisted: true, builderVariant: "mcp" }` on line 2, while the
+ * n8n-as-code workflow has `meta: null`. The asymmetry alone identifies the branch, so any
+ * judge reading raw workflow JSON is unblinded before it reads a single node.
+ *
+ * Nothing needs this yet - correctness is deterministic and indifferent to provenance. It
+ * exists so that the first judge which does care cannot be built without it. Apply at judge
+ * time, never when archiving: the stored artefact must stay faithful evidence.
+ */
+export function blindWorkflow(workflow) {
+    const drop = new Set(['meta', 'id', 'versionId', 'versionCounter', 'shared', 'name',
+        'createdAt', 'updatedAt', 'tags', 'pinData', 'triggerCount']);
+    const nodeDrop = new Set(['id', 'webhookId', 'credentials']);
+    const out = {};
+    for (const [key, value] of Object.entries(workflow || {})) {
+        if (drop.has(key)) continue;
+        out[key] = value;
+    }
+    // Node names survive: they resolve $("X") references and are part of the workflow.
+    // They are also a fingerprint risk, so a judge prompt must forbid reading them for provenance.
+    out.nodes = (workflow?.nodes || []).map((node) => Object.fromEntries(
+        Object.entries(node).filter(([k]) => !nodeDrop.has(k))));
+    return out;
+}
+
 const round = (n) => parseFloat(Number(n).toFixed(2));
 
 /** A LangChain agent node — the real node type, never a Code node someone named "... Agent". */

@@ -202,8 +202,13 @@ export async function validateWorkflowOnInstance(workflowId) {
     console.warn('validate_node_config RPC call failed, falling back to basic checks:', err.message);
   }
 
-  const nodeValidityScore = nodes.length > 0
-    ? parseFloat(((validNodesCount / nodes.length) * 100).toFixed(2))
+  // Sticky notes are annotations, not nodes the server validates, yet they sat in this
+  // denominator: with one invalid node, 8/9 scores 88.89 and 9/10 scores 90.00, so pasting a
+  // sticky bought free points without touching the workflow. Score over functional nodes only.
+  const validFunctionalCount = functionalNodes.length - invalidNodes
+    .filter(i => !String(i.type || '').toLowerCase().includes('stickynote')).length;
+  const nodeValidityScore = functionalNodes.length > 0
+    ? parseFloat(((validFunctionalCount / functionalNodes.length) * 100).toFixed(2))
     : 100;
 
   // 4. Query live execution history from GET /api/v1/executions
