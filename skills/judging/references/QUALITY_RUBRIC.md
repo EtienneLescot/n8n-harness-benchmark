@@ -70,25 +70,44 @@ mandated, none a quality signal.
 
 ## How a grade is defended
 
-An absolute grade from a language model is an opinion unless it is constrained. Four rules,
+An absolute grade from a language model is an opinion unless it is constrained. Five rules,
 and a grade that breaks any of them is void:
 
-1. **Every dimension score cites a JSON pointer that resolves.** A score with no citation is
+1. **One workflow per judge. Never two in one context.** A judge that sees both stops grading
+   and starts comparing, and the grade becomes relative to the other workflow — which is
+   precisely the logic this axis exists to escape. If the prompt is the yardstick, no judge
+   needs to see anything but the workflow and the prompt.
+
+   > `run_12`'s first quality panel broke this rule and the grades show it. Each judge was
+   > handed both workflows, with the presentation order swapped for one of them as a
+   > mitigation. The judge who saw the eventual winner first returned a 4-point gap; the two
+   > who saw it second returned 23 and 10. The grades moved with presentation order, so they
+   > were measuring position as well as quality. Swapping the order **detects** that
+   > contamination; it does not remove it. Only isolation removes it. That panel was voided
+   > and re-run with six judges, one workflow each.
+
+2. **Every dimension score cites a JSON pointer that resolves.** A score with no citation is
    discarded and the dimension is regraded by another judge.
-2. **Three judges, independent contexts, no shared state.** The published grade is the median,
-   never the mean, so one outlier cannot drag it.
-3. **Disagreement is published, not smoothed.** If the three judges spread more than 15 points
+3. **Three judges per workflow, independent contexts, no shared state.** The published grade is
+   the median, never the mean, so one outlier cannot drag it.
+4. **Disagreement is published, not smoothed.** If the three judges spread more than 15 points
    on the total, the report says so and prints all three. A wide spread is information about
    the rubric, not noise to average away.
-4. **A blind pairwise check runs alongside.** The same judges, in a fresh context, are asked
-   only which of the two workflows better answers the brief, with the presentation order
-   swapped between them. If the pairwise winner contradicts the absolute ordering, the report
-   says so. Absolute grades that cannot reproduce their own ranking are not trustworthy and
-   the run says as much rather than hiding it.
+5. **A blind pairwise check runs alongside, by different agents.** Two further agents, who
+   produce no grade of their own, are each asked one question: which of the two workflows
+   better answers the brief. They see both, deliberately — comparison is what they are for —
+   with the presentation order swapped between them. If the pairwise winner contradicts the
+   ordering the isolated grades produced, the report says so. Absolute grades that cannot
+   reproduce their own ranking are not trustworthy, and the run says as much rather than
+   hiding it.
 
-Judges see the two workflows **blinded** through `blindWorkflow()`, the brief verbatim, the
-harness operating rules, and the structural facts. They do not see: correctness scores, token
-counts, build times, branch names, or the defect panel's findings.
+   **The pairwise result never enters the grade.** It is a check on the grades, not an input
+   to them. An agent that graded may not also vote, and a vote may not adjust a grade.
+
+Each judge sees **one** workflow, blinded through `blindWorkflow()`, the brief verbatim, the
+harness operating rules, and the structural facts computed from that workflow. No judge sees:
+the other workflow, correctness scores, token counts, build times, branch names, or the defect
+panel's findings.
 
 ---
 

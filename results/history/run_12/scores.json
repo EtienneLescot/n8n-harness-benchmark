@@ -11,7 +11,7 @@
     "correctness": 100,
     "tokenEfficiency": 100,
     "buildTime": 73.66,
-    "composite": 86.25,
+    "composite": 86.95,
     "raw": {
       "buildMs": 427082,
       "tokens": 143244,
@@ -24,7 +24,7 @@
       "friction": 100,
       "commands": 22.31
     },
-    "quality": 72,
+    "quality": 74,
     "partial": false
   },
   "native_mcp": {
@@ -50,62 +50,136 @@
   "weightsChangedAt": "run_12",
   "weightsNote": "Quality 35, correctness 30, tokens 20, build time 15. Runs 6-11 were scored under a three-axis composite and are comparable to this run only axis by axis, never composite to composite.",
   "quality": {
-    "grades": [
-      {
-        "judge": "judge 1",
-        "order": "alpha first",
-        "alpha": 65,
-        "beta": 88
+    "method": "Six judges, one workflow each, no judge saw the other workflow. Median of three per branch.",
+    "voided": {
+      "reason": "The first quality panel showed each judge both workflows, with the presentation order swapped for one of them. That makes judges compare rather than grade, which reintroduces the relative logic this axis exists to escape.",
+      "evidence": "The judge who saw the eventual winner first returned a 4-point gap; the two who saw it second returned 23 and 10. The grades moved with presentation order.",
+      "voidedGrades": {
+        "n8nac": 72,
+        "native_mcp": 87
       },
-      {
-        "judge": "judge 2",
-        "order": "beta first (swapped)",
-        "alpha": 72,
-        "beta": 76
-      },
-      {
-        "judge": "judge 3",
-        "order": "alpha first",
-        "alpha": 77,
-        "beta": 87
+      "voidedSpreads": {
+        "n8nac": 12,
+        "native_mcp": 12
       }
-    ],
-    "median": {
-      "alpha": 72,
-      "beta": 87
     },
-    "disagreement": {
-      "alpha": {
-        "spread": 12,
-        "flagged": false,
-        "grades": [
-          65,
-          72,
-          77
-        ]
-      },
-      "beta": {
-        "spread": 12,
-        "flagged": false,
-        "grades": [
-          88,
-          76,
-          87
-        ]
+    "isolated": {
+      "n8nac": [
+        {
+          "judge": "A1",
+          "total": 71,
+          "dims": {
+            "idea": 21,
+            "structure": 17,
+            "connections": 23,
+            "answer": 10
+          },
+          "appraisal": "The workflow correctly fetches, triages and composes a real HTML dashboard, but never wires the last mile. The one deliverable the brief named is unreachable outside the execution log."
+        },
+        {
+          "judge": "A2",
+          "total": 74,
+          "dims": {
+            "idea": 21,
+            "structure": 22,
+            "connections": 22,
+            "answer": 9
+          },
+          "appraisal": "A well-decomposed pipeline gathers and sorts the data and generates a genuinely usable HTML briefing, then ends by writing it into execution output with no delivery node. The operative verb is never fulfilled."
+        },
+        {
+          "judge": "A3",
+          "total": 76,
+          "dims": {
+            "idea": 22,
+            "structure": 20,
+            "connections": 23,
+            "answer": 11
+          },
+          "appraisal": "A correctly shaped multi-agent workflow builds exactly the HTML dashboard the brief asked for, then never presents it anywhere."
+        }
+      ],
+      "native_mcp": [
+        {
+          "judge": "B1",
+          "total": 89,
+          "dims": {
+            "idea": 23,
+            "structure": 22,
+            "connections": 23,
+            "answer": 21
+          },
+          "appraisal": "The workflow actually ships the HTML somewhere real, through a genuine parallel two-agent fan-in. Undercut only by the dashboard landing as a plain email rather than anything more dashboard-like."
+        },
+        {
+          "judge": "B2",
+          "total": 87,
+          "dims": {
+            "idea": 22,
+            "structure": 23,
+            "connections": 23,
+            "answer": 19
+          },
+          "appraisal": "Architecturally sound multi-agent design that gets the sorted HTML briefing all the way to delivery, but reduces the dashboard to an email, which is the one place a reader of the brief might feel shortchanged."
+        },
+        {
+          "judge": "B3",
+          "total": 87,
+          "dims": {
+            "idea": 22,
+            "structure": 22,
+            "connections": 23,
+            "answer": 20
+          },
+          "appraisal": "The orchestrator delegates cleanly to two purpose-built sub-agents that each own their fetch tool and produce a real HTML dashboard, but presents is fulfilled only by emailing it rather than surfacing it anywhere persistent."
+        }
+      ]
+    },
+    "n8nac": {
+      "grades": [
+        71,
+        74,
+        76
+      ],
+      "median": 74,
+      "spread": 5,
+      "flagged": false,
+      "dimensionMedians": {
+        "idea": 21,
+        "structure": 20,
+        "connections": 23,
+        "answer": 10
+      }
+    },
+    "native_mcp": {
+      "grades": [
+        89,
+        87,
+        87
+      ],
+      "median": 87,
+      "spread": 2,
+      "flagged": false,
+      "dimensionMedians": {
+        "idea": 22,
+        "structure": 22,
+        "connections": 23,
+        "answer": 20
       }
     },
     "pairwise": [
       {
-        "order": "alpha as Workflow 1",
-        "winner": "beta"
+        "order": "n8n-as-code presented first",
+        "winner": "native_mcp"
       },
       {
-        "order": "beta as Workflow 1",
-        "winner": "beta"
+        "order": "native MCP presented first",
+        "winner": "native_mcp"
       }
     ],
-    "absoluteWinner": "beta",
-    "pairwiseWinner": "beta",
-    "consistent": true
+    "absoluteWinner": "native_mcp",
+    "pairwiseWinner": "native_mcp",
+    "consistent": true,
+    "rubricEditedMidPanel": "The rubric was edited while the six judges were reading it, to add the isolation rule. The edit touched only the panel process rules, never the four dimensions or the bands, so all six graded on identical criteria."
   }
 }

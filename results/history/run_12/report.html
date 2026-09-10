@@ -1,0 +1,417 @@
+<title>Run 12 du benchmark n8n</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root {
+    --ground: #F4F6F8;
+    --panel: #FFFFFF;
+    --ink: #141A21;
+    --ink-soft: #48545F;
+    --ink-faint: #7C8792;
+    --rule: #DCE2E8;
+    --rule-soft: #EAEEF2;
+    --a: #0F6157;
+    --a-wash: #DDECE9;
+    --b: #7B3F86;
+    --b-wash: #EDE1EF;
+    --warn: #A8551A;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1317;
+      --panel: #161C22;
+      --ink: #E8EDF1;
+      --ink-soft: #A3AFB9;
+      --ink-faint: #6E7B86;
+      --rule: #2A333B;
+      --rule-soft: #212930;
+      --a: #4FBFAC;
+      --a-wash: #16302D;
+      --b: #C68BD1;
+      --b-wash: #2C1F30;
+      --warn: #D98B4E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0E1317;
+    --panel: #161C22;
+    --ink: #E8EDF1;
+    --ink-soft: #A3AFB9;
+    --ink-faint: #6E7B86;
+    --rule: #2A333B;
+    --rule-soft: #212930;
+    --a: #4FBFAC;
+    --a-wash: #16302D;
+    --b: #C68BD1;
+    --b-wash: #2C1F30;
+    --warn: #D98B4E;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 40px 24px 96px;
+  }
+  .sheet { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 20px;
+    letter-spacing: -.01em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0;
+  }
+  p { margin: 0 0 12px; max-width: 66ch; color: var(--ink-soft); }
+  p.lede { color: var(--ink); font-size: 16.5px; }
+  p:last-child { margin-bottom: 0; }
+  section > .intro { margin-bottom: 22px; }
+  strong { color: var(--ink); font-weight: 600; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  .meta b { color: var(--ink-soft); font-weight: 500; }
+
+  /* head to head */
+  .versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; }
+  .side {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--tone);
+    padding: 20px 22px 22px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .side.a { --tone: var(--a); }
+  .side.b { --tone: var(--b); }
+  .side .who { font-family: var(--display); font-weight: 600; font-size: 15px; color: var(--tone); }
+  .side .composite { font-family: var(--mono); font-weight: 600; font-size: 40px; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .side .caption { font-size: 12.5px; color: var(--ink-faint); }
+  .gap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 4px; }
+  .gap .delta { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink-soft); }
+  .gap .label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); }
+
+  /* axes */
+  .axes { display: flex; flex-direction: column; }
+  .axis { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 16px 0; border-top: 1px solid var(--rule-soft); }
+  .axis:first-child { border-top: none; }
+  .axis-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .axis-name { font-family: var(--display); font-weight: 600; font-size: 15px; }
+  .axis-weight { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .axis-note { font-size: 13px; color: var(--ink-faint); margin: 0; max-width: 62ch; }
+  .bars { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+  .barrow { display: grid; grid-template-columns: 108px 1fr 52px; gap: 12px; align-items: center; }
+  .barrow .tag { font-size: 12.5px; color: var(--ink-soft); }
+  .track { height: 10px; background: var(--rule-soft); position: relative; }
+  .fill { height: 100%; }
+  .fill.a { background: var(--a); }
+  .fill.b { background: var(--b); }
+  .barrow .val { font-family: var(--mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* tables */
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule-soft); }
+  th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 500; border-bottom: 1px solid var(--rule);
+  }
+  td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; padding-right: 0; }
+  tr.total td { border-bottom: none; border-top: 1px solid var(--rule); font-weight: 600; color: var(--ink); }
+  td.a { color: var(--a); }
+  td.b { color: var(--b); }
+
+  /* judges */
+  .judges { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .judge {
+    background: var(--panel); border: 1px solid var(--rule); border-left: 3px solid var(--tone);
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .judge.a { --tone: var(--a); }
+  .judge.b { --tone: var(--b); }
+  .judge .top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .judge .id { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+  .judge .score { font-family: var(--mono); font-weight: 600; font-size: 24px; color: var(--tone); font-variant-numeric: tabular-nums; }
+  .judge q { font-size: 13.5px; color: var(--ink-soft); font-style: italic; quotes: "«\00a0" "\00a0»"; }
+
+  .group-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--tone); margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--rule);
+  }
+  .group-label.a { --tone: var(--a); }
+  .group-label.b { --tone: var(--b); }
+  .group + .group { margin-top: 26px; }
+
+  .callout {
+    background: var(--panel); border: 1px solid var(--rule); border-left: 3px solid var(--warn);
+    padding: 18px 20px;
+  }
+  .callout h3 { margin-bottom: 8px; }
+  .callout p { max-width: none; }
+
+  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .note { background: var(--panel); border: 1px solid var(--rule); padding: 16px 18px; }
+  .note h3 { margin-bottom: 6px; }
+  .note p { font-size: 13.5px; max-width: none; margin-bottom: 0; }
+
+  code { font-family: var(--mono); font-size: .89em; background: var(--rule-soft); padding: 1px 5px; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 18px; font-size: 12.5px; color: var(--ink-faint); }
+  footer p { color: inherit; font-size: inherit; }
+
+  @media (max-width: 600px) {
+    .versus { grid-template-columns: 1fr; }
+    .gap { flex-direction: row; gap: 8px; padding: 4px 0; }
+    .barrow { grid-template-columns: 88px 1fr 46px; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header>
+    <p class="eyebrow">Benchmark n8n · run 12</p>
+    <h1>n8n-as-code contre n8n Native MCP</h1>
+    <p class="lede">Même demande, deux outillages, deux sous-agents constructeurs isolés. Premier run noté sur quatre axes, dont la qualité fonctionnelle du workflow.</p>
+    <div class="meta">
+      <span><b>Date</b> 10 septembre 2026</span>
+      <span><b>Sous test</b> n8nac@2.6.0-rc.6</span>
+      <span><b>Instance</b> n8n Cloud</span>
+      <span><b>Modèle</b> identique sur les deux branches</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="versus">
+      <div class="side a">
+        <span class="who">n8n-as-code</span>
+        <span class="composite">86,95</span>
+        <span class="caption">composite sur 100</span>
+      </div>
+      <div class="gap">
+        <span class="label">écart</span>
+        <span class="delta">4,35</span>
+      </div>
+      <div class="side b">
+        <span class="who">n8n Native MCP</span>
+        <span class="composite">91,30</span>
+        <span class="caption">composite sur 100</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Les quatre axes</h2>
+      <p>Les deux axes de coût sont relatifs: la branche la moins chère prend 100, l'autre décroît selon l'écart. La qualité et la correctness sont absolues, parce qu'elles ont un étalon.</p>
+    </div>
+
+    <div class="axes">
+
+      <div class="axis">
+        <div class="axis-head">
+          <span class="axis-name">Qualité fonctionnelle</span>
+          <span class="axis-weight">poids 35 · absolue</span>
+        </div>
+        <p class="axis-note">Note contre le prompt: l'idée, la structure des nœuds, leurs liaisons, la réponse à la demande. Six juges, un workflow chacun, médiane par branche.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:74%"></span></span><span class="val">74</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:87%"></span></span><span class="val">87</span></div>
+        </div>
+      </div>
+
+      <div class="axis">
+        <div class="axis-head">
+          <span class="axis-name">Correctness</span>
+          <span class="axis-weight">poids 30 · absolue</span>
+        </div>
+        <p class="axis-note">Audit déterministe sur l'instance: couverture des capacités demandées, validité des nœuds contre le schéma serveur, intégrité du graphe. Zéro inférence.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:100%"></span></span><span class="val">100</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:100%"></span></span><span class="val">100</span></div>
+        </div>
+      </div>
+
+      <div class="axis">
+        <div class="axis-head">
+          <span class="axis-name">Tokens</span>
+          <span class="axis-weight">poids 20 · relative</span>
+        </div>
+        <p class="axis-note">Consommation du constructeur seule. 143 244 contre 165 445, soit 15 % de plus pour Native MCP.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:100%"></span></span><span class="val">100</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:79.26%"></span></span><span class="val">79,3</span></div>
+        </div>
+      </div>
+
+      <div class="axis">
+        <div class="axis-head">
+          <span class="axis-name">Temps de construction</span>
+          <span class="axis-weight">poids 15 · relative</span>
+        </div>
+        <p class="axis-note">Chronomètre externe du harnais. 427 secondes contre 355, soit 20 % de plus pour n8n-as-code.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:73.66%"></span></span><span class="val">73,7</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:100%"></span></span><span class="val">100</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Ce qui a décidé la qualité</h2>
+    </div>
+    <div class="callout">
+      <h3>Le dashboard de n8n-as-code n'est livré nulle part</h3>
+      <p>Son nœud terminal est un nœud Code sans arête sortante, sous un déclencheur planifié qui n'a aucun canal de réponse. Le briefing HTML est construit chaque matin, complet, puis abandonné dans les données d'exécution. Native MCP finit sur un envoi Gmail en <code>emailType: html</code>.</p>
+      <p>Les six juges isolés ont convergé là-dessus sans se voir. Et ni la correctness ni le détecteur de défauts ne pouvaient le dire: le premier vérifie qu'un nœud produit du HTML, jamais qu'il atteigne quelqu'un; le second exige une exigence explicite dans le prompt, or «présente» ne nomme aucun mécanisme de livraison.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Le panel de qualité, juge par juge</h2>
+      <p>Chaque juge a reçu un seul workflow, le prompt, les contraintes du harnais et les faits structurels. Aucun n'a vu l'autre workflow, ni les scores de correctness, ni les coûts, ni le nom de la branche.</p>
+    </div>
+
+    <div class="group">
+      <p class="group-label a">n8n-as-code · médiane 74 · dispersion 5</p>
+      <div class="judges">
+        <div class="judge a">
+          <div class="top"><span class="id">Juge A1</span><span class="score">71</span></div>
+          <q>Le workflow récupère, trie et compose un vrai dashboard HTML, mais ne câble jamais le dernier mètre. Le seul livrable que le brief nomme est inatteignable hors du journal d'exécution.</q>
+        </div>
+        <div class="judge a">
+          <div class="top"><span class="id">Juge A2</span><span class="score">74</span></div>
+          <q>Un pipeline bien décomposé rassemble et trie les données et génère un briefing HTML réellement utilisable, puis finit par l'écrire dans la sortie d'exécution sans nœud de livraison. Le verbe central n'est jamais honoré.</q>
+        </div>
+        <div class="judge a">
+          <div class="top"><span class="id">Juge A3</span><span class="score">76</span></div>
+          <q>Un workflow multi-agent correctement formé construit exactement le dashboard HTML demandé, puis ne le présente nulle part.</q>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <p class="group-label b">n8n Native MCP · médiane 87 · dispersion 2</p>
+      <div class="judges">
+        <div class="judge b">
+          <div class="top"><span class="id">Juge B1</span><span class="score">89</span></div>
+          <q>Le workflow expédie réellement le HTML quelque part, par une vraie convergence parallèle de deux agents. Amoindri seulement par le dashboard qui atterrit en simple email plutôt qu'en quelque chose de plus tableau de bord.</q>
+        </div>
+        <div class="judge b">
+          <div class="top"><span class="id">Juge B2</span><span class="score">87</span></div>
+          <q>Conception multi-agent architecturalement saine qui mène le briefing HTML trié jusqu'à la livraison, mais réduit le dashboard à un email, seul endroit où un lecteur du brief pourrait se sentir lésé.</q>
+        </div>
+        <div class="judge b">
+          <div class="top"><span class="id">Juge B3</span><span class="score">87</span></div>
+          <q>L'orchestrateur délègue proprement à deux sous-agents dédiés qui possèdent chacun leur outil de récupération et produisent un vrai dashboard HTML, mais «présente» n'est honoré que par un email plutôt que par une surface persistante.</q>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Le détail par dimension</h2>
+      <p>Médiane des trois juges de chaque branche, sur 25 points par dimension.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th class="n">n8n-as-code</th><th class="n">Native MCP</th><th class="n">Écart</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>L'idée</td><td class="n a">21</td><td class="n b">22</td><td class="n">+1</td></tr>
+          <tr><td>Structure des nœuds</td><td class="n a">20</td><td class="n b">22</td><td class="n">+2</td></tr>
+          <tr><td>Liaisons</td><td class="n a">23</td><td class="n b">23</td><td class="n">0</td></tr>
+          <tr><td>Réponse au prompt</td><td class="n a">10</td><td class="n b">20</td><td class="n">+10</td></tr>
+          <tr class="total"><td>Total médian</td><td class="n a">74</td><td class="n b">87</td><td class="n">+13</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px">Les deux workflows sont à égalité sur les liaisons et proches sur l'idée et la structure. Tout l'écart tient à une seule dimension, et à un seul nœud.</p>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Contrôles de méthode</h2>
+    </div>
+    <div class="split">
+      <div class="note">
+        <h3>Isolation des juges</h3>
+        <p>Un premier panel montrait les deux workflows à chaque juge. Le juge qui voyait le vainqueur en premier rendait 4 points d'écart, les deux qui le voyaient en second en rendaient 23 et 10. Les notes suivaient l'ordre de présentation. Panel annulé, refait à six juges isolés. La dispersion est tombée de 12 et 12 à 5 et 2.</p>
+      </div>
+      <div class="note">
+        <h3>Contrôle par paires</h3>
+        <p>Deux agents distincts, qui ne produisent aucune note, ont désigné le meilleur des deux workflows, ordre de présentation inversé entre eux. Native MCP dans les deux sens. Le classement des notes isolées est donc reproductible.</p>
+      </div>
+      <div class="note">
+        <h3>Panel de défauts</h3>
+        <p>Quatre chercheurs et deux attaquants, en amont. Deux revendications, une par branche, toutes deux réfutées. Zéro défaut confirmé des deux côtés, l'axe reste à 100 pour tout le monde et à poids nul.</p>
+      </div>
+      <div class="note">
+        <h3>Portes d'outillage</h3>
+        <p>Vérifié mécaniquement avant et après la construction: chaque sandbox exposait son outillage, et chaque constructeur l'a réellement piloté. Plus de trente invocations du CLI d'un côté, des appels <code>tools/call</code> de l'autre. Aucun repli sur l'API REST.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Télémétrie brute</h2>
+      <p>Mesurée, publiée, jamais notée.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Mesure</th><th class="n">n8n-as-code</th><th class="n">Native MCP</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Tokens du constructeur</td><td class="n">143 244</td><td class="n">165 445</td></tr>
+          <tr><td>Durée de construction</td><td class="n">427 s</td><td class="n">355 s</td></tr>
+          <tr><td>Nœuds fonctionnels</td><td class="n">11</td><td class="n">10</td></tr>
+          <tr><td>Agents LangChain</td><td class="n">3</td><td class="n">3</td></tr>
+          <tr><td>Nœuds invalides</td><td class="n">0</td><td class="n">0</td></tr>
+          <tr><td>Commandes d'installation</td><td class="n">15</td><td class="n">7</td></tr>
+          <tr><td>Impasses à l'installation</td><td class="n">1</td><td class="n">1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>Les poids ont changé au run 12: qualité 35, correctness 30, tokens 20, temps 15. Les runs 6 à 11 étaient notés sur trois axes et ne sont comparables à celui-ci qu'axe par axe, jamais composite contre composite.</p>
+  </footer>
+
+</div>
