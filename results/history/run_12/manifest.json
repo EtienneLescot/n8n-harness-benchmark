@@ -19,12 +19,10 @@
       "installRequest": "Install and configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Credentials are in .env"
     }
   },
-  "halted": {
-    "at": "2026-09-10T15:56:24.277Z",
-    "phase": "before builders",
-    "reason": "This orchestrator cannot satisfy a stated benchmark precondition: SKILL.md registers the worker persona with enable_mcp_tools true and defines branch B as discovering its environment through the MCP server tools exposed in its runtime. The Agent tool here has no equivalent, and a sub-agent inherits the parent session tool list rather than reading the sandbox .mcp.json.",
-    "ruledOut": "Letting branch B hand-roll an HTTP MCP client. EVALUATION_RUBRIC.md names that a benchmark artefact and discounts acquisition seconds on both branches to compensate for it, so it is the bias to remove, not a fallback to choose.",
-    "installersValid": true,
-    "resumeAt": "builder phase, once the n8n MCP server is present in the orchestrator session"
+  "branchBRule": {
+    "correctedAt": "2026-09-10T15:59:33.977Z",
+    "wrongCall": "I halted this run claiming the orchestrator was unfit because it cannot hand a worker wired MCP tools. No run ever had those. run_10 branch B built its own PowerShell client and called initialize, tools/list and tools/call against the MCP endpoint, and the rubric already compensates for that client-building cost by excluding acquisition seconds on both branches.",
+    "actualRule": "Branch B must exercise the MCP server. Hand-rolling the client is precedented and accepted. Bypassing MCP for the plain REST API, as run_11 did, is what voids the cost axes.",
+    "check": "After the branch B builder returns, its builder_log.json must show at least one tools/call against the MCP endpoint."
   }
 }
