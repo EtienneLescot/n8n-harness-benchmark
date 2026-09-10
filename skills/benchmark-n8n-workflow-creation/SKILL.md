@@ -264,3 +264,22 @@ after:
 The judge itself runs only after both builds are frozen and archived, reads the archived
 JSON through `blindWorkflow()`, and scores nothing an agent merely asserted: a finding
 enters the Latent Defects axis only when a predicate over the artefact returns true.
+
+> [!CAUTION]
+> **Precondition: branch B's runtime must expose the MCP server tools.** This is not a
+> detail of the worker prompt, it is stated twice above: the persona is registered with
+> `enable_mcp_tools: true`, and branch B is defined as discovering its environment *through
+> the MCP server tools exposed in its runtime*. Branch A discovers a binary sitting in its
+> sandbox; branch B has nothing discoverable unless the harness grants it the tools.
+>
+> **Assert it before dispatching, and declare the orchestrator unfit if it fails.** An
+> orchestrator whose sub-agent runtime cannot be granted MCP tools does not run branch B.
+> Writing `.mcp.json` into the sandbox does not satisfy this: that file is read by an MCP
+> *client* at startup, and a sub-agent created inside an already-running session inherits
+> its parent's tool list. Changing directory into the sandbox reloads nothing.
+>
+> **Do not fall back to a hand-rolled HTTP client.** `EVALUATION_RUBRIC.md` names that a
+> benchmark artefact, not a toolchain, and discounts acquisition seconds on both branches
+> precisely to compensate for it. In `run_11` branch B went further and used the plain REST
+> API with no schema lookup at all, which made the cost axes compare n8n-as-code against a
+> client that consults nothing. That run was void.

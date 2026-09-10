@@ -1,0 +1,30 @@
+{
+  "runId": "run_12",
+  "createdAt": "2026-09-10T15:18:25.256Z",
+  "supersedes": "run_11, voided because its prerelease was mispublished",
+  "underTest": "n8nac@2.6.0-rc.6 (npm tag next), https://github.com/EtienneLescot/n8n-as-code/releases/tag/v2.6.0-rc.6",
+  "userRequest": "Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.",
+  "preflight": {
+    "globalN8nacRemovedBeforeStart": true
+  },
+  "branches": {
+    "n8nac": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\sandboxes\\run_12_n8nac",
+      "workflowToken": "bench-1c7cdd99",
+      "installRequest": "Install the latest prerelease of n8n-as-code (https://github.com/EtienneLescot/n8n-as-code). Credentials are in .env"
+    },
+    "native_mcp": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\sandboxes\\run_12_native_mcp",
+      "workflowToken": "bench-7e3c2f4d",
+      "installRequest": "Install and configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Credentials are in .env"
+    }
+  },
+  "halted": {
+    "at": "2026-09-10T15:56:24.277Z",
+    "phase": "before builders",
+    "reason": "This orchestrator cannot satisfy a stated benchmark precondition: SKILL.md registers the worker persona with enable_mcp_tools true and defines branch B as discovering its environment through the MCP server tools exposed in its runtime. The Agent tool here has no equivalent, and a sub-agent inherits the parent session tool list rather than reading the sandbox .mcp.json.",
+    "ruledOut": "Letting branch B hand-roll an HTTP MCP client. EVALUATION_RUBRIC.md names that a benchmark artefact and discounts acquisition seconds on both branches to compensate for it, so it is the bias to remove, not a fallback to choose.",
+    "installersValid": true,
+    "resumeAt": "builder phase, once the n8n MCP server is present in the orchestrator session"
+  }
+}
