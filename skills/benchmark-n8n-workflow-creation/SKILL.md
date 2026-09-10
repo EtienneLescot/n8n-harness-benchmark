@@ -250,8 +250,16 @@ after:
    `judging.eligible = false` into `benchmark_results.json` and publish the run as
    correctness-tier. Do NOT run the loop single-agent: a finder and an attacker sharing a
    context confirm each other, which is the failure mode the protocol exists to prevent.
-2. **Assert spatial isolation.** No sandbox may contain a path matching `skills/judging`,
-   `JUDGING_PROTOCOL`, `EVALUATION_RUBRIC` or `benchmark.config`. Abort the run if one does.
+2. **Assert spatial isolation.** No sandbox may hold a scoring or judging document, under
+   its own name, renamed, or reachable through a symlink. This is checked, not promised:
+
+   ```bash
+   npm run guard
+   ```
+
+   Non-zero exit means a builder could read how it is graded. Abort the run; do not
+   delete the offending file and continue, because whatever put it there will do it
+   again next run.
 
 The judge itself runs only after both builds are frozen and archived, reads the archived
 JSON through `blindWorkflow()`, and scores nothing an agent merely asserted: a finding

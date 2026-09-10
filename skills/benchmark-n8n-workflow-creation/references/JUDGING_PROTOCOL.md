@@ -93,9 +93,28 @@ judge's run begins.
   perturb what the next run measures.
 
 **Mechanical check, not a promise.** `run_9` fell through a channel weaker than a copied
-file. Before dispatching builders the orchestrator asserts that no sandbox contains a path
-matching `skills/judging`, `JUDGING_PROTOCOL`, `EVALUATION_RUBRIC` or `benchmark.config`,
-and aborts the run if one does.
+file. Before dispatching builders the orchestrator runs `npm run guard`
+(`benchmark/harness/isolation-guard.mjs`) and aborts on a non-zero exit.
+
+The guard audits every directory under `benchmark/sandboxes/` on three channels, because
+each one defeats the previous:
+
+| Channel | Catches |
+|---|---|
+| **path** | a scoring or judging file copied in under its own name |
+| **content** | the same file renamed — scanned for scoring vocabulary |
+| **symlink** | a link that reaches back into the repository the sandbox is nested inside |
+
+The forbidden patterns and markers are defined once, in that module, and are deliberately
+not restated here: this repository already carried four incompatible definitions of
+"quality" and scored runs 6-9 by whichever one the caller happened to reach.
+
+`node benchmark/harness/isolation-guard.mjs --self-check` plants one violation of each
+channel and asserts the guard sees it, then asserts a plausible sandbox is clean. A guard
+that never fires and a guard that always fires are equally useless.
+
+**Known ceiling:** `node_modules` and `.git` are pruned. A scoring document planted inside
+a dependency tree is not the accident this guards against, and walking them costs minutes.
 
 ### Barrier 3 — Semantic (the one that gets forgotten)
 If the judge holds n8n skills **and** the builders hold n8n skills, the benchmark risks

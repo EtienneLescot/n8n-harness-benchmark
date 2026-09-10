@@ -11,7 +11,9 @@
     "verify": "node benchmark/cli.mjs verify",
     "evaluate": "node benchmark/cli.mjs evaluate",
     "validate": "node benchmark/harness/validator.mjs",
-    "report": "node benchmark/harness/compiler.mjs"
+    "report": "node benchmark/harness/compiler.mjs",
+    "guard": "node benchmark/harness/isolation-guard.mjs",
+    "test": "node benchmark/harness/isolation-guard.mjs --self-check"
   },
   "keywords": [
     "n8n",
