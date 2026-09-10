@@ -1,0 +1,278 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Every Morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        208
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Daily Briefing Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        288,
+        208
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Build today's HTML daily briefing dashboard for {{ $now.toFormat(\"cccc, LLLL d, yyyy\") }}.",
+        "options": {
+          "systemMessage": "You produce a daily briefing dashboard. Call the Email Triage Agent tool and the Calendar Agent tool, then combine both results into a single self-contained HTML page: a full <html> document with an inline <style> block, a header with today's date, an \"Emails\" section (grouped Urgent / Action Needed / FYI), and a \"Schedule\" section (chronological events, or \"No events today\" if empty). Use clean minimal styling with cards. Reply with ONLY the raw HTML document, no markdown fences, no commentary."
+        }
+      }
+    },
+    {
+      "name": "Orchestrator Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        432
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        352,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Reads today's Gmail messages and returns them sorted into Urgent, Action Needed, and FYI groups with a one-line reason for each.",
+        "text": "Use the Read Todays Emails tool to fetch today's messages. Sort them into Urgent, Action Needed, and FYI. For each email give sender, subject, and a one-line reason for its category. Reply with plain structured text, not HTML.",
+        "options": {
+          "systemMessage": "You are an email triage specialist. Your only tool is Read Todays Emails. Always call it before answering. Never invent emails that were not returned by the tool."
+        }
+      }
+    },
+    {
+      "name": "Email Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        288,
+        640
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Read Todays Emails",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        640
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 30,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d",
+          "readStatus": "both"
+        }
+      }
+    },
+    {
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        608,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Reads today's Google Calendar events and returns a chronological schedule summary.",
+        "text": "Use the Read Todays Events tool to fetch today's calendar events. Return them in chronological order with start time, end time, and title. Note any back-to-back meetings or free gaps.",
+        "options": {
+          "systemMessage": "You are a calendar assistant. Your only tool is Read Todays Events. Always call it before answering. Never invent events that were not returned by the tool."
+        }
+      }
+    },
+    {
+      "name": "Calendar Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        640
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Read Todays Events",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        640
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary",
+          "cachedResultName": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today }}",
+        "timeMax": "={{ $today.plus({ days: 1 }) }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "name": "Send Daily Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        208
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "<__PLACEHOLDER_VALUE__Your email address to receive the daily briefing__>",
+        "subject": "=Daily Briefing - {{ $now.toFormat(\"MMMM d, yyyy\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}"
+      }
+    }
+  ],
+  "connections": {
+    "Every Morning": {
+      "main": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Briefing Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Todays Emails": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Todays Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

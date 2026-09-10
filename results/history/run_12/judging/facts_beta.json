@@ -1,0 +1,19 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 10,
+  "triggers": [
+    "Every Morning"
+  ],
+  "maxMainDepth": 2,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Daily Briefing Orchestrator": [
+      "Every Morning"
+    ],
+    "Send Daily Briefing Email": [
+      "Daily Briefing Orchestrator",
+      "Every Morning"
+    ]
+  }
+}

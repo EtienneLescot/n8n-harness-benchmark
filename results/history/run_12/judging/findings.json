@@ -1,0 +1,62 @@
+{
+  "runId": "run_12",
+  "panel": {
+    "finders": 4,
+    "attackers": 2,
+    "findersPerBranch": 2
+  },
+  "confirmed": {
+    "alpha": 0,
+    "beta": 0
+  },
+  "candidates": [
+    {
+      "id": "alpha-f1-undelivered-dashboard",
+      "branch": "alpha (n8n-as-code)",
+      "family": 6,
+      "raisedBy": [
+        "finder 1 alpha",
+        "finder 2 alpha"
+      ],
+      "claim": "The HTML dashboard is built in a terminal Code node at /nodes/10 which has no outgoing edge, and the only trigger is a scheduleTrigger with no response channel. No node in the workflow can deliver the HTML outside the execution data.",
+      "pointers": [
+        "/nodes/10",
+        "/nodes/0/type",
+        "/connections"
+      ],
+      "verdict": "REFUTED",
+      "attackerReason": "The brief says \"presents an HTML daily briefing dashboard\" and names no delivery mechanism. Family 6 forbids contradicting a brief with a requirement it never states, the same rule that rules out \"the limit should have been higher\". A terminal node with no outgoing edge is the normal shape of any last node.",
+      "disposition": "reasoned, not scored",
+      "worthReporting": "The observable asymmetry survives even though the finding does not: beta ends in a Gmail send node, alpha ends in a Code node with no outgoing edge. Both scored full marks on the html_dashboard capability, because emitsHtml() asks whether some node produces HTML, never whether it reaches anyone."
+    },
+    {
+      "id": "beta-f1-inactive-workflow",
+      "branch": "beta (native MCP)",
+      "family": 6,
+      "raisedBy": [
+        "finder 1 beta"
+      ],
+      "claim": "Top-level /active is false, so the schedule trigger never fires and the workflow runs never rather than daily.",
+      "pointers": [
+        "/active"
+      ],
+      "verdict": "REFUTED",
+      "attackerReason": "Both builder prompts carry the identical harness instruction \"Leave it inactive.\" at line 10, and the comparator workflow is inactive too. The brief never mentions activation state, so family 6 has no \"asked\" side to compare against.",
+      "disposition": "discarded",
+      "worthReporting": "This is a defect in the judge kit, not in the workflow. The finder was handed the user request alone and had no way to tell a harness constraint from a requirement."
+    }
+  ],
+  "cost": {
+    "finderTokens": 312520,
+    "attackerTokens": 126280,
+    "totalTokens": 438800,
+    "builderTokens": 308689,
+    "cap": 926067,
+    "ratioOfBuildCost": 1.42
+  },
+  "kitDefectsFound": [
+    "The finder prompt carried only the user request, so a harness-mandated state (active: false) was reported as a defect by one finder and had to be refuted by an attacker. The operating rules must travel with the brief, labelled as constraints.",
+    "blindWorkflow() strips every node credentials block, so family 7 cannot be judged from the blinded artefact at all. All four finders said so independently.",
+    "No finder had validate_node_config access, so families 3 and 7 went unevaluated. The validator output already exists in quality_*.json and was simply never handed over."
+  ]
+}

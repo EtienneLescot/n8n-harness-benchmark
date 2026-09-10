@@ -35,6 +35,11 @@ That is what defeats *the judge is weaker than the builder*. The judge never has
 4. **The prompts below are fixed.** Copy them verbatim into
    `results/history/<runId>/judging/prompts/` before dispatch. Composing a judge prompt per
    run is how `run_9` deleted the capability under test from both branches at once.
+5. **The finder sees the harness constraints as well as the brief.** A judge given the user
+   request alone cannot tell a rule the harness imposed from something the workflow got
+   wrong. In `run_12` a finder reported `active: false` as a failure to run daily; both
+   builder prompts say "Leave it inactive." and both workflows are inactive. An attacker
+   spent 62k tokens establishing what the prompt should have made unclaimable.
 
 ---
 
@@ -68,6 +73,11 @@ node benchmark/harness/predicates.mjs results/history/RUN/judging/blinded_n8nac.
 Give each finder this output alongside the workflow. It is deterministic ground truth about
 the graph, and handing it over stops a finder inventing an edge to support a claim.
 
+Hand over `results/history/RUN/quality_<branch>.json` too, with the branch name stripped.
+That file is the `validate_node_config` verdict, and families 3 and 7 are decided by it and
+nothing else. In `run_12` all four finders reported they had no way to evaluate those two
+families, while the answer had been sitting in the run directory the whole time.
+
 ## Step 3 — Dispatch finders (3 to 5, independent contexts)
 
 Same inputs, no shared context, no visibility of each other. Fixed prompt:
@@ -76,8 +86,13 @@ Same inputs, no shared context, no visibility of each other. Fixed prompt:
 You are auditing one deployed n8n workflow for latent defects: things that are wrong and
 that a schema-and-connectivity audit already passed.
 
-You are given the workflow JSON, the structural facts computed from it, the user request it
-was built from, the n8n execution semantics reference, and the confirmation catalogue.
+You are given the workflow JSON, the structural facts computed from it, the server-side
+validate_node_config verdict, the user request it was built from, the operating rules the
+harness gave every builder, the n8n execution semantics reference, and the confirmation
+catalogue.
+
+The operating rules are constraints, not requirements. Nothing the harness mandated can be
+a defect, and the brief is the only thing a family 6 finding may be measured against.
 
 Report every defect you can support. For each one give:
   - what breaks, or what runs in an order that costs something

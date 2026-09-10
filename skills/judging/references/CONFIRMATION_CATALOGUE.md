@@ -89,6 +89,16 @@ parameter path. It still has to be code, and it still has to be archived and re-
 by one. *"The limit should have been higher"* is a preference. *"The brief said daily and
 `rule.interval[0].field` is `weeks`"* is a predicate.
 
+The same rule kills a whole class of plausible findings, and `run_12` produced two of them.
+Both alpha finders reported that its HTML dashboard is built in a terminal node with no
+outgoing edge and so reaches nobody. Refuted: the brief says *presents* and names no delivery
+mechanism, so the claim imports a requirement that was never stated. And a finder reported
+`active: false` as a failure to run daily. Refuted: the harness told every builder to leave
+the workflow inactive, and the brief never mentions activation at all.
+
+Before writing a family 6 finding, quote the words in the brief that the parameter
+contradicts. If you cannot quote them, you do not have one.
+
 ## 7. Credential-slot presence
 
 A node whose type requires credentials with no slot declared will fail at run time. The
@@ -111,6 +121,13 @@ provision third-party OAuth, so builders leave credentials unassigned by design.
 What remains in this family is only what the server reports: ask `validate_node_config`, and
 cite its output. Do not maintain a list of which node types need credentials, and do not
 infer a defect from the shape of the node JSON.
+
+> **You cannot see credentials anyway.** `blindWorkflow()` strips every node's `credentials`
+> block, because a credential id is provenance. So the blinded artefact carries no evidence
+> for this family in either direction, and the absence of the key there says nothing at all.
+> The verdict comes from the run's `quality_<branch>.json`, which the orchestrator hands you.
+> In `run_12` all four finders noted they had no way to evaluate this family; that file
+> existed and had simply not been passed along.
 
 ---
 

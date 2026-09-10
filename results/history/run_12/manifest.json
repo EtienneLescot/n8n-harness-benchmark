@@ -49,5 +49,44 @@
       "evidence": "results/history/run_12/workflow_n8nac_VOID.json, benchmark/sandboxes/run_12_n8nac/{installer,builder}_log.json archived under attempt_1/",
       "docsFinding": "The README presents the four Quick Start lines as equals. The first three configure an environment; the fourth is what makes the toolkit usable by an agent. Nothing says so."
     }
-  ]
+  ],
+  "gates": {
+    "readiness": "passed",
+    "usage": "passed — n8nac:used native_mcp:used"
+  },
+  "branchBSeeded": "benchmark/config/native-mcp-windows-helper copied into the sandbox before its installer ran, as run_10 did. EVALUATION_RUBRIC.md already excludes acquisition seconds on both branches to compensate for artefacts of this kind.",
+  "judging": {
+    "eligible": true,
+    "tier": "full",
+    "confirmed": {
+      "alpha": 0,
+      "beta": 0
+    },
+    "latentDefects": {
+      "a": 0,
+      "b": 0,
+      "weight": 0
+    },
+    "candidates": [
+      {
+        "id": "alpha-f1-undelivered-dashboard",
+        "verdict": "REFUTED",
+        "disposition": "reasoned, not scored"
+      },
+      {
+        "id": "beta-f1-inactive-workflow",
+        "verdict": "REFUTED",
+        "disposition": "discarded"
+      }
+    ],
+    "cost": {
+      "finderTokens": 312520,
+      "attackerTokens": 126280,
+      "totalTokens": 438800,
+      "builderTokens": 308689,
+      "cap": 926067,
+      "ratioOfBuildCost": 1.42
+    }
+  },
+  "platformArtefact": "The n8n platform attached an existing OpenAI credential to beta's three lmChatOpenAi nodes at creation time. The builder did not create it. Credentials are not scored, so this moves nothing, but the two archived artefacts are not symmetric on this point."
 }

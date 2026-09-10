@@ -1,0 +1,66 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 11,
+  "triggers": [
+    "Daily Schedule"
+  ],
+  "maxMainDepth": 9,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Recent Emails": [
+      "Daily Schedule"
+    ],
+    "Aggregate Emails": [
+      "Fetch Recent Emails",
+      "Daily Schedule"
+    ],
+    "Email Triage Agent": [
+      "Aggregate Emails",
+      "Fetch Recent Emails",
+      "Daily Schedule"
+    ],
+    "Fetch Today Events": [
+      "Daily Schedule"
+    ],
+    "Aggregate Events": [
+      "Fetch Today Events",
+      "Daily Schedule"
+    ],
+    "Calendar Agent": [
+      "Aggregate Events",
+      "Fetch Today Events",
+      "Daily Schedule"
+    ],
+    "Join Agent Outputs": [
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Fetch Today Events",
+      "Daily Schedule",
+      "Aggregate Emails",
+      "Fetch Recent Emails"
+    ],
+    "Briefing Composer Agent": [
+      "Join Agent Outputs",
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Fetch Today Events",
+      "Daily Schedule",
+      "Aggregate Emails",
+      "Fetch Recent Emails"
+    ],
+    "Build Dashboard Output": [
+      "Briefing Composer Agent",
+      "Join Agent Outputs",
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Fetch Today Events",
+      "Daily Schedule",
+      "Aggregate Emails",
+      "Fetch Recent Emails"
+    ]
+  }
+}

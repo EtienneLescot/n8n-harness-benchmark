@@ -1,0 +1,321 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        200,
+        460
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Fetch Recent Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        240
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      }
+    },
+    {
+      "name": "Aggregate Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        240
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nreturn [{ json: { emailCount: items.length, emails: items.map(i => i.json) } }];"
+      }
+    },
+    {
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        940,
+        240
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are triaging today's Gmail inbox. Here are {{ $json.emailCount }} email(s) as JSON:\n{{ JSON.stringify($json.emails) }}\n\nFor each email, extract sender, subject, and a one-line summary. Group the results into \"Urgent\", \"Action Needed\", and \"FYI\". Respond with a concise structured summary in plain text or markdown, not HTML.",
+        "options": {
+          "systemMessage": "You are an email triage assistant. You read raw Gmail message JSON and produce a concise, categorized summary. Never invent email content that is not present in the input. If there are no emails, say so plainly."
+        }
+      }
+    },
+    {
+      "name": "Fetch Today Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        460,
+        680
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "timeMin": "={{ $now.startOf('day') }}",
+        "timeMax": "={{ $now.endOf('day') }}",
+        "returnAll": true
+      }
+    },
+    {
+      "name": "Aggregate Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        680
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nreturn [{ json: { eventCount: items.length, events: items.map(i => i.json) } }];"
+      }
+    },
+    {
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        940,
+        680
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are summarizing today's Google Calendar schedule. Here are {{ $json.eventCount }} event(s) as JSON:\n{{ JSON.stringify($json.events) }}\n\nList the events in chronological order with time, title, and location or attendees if present. Flag any conflicts or back-to-back meetings. Respond with a concise structured summary in plain text or markdown, not HTML.",
+        "options": {
+          "systemMessage": "You are a calendar assistant. You read raw Google Calendar event JSON and produce a concise, chronological schedule summary. Never invent events that are not present in the input. If there are no events, say so plainly."
+        }
+      }
+    },
+    {
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        940,
+        950
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "name": "Join Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1180,
+        460
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 2
+      }
+    },
+    {
+      "name": "Briefing Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1420,
+        460
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Build today's HTML daily briefing dashboard using the two summaries below.\n\nEMAIL SUMMARY:\n{{ $('Email Triage Agent').item.json.output }}\n\nCALENDAR SUMMARY:\n{{ $('Calendar Agent').item.json.output }}\n\nProduce a single, complete, self-contained HTML document (including an inline <style> block) with a clean dashboard layout: a header showing today's date, a \"Calendar\" section, and an \"Inbox\" section with the Urgent / Action Needed / FYI groups. Output ONLY the raw HTML, starting with <!DOCTYPE html> and nothing else.",
+        "options": {
+          "systemMessage": "You are a dashboard generator. You always respond with a single valid, self-contained HTML document and nothing else: no markdown fences, no commentary before or after the HTML."
+        }
+      }
+    },
+    {
+      "name": "Build Dashboard Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const html = $input.first().json.output;\nreturn [{ json: { html, generatedAt: new Date().toISOString() } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Emails": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Events": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Join Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Join Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Join Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Build Dashboard Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Briefing Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}
