@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { validateWorkflowOnInstance } from './validator.mjs';
-import { compositeScore, scoreSetupEase, COMPOSITE_WEIGHTS, CORRECTNESS_WEIGHTS, SETUP_WEIGHTS } from './scoring.mjs';
+import { compositeScore, scoreSetupEase, relativeScore, COMPOSITE_WEIGHTS, CORRECTNESS_WEIGHTS, SETUP_WEIGHTS } from './scoring.mjs';
 import { MarkdownReporter } from '../reporters/markdown-reporter.mjs';
 import { DashboardReporter } from '../reporters/dashboard-reporter.mjs';
 import { JsonReporter } from '../reporters/json-reporter.mjs';
@@ -33,19 +33,12 @@ function loadEnv() {
 loadEnv();
 
 /**
- * Universal Minimax ratio calculation:
- * Score(X) = 100 * (min(A, B) / X)
- * Ensures lower cost/time gives higher score, best gets 100, no arbitrary floor effect.
+ * Relative cost score for a pair of branches, from scoring.mjs. The cheaper one gets 100
+ * and the other decays with its overage; only the ratio is read, so runs on different
+ * orchestrators stay comparable even when their absolute numbers are not.
  */
-function calculateMinimax(valA, valB) {
-  const a = Math.max(0.001, Number(valA) || 0.001);
-  const b = Math.max(0.001, Number(valB) || 0.001);
-  const minVal = Math.min(a, b);
-
-  return {
-    scoreA: parseFloat((100 * (minVal / a)).toFixed(2)),
-    scoreB: parseFloat((100 * (minVal / b)).toFixed(2))
-  };
+function calculatePair(valA, valB) {
+  return { scoreA: relativeScore(valA, valB), scoreB: relativeScore(valB, valA) };
 }
 
 export async function compileBenchmarkResults(options = {}) {
@@ -114,11 +107,11 @@ export async function compileBenchmarkResults(options = {}) {
   const n8nacTurns = n8nacBuilder.interactionTurns || n8nacBuilder.turns || 1;
   const mcpTurns = mcpBuilder.interactionTurns || mcpBuilder.turns || 1;
 
-  // 4. Calculate Minimax Scores. Minimax is a ratio between two branches, so an axis
+  // 4. Score the cost axes. Each is a ratio between the two branches, so an axis
   // missing on either side has no score for either — not a default one.
-  const pairMinimax = (a, b) => (a === null || b === null)
+  const pairScore = (a, b) => (a === null || b === null)
     ? { scoreA: null, scoreB: null }
-    : calculateMinimax(a, b);
+    : calculatePair(a, b);
   // Setup is scored on friction and command count, not on seconds — see SETUP_WEIGHTS.
   // Acquisition seconds stay in the report as telemetry on both branches.
   const countOf = (log, ...keys) => {
@@ -140,8 +133,8 @@ export async function compileBenchmarkResults(options = {}) {
     },
   );
   const setupTimeMinimax = { scoreA: setupEase.a.score, scoreB: setupEase.b.score };
-  const buildTimeMinimax = pairMinimax(n8nacBuildSec, mcpBuildSec);
-  const tokensMinimax = pairMinimax(n8nacTokens, mcpTokens);
+  const buildTimeMinimax = pairScore(n8nacBuildSec, mcpBuildSec);
+  const tokensMinimax = pairScore(n8nacTokens, mcpTokens);
 
   // 5. Run Deterministic Ground-Truth API Validation for both workflows
   // No fallback workflow id: auditing a stale workflow from an earlier run and reporting it
@@ -189,7 +182,7 @@ export async function compileBenchmarkResults(options = {}) {
       model: process.env.BENCHMARK_MODEL || 'Gemini 3.8 Flash High',
       temperature: parseFloat(process.env.BENCHMARK_TEMPERATURE || '0.2'),
       subagentRuntime: process.env.BENCHMARK_SUBAGENT_RUNTIME || 'invoke_subagent',
-      evaluationEngine: 'Deterministic n8n API Validator + Universal Minimax Scoring (Option B)',
+      evaluationEngine: 'Deterministic n8n API validator + scale-invariant relative cost scoring',
       timestamp: new Date().toISOString(),
       environment: {
         os: `${process.platform} (${process.arch})`,

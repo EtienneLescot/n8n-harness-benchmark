@@ -1,6 +1,11 @@
-# Standardized Benchmark Rubric (Option B: Ground-Truth API & Universal Minimax)
+# Standardized Benchmark Rubric (Ground-Truth API + Scale-Invariant Relative Cost)
 
-This rubric establishes a 100% deterministic, reproducible evaluation model. It eliminates subjective LLM grading in favor of **ground-truth n8n API validation** and **symmetrical Minimax scaling** across all quantitative performance metrics.
+This rubric establishes a 100% deterministic, reproducible evaluation model. It eliminates
+subjective LLM grading in favour of **ground-truth n8n API validation** and **scale-invariant
+relative scoring** on every quantitative metric.
+
+> Every weight and every formula below is defined once, in `benchmark/harness/scoring.mjs`.
+> This document describes that module; it does not redefine it.
 
 ---
 
@@ -8,22 +13,22 @@ This rubric establishes a 100% deterministic, reproducible evaluation model. It 
 
 | Dimension | Weight | Measurement Source | Scoring Formula |
 |---|:---:|---|---|
-| **1. Workflow Quality** | **40%** | Live n8n Cloud API + `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
-| **2. Creation Time** | **25%** | External stopwatch ($T_{\text{build}}$) | $100 \times \frac{\min(T_A, T_B)}{T_X}$ (Universal Minimax) |
-| **3. Token Efficiency** | **25%** | Total prompt + completion tokens ($K$) | $100 \times \frac{\min(K_A, K_B)}{K_X}$ (Universal Minimax) |
-| **4. Setup Ease** | **10%** | Installer log: friction events and command count | $0.70 \times \text{FrictionScore} + 0.30 \times \text{CommandScore}$, each a Universal Minimax ratio |
-| **Composite Score** | **100%** | Weighted combination of 4 dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
+| **1. Correctness** | **35 %** | Live n8n Cloud API + `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
+| **2. Token Efficiency** | **35 %** | Prompt + completion tokens | $100 \times e^{-1.5(K_X/\min(K_A,K_B) - 1)}$ |
+| **3. Build Time** | **30 %** | External harness stopwatch | $100 \times e^{-1.5(T_X/\min(T_A,T_B) - 1)}$ |
+| *Setup ease* | *telemetry* | Installer log: friction (70 %) and commands (30 %) | Reported, not scored |
+| **Composite** | **100 %** | Weighted sum of the three scored dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
 
 ---
 
-## 🔬 Dimension 1: Workflow Quality (40% Weight — Ground-Truth API Audit)
+## 🔬 Dimension 1: Correctness (35 % Weight — Ground-Truth API Audit)
 
-Workflow Quality is evaluated with ZERO LLM inference directly on the live n8n instance via `GET /api/v1/workflows/:id` and `validate_node_config`:
+Correctness is evaluated with ZERO LLM inference directly on the live n8n instance via `GET /api/v1/workflows/:id` and `validate_node_config`:
 
 > Weights live in `benchmark/harness/scoring.mjs` and nowhere else. Every number below is
 > a description of that module, not a second definition of it.
 
-### 1.1 Requirement Coverage (40% of Quality Score)
+### 1.1 Requirement Coverage (40 % of Correctness)
 Checks the deployed graph against `requirements.expectedCapabilities` in
 `benchmark/config/benchmark.config.json`, each capability worth an equal share:
 $$\text{RequirementCoverage} = 100 \times \frac{\sum \text{capability credit}}{\text{capability count}}$$
@@ -40,13 +45,13 @@ workflow's own node count, so on their own they make doing less free. In `run_8`
 workflow with no triage step scored 100/100 against a 15-node one that fulfilled the brief.
 Coverage is the only component that a workflow cannot improve by shrinking.
 
-### 1.2 Node Schema Validity (40% of Quality Score)
+### 1.2 Node Schema Validity (40 % of Correctness)
 Every node in the deployed workflow is audited by n8n's server-side `validate_node_config` tool:
 $$\text{NodeValidityScore} = 100 \times \frac{\text{Valid Nodes (0 errors)}}{\text{Total Nodes}}$$
 - Audits parameter types, required fields, subnodes, and display options against the official n8n server schema.
 - Flags parameter discrepancies (e.g. invalid default flags, missing required subnodes).
 
-### 1.3 Graph Topology & Integrity (20% of Quality Score)
+### 1.3 Graph Topology & Integrity (20 % of Correctness)
 Audits the mathematical graph structure formed by nodes and connections:
 - Identifies functional orphaned nodes (nodes with 0 incoming and 0 outgoing edges, excluding valid triggers and response sinks).
 - Verifies subconnection wiring (`ai_languageModel`, `ai_tool`, `ai_memory`, `ai_outputParser`).
@@ -64,13 +69,13 @@ Live execution status is queried from `GET /api/v1/executions?workflowId=:id` an
 
 ---
 
-## 🧰 Dimension 4: Setup Ease (10% Weight — friction, not seconds)
+## 🧰 Setup Ease — measured, never scored
 
 Setup is scored on what the installer ran into, never on wall clock:
 
-$$	ext{SetupEase}(X) = 0.70 	imes 	ext{FrictionScore}(X) + 0.30 	imes 	ext{CommandScore}(X)$$
+$$\text{SetupEase}(X) = 0.70 \times \text{FrictionScore}(X) + 0.30 \times \text{CommandScore}(X)$$
 
-Both components are Universal Minimax ratios on `count + 1`, so zero friction on both sides
+Both components use the same relative curve on `count + 1`, so zero friction on both sides
 is a tie at 100 rather than a division by zero.
 
 **Why friction and not seconds.** Installation is paid once and amortises to nothing, while
@@ -88,18 +93,40 @@ runtime ships no wired MCP client. A real user of either does neither.
 
 ---
 
-## ⚡ Dimensions 2 & 3: Universal Minimax Scaling
+## ⚡ Dimensions 2 & 3: Scale-Invariant Relative Cost Scoring
 
-To eliminate arbitrary cut-off thresholds (floor effect where both contenders get 0 pts despite 3x performance differences), all cost and latency metrics are evaluated using the **Universal Minimax Ratio**:
+Both cost axes are scored against the better branch of the same run:
 
-$$\text{Score}(X) = 100 \times \frac{\min(A, B)}{X}$$
+$$\text{Score}(X) = 100 \times e^{-1.5\,(X/\min(A,B) - 1)}$$
 
-### Properties of Minimax Scoring:
-1. **Best Contender receives 100 pts**: The fastest or most token-efficient harness achieves the maximum score.
-2. **Proportional Degradation**: A contender taking $2\times$ longer receives $100 \times 1/2 = 50.00$ pts. A contender taking $3.2\times$ longer receives $100 \times 1/3.2 = 31.25$ pts.
-3. **Zero Floor Effect**: Scores never artificially collapse to 0 on complex enterprise tasks.
-4. **Scale Invariance**: Works identically for a 30-second toy task and a 1500-second multi-agent architecture.
+**Why exponential decay and not the plain ratio.** Both read only `X / min(A, B)`, so both
+are scale-invariant: multiply every measurement in a run by any factor and the scores do
+not move. That property is the point — absolute token counts and wall-clock seconds vary
+enormously with the orchestrator, so only the gap between the two branches is comparable
+across runs.
 
+They differ in how that gap becomes points. The reciprocal `100 * min/X` understates every
+overage: spending 30 % more scored 76.6, a 23 % deficit for a 30 % cost, and the gap widened
+with the ratio — doubling the cost lost only half the score. Exponential decay is steeper
+where it matters and, unlike a straight line, needs no floor: it approaches zero without
+reaching it, so a 2x branch and a 10x branch still rank in the right order instead of both
+flattening to nothing.
+
+| Overage | Reciprocal | Exponential |
+|---:|---:|---:|
+| +10 % | 90.9 | 86.1 |
+| +30 % | 76.6 | 63.3 |
+| +50 % | 66.7 | 47.2 |
+| +100 % | 50.0 | 22.3 |
+| +334 % | 23.0 | 0.7 |
+
+### Properties
+1. **The better branch scores 100.** Its overage is zero, so the exponent is zero.
+2. **Scale-invariant.** Only the A/B ratio is read; absolute magnitudes cancel.
+3. **No floor, no ceiling below 100.** The curve approaches zero asymptotically, so a
+   large gap never collapses two different ratios onto the same score.
+4. **One tunable.** The decay constant lives in `benchmark/harness/scoring.mjs` as
+   `DECAY`, and nothing restates it.
 ---
 
 ## 📊 Physical Operational Telemetry (Reported Raw)

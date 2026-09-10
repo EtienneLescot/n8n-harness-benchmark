@@ -60,7 +60,7 @@ Because benchmark results can be contributed by multiple developers and agent ru
   - `primaryAgent`: The orchestrator role/agent name
   - `model`: The exact model ID running the subagents (e.g., `Gemini 3.8 Flash High`)
   - `temperature`: Locked sampling temperature (`0.2`)
-  - `evaluationEngine`: Option B (Ground-Truth n8n API Validator + Universal Minimax)
+  - `evaluationEngine`: Option B (Ground-Truth n8n API Validator + relative cost scoring)
 - These fields must be explicit, verifiable facts—never inferred, assumed, or approximated.
 
 ### 🗣️ Principle 4: Pure Natural User Prompts (Zero Preamble, Zero Micro-Management)
@@ -114,10 +114,10 @@ Workers must be tested under 100% natural, realistic user conditions:
                       │   - GET /api/v1/executions    │
                       └──────────────┬────────────────┘
                                      │
-     4. REPORT & MINIMAX             ▼
+     4. REPORT & SCORE               ▼
                       ┌───────────────────────────────┐
-                      │   compiler.mjs (Minimax)      │
-                      │   - Minimax Speed & Tokens    │
+                      │   compiler.mjs                │
+                      │   - Relative speed & tokens   │
                       │   - Markdown & HTML Dashboard │
                       └───────────────────────────────┘
 ```

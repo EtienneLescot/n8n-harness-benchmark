@@ -11,15 +11,20 @@ with branch A's workflow deleted from the instance before branch B was dispatche
 
 Correctness 35 / tokens 35 / build 30. Setup is measured and reported but not scored.
 
+Cost axes score against the cheaper branch with exponential decay,
+`100 × e^(-1.5 × (X/min − 1))`: scale-invariant, so only the A/B ratio counts and runs on
+different orchestrators stay comparable. Native MCP spent about 30 % more on both cost axes;
+that overage costs it 36.7 points rather than the 23.4 a plain reciprocal would have charged.
+
 | Axis | Weight | n8n-as-code | Native MCP | Winner |
 |---|---:|---|---|---|
 | **Correctness** | 35 % | **100 / 100** | **100 / 100** | tie |
 | — requirement coverage | 40 % of it | 100 (6/6) | 100 (6/6) | tie |
 | — node schema validity | 40 % of it | 100 (10/10) | 100 (10/10) | tie |
 | — graph integrity | 20 % of it | 100 (0 orphans) | 100 (0 orphans) | tie |
-| **Token efficiency** | 35 % | **118 001** → 100 | 153 971 → 76.64 | n8n-as-code, 1.30× |
-| **Build time** | 30 % | **346.0 s** → 100 | 449.8 s → 76.92 | n8n-as-code, 1.30× |
-| **Composite** | 100 % | **100.00** | 84.90 | n8n-as-code |
+| **Token efficiency** | 35 % | **118 001** → 100 | 153 971 → 63.30 | n8n-as-code |
+| **Build time** | 30 % | **346.0 s** → 100 | 449.8 s → 63.76 | n8n-as-code |
+| **Composite** | 100 % | **100.00** | 76.28 | n8n-as-code |
 
 **Telemetry, not scored:**
 
@@ -151,7 +156,7 @@ Not numerically comparable to `run_3`–`run_9` (different worker runtimes and m
 
 - `workflow_n8nac.json`, `workflow_native_mcp.json` — the deployed graphs.
 - `quality_n8nac.json`, `quality_native_mcp.json` — full server audits.
-- `scores.json` — minimax and composite computation.
+- `scores.json` — relative cost scores and composite computation.
 - `benchmark/sandboxes/run_10_builder_prompt_*.txt` — the exact dispatched prompts.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

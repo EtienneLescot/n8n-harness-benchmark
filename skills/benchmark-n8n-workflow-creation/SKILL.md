@@ -16,7 +16,7 @@ To achieve absolute scientific neutrality and eliminate subjective LLM evaluatio
 2. **Zero Subjective LLM Judges**: Replaced entirely by server-side ground truth via n8n's official `validate_node_config` RPC tool, graph topology inspection, and live cloud execution audits.
 3. **Universal Confinement**: A strictly generic system prompt prevents agents from querying or listing existing workflows on the target instance:
    > *“STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.”*
-4. **Universal Minimax Scaling**: Quantitative latencies and token counts are scaled symmetrically via $\text{Score} = 100 \times \frac{\min(A, B)}{X}$, eliminating floor effects.
+4. **Relative Cost Scoring**: latencies and token counts are scored against the better branch via $\text{Score} = 100 \times e^{-1.5(X/\min(A,B) - 1)}$ — scale-invariant, so only the A/B gap counts.
 
 ```
                       ┌───────────────────────────────┐
@@ -55,10 +55,10 @@ To achieve absolute scientific neutrality and eliminate subjective LLM evaluatio
                       │   - GET /api/v1/executions    │
                       └──────────────┬────────────────┘
                                      │
-     4. REPORT & MINIMAX             ▼
+     4. REPORT & SCORE               ▼
                       ┌───────────────────────────────┐
-                      │   compiler.mjs (Minimax)      │
-                      │   - Minimax Speed & Tokens    │
+                      │   compiler.mjs                │
+                      │   - Relative speed & tokens   │
                       │   - Markdown & HTML Dashboard │
                       └───────────────────────────────┘
 ```
@@ -218,7 +218,7 @@ workflow with no triage step scored 100/100 against a 15-node one that fulfilled
 
 ---
 
-### Step 6: Phase 4 — Deterministic Minimax Compilation & Reporting
+### Step 6: Phase 4 — Deterministic Relative Cost Compilation & Reporting
 The Primary Orchestrator compiles the factual telemetry and API validation results into final reports using:
 
 ```bash
@@ -226,7 +226,7 @@ npm run report
 ```
 
 This executes `benchmark/harness/compiler.mjs`, calculating:
-- **Universal Minimax Scaling**: $100 \times \frac{\min(A, B)}{X}$ for Creation Time (25%), Token Efficiency (20%), and Setup Time (20%).
+- **Relative Cost Scoring**: $100 \times \frac{\min(A, B)}{X}$ for Creation Time (25%), Token Efficiency (20%), and Setup Time (20%).
 - Generates:
   - 📄 `benchmark/reports/benchmark_report.md` (Markdown summary)
   - 📊 `benchmark/reports/benchmark_dashboard.html` (Interactive Generative UI dashboard)

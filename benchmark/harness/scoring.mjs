@@ -80,11 +80,30 @@ export const COMPOSITE_WEIGHTS = Object.fromEntries(
  */
 export const SETUP_WEIGHTS = { friction: 0.70, commands: 0.30 };
 
-/** Universal Minimax: the better contender scores 100, the other degrades proportionally. */
-export function minimax(value, otherValue) {
+/**
+ * How steeply a cost overage is punished. Score = 100 * e^(-DECAY * overage), so at
+ * DECAY = 1.5 a branch costing 30% more scores 63.3 and one costing 50% more scores 47.2.
+ */
+export const DECAY = 1.5;
+
+/**
+ * Relative cost score: the cheaper branch gets 100, the other decays with how much more
+ * it spent. Scale-invariant — multiply both branches by any factor and nothing moves —
+ * because it reads only the ratio between them. Absolute token counts and seconds vary
+ * enormously by orchestrator, so only the gap between A and B is comparable across runs.
+ *
+ * This replaced the plain minimax ratio (100 * min/X), which understated every overage:
+ * spending 30% more scored 76.6, a 23% deficit for a 30% cost. That compression is
+ * inherent to a reciprocal and it grew with the gap — doubling the cost lost only half
+ * the score. Exponential decay is steeper where it matters and, unlike a straight line,
+ * needs no floor: it approaches zero without reaching it, so a 2x branch and a 10x branch
+ * still rank in the right order instead of both flattening to nothing.
+ */
+export function relativeScore(value, otherValue) {
     const a = Math.max(0.001, Number(value) || 0.001);
     const b = Math.max(0.001, Number(otherValue) || 0.001);
-    return parseFloat(((Math.min(a, b) / a) * 100).toFixed(2));
+    const overage = a / Math.min(a, b) - 1;
+    return parseFloat((100 * Math.exp(-DECAY * overage)).toFixed(2));
 }
 
 const round = (n) => parseFloat(Number(n).toFixed(2));
@@ -223,14 +242,14 @@ export function scoreRequirementCoverage(workflow) {
 /**
  * Score the setup axis for both branches at once, on friction and command count.
  *
- * Both components are minimax ratios like every other cost axis, so the easier branch gets
+ * Both components use the same relative-score curve as every other cost axis, so the easier branch gets
  * 100 and the other degrades proportionally. Zero friction on both sides is a tie at 100
  * rather than a division by zero — the ratio is taken on `count + 1`.
  */
 export function scoreSetupEase(a, b) {
     const pair = (x, y) => {
         const [p, q] = [Number(x) + 1, Number(y) + 1];
-        return [minimax(p, q), minimax(q, p)];
+        return [relativeScore(p, q), relativeScore(q, p)];
     };
     const [frictionA, frictionB] = pair(a.frictionCount, b.frictionCount);
     const [commandsA, commandsB] = pair(a.commandCount, b.commandCount);

@@ -1,6 +1,6 @@
 # n8n-harness-benchmark
 
-**How fast, frugal, and compliant is AI-driven workflow creation on n8n?** Code-first GitOps (`n8n-as-code`) vs. remote JSON-RPC (`n8n Native MCP`) — evaluated on the same live n8n instance under identical conditions, with zero subjective LLM judges, server-side RPC validation, and universal minimax scaling.
+**How fast, frugal, and compliant is AI-driven workflow creation on n8n?** Code-first GitOps (`n8n-as-code`) vs. remote JSON-RPC (`n8n Native MCP`) — evaluated on the same live n8n instance under identical conditions, with zero subjective LLM judges, server-side RPC validation, and scale-invariant relative cost scoring.
 
 **Results:** <https://etiennelescot.github.io/n8n-harness-benchmark/>  
 *Historical run data, reports, and workflow JSON files are archived in [`results/`](results/).*
@@ -24,7 +24,7 @@ Clone https://github.com/EtienneLescot/n8n-harness-benchmark.git, read the bench
 2. **Lock Parameters**: Records the exact model and temperature used, identically for both branches.
 3. **Partition Sandboxes**: Spawns isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`) with universal confinement and a distinct unguessable workflow token per branch (e.g. `bench-3f9a1c72`). Sandboxes contain no rubric and no requirement list, and neither prompt names the other branch's directory.
 4. **Deploy & Time**: Dispatches subagents to install dependencies and author the multi-agent workflow under external stopwatch timing.
-5. **Deterministic API Audit**: Queries the n8n Cloud server's official `validate_node_config` RPC, calculates universal minimax scores, and updates `results/` and `docs/`.
+5. **Deterministic API Audit**: Queries the n8n Cloud server's official `validate_node_config` RPC, computes the relative cost scores, and updates `results/` and `docs/`.
 
 ---
 
@@ -73,8 +73,8 @@ Every weight and every check below is defined in exactly one place,
 | Dimension | Weight | Measurement Source | Scoring Formula |
 |---|:---:|---|---|
 | **1. Correctness** | **35%** | Live n8n Cloud API + server `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
-| **2. Token Efficiency** | **35%** | Prompt + completion tokens | Universal Minimax |
-| **3. Build Time** | **30%** | External harness stopwatch | Universal Minimax |
+| **2. Token Efficiency** | **35%** | Prompt + completion tokens | Relative to the cheaper branch, exponential decay |
+| **3. Build Time** | **30%** | External harness stopwatch | Relative to the faster branch, exponential decay |
 | *Setup ease* | *telemetry* | Installer log: friction (70%) and command count (30%) | Reported, not scored |
 
 **Correctness**, not quality: the axis answers whether the workflow works and whether it does
@@ -93,14 +93,32 @@ Instead of asking an LLM judge to guess code quality, the benchmark queries the 
 - **Graph Topology (20% of Correctness)**: Traverses connection adjacency to verify all functional nodes are fully connected (0 orphaned nodes).
 - **Live Cloud Execution (Informative Only)**: Standardized benchmarks cannot and should not require real third-party OAuth2 credentials (such as personal Google tokens) on automated instances. Execution history is tracked informatively without distorting the score.
 
-### 2. Universal Minimax Scaling
-To eliminate arbitrary cut-off thresholds (floor effect where both contenders get 0 pts despite 3x performance differences), all latency and token metrics use the **Universal Minimax Ratio**:
+### 2. Scale-Invariant Relative Cost Scoring
 
-$$\text{Score}(X) = 100 \times \frac{\min(A, B)}{X}$$
+Cost axes are scored against the better branch, never against an absolute threshold:
 
-- The fastest or most frugal harness receives 100 pts.
-- A harness taking $2\times$ longer receives $50.00$ pts. No arbitrary floor collapse.
+$\text{Score}(X) = 100 \times e^{-1.5\,(X/\min(A,B) - 1)}$
 
+**Why exponential decay and not the plain ratio.** Both read only `X / min(A, B)`, so both
+are scale-invariant: multiply every measurement in a run by any factor and the scores do
+not move. That property is the point — absolute token counts and wall-clock seconds vary
+enormously with the orchestrator, so only the gap between the two branches is comparable
+across runs.
+
+They differ in how that gap becomes points. The reciprocal `100 * min/X` understates every
+overage: spending 30 % more scored 76.6, a 23 % deficit for a 30 % cost, and the gap widened
+with the ratio — doubling the cost lost only half the score. Exponential decay is steeper
+where it matters and, unlike a straight line, needs no floor: it approaches zero without
+reaching it, so a 2x branch and a 10x branch still rank in the right order instead of both
+flattening to nothing.
+
+| Overage | Reciprocal | Exponential |
+|---:|---:|---:|
+| +10 % | 90.9 | 86.1 |
+| +30 % | 76.6 | 63.3 |
+| +50 % | 66.7 | 47.2 |
+| +100 % | 50.0 | 22.3 |
+| +334 % | 23.0 | 0.7 |
 ### 3. Anti-Contamination & Sandboxing
 - **Hermetic Workspaces**: Builders run concurrently in separate directories with isolated `.env` files.
 - **Universal Confinement**: Builders operate under a strict rule:
@@ -161,7 +179,7 @@ Pull Requests containing inferred or missing model/harness specifications will n
 │   ├── harness/
 │   │   ├── scoring.mjs   # THE definition of every weight and check — nothing restates it
 │   │   ├── validator.mjs # live server audit (validate_node_config + graph)
-│   │   ├── compiler.mjs  # minimax + composite from the two builder logs
+│   │   ├── compiler.mjs  # relative cost scores + composite from the builder logs
 │   │   └── evaluator.mjs # offline view of scoring.mjs for an undeployed workflow
 │   ├── reporters/        # markdown, json, html generators
 │   ├── config/           # benchmark.config.json + the native MCP helper reference

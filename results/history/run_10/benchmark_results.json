@@ -22,7 +22,8 @@
       "friction": 0.7,
       "commands": 0.3
     },
-    "note": "Setup ease and acquisition seconds are telemetry, not scored axes."
+    "note": "Setup ease and acquisition seconds are telemetry, not scored axes.",
+    "scoringCurve": "relativeScore(X) = 100 * e^(-1.5 * (X/min - 1)) — scale-invariant, reads only the A/B ratio"
   },
   "n8nac": {
     "workflowId": "7jYlI9lz6LwhGyHA",
@@ -30,9 +31,9 @@
     "scores": {
       "buildTime": 100,
       "tokenEfficiency": 100,
-      "composite": 100.0,
+      "composite": 100,
       "correctness": 100,
-      "setupEaseTelemetry": 39.33
+      "setupEaseTelemetry": 11.56
     },
     "requirementChecks": [
       {
@@ -109,9 +110,9 @@
     "workflowId": "o79MhsPGOplEziPx",
     "workflowName": "bench-75e42601",
     "scores": {
-      "buildTime": 76.92,
-      "tokenEfficiency": 76.64,
-      "composite": 84.9,
+      "buildTime": 63.76,
+      "tokenEfficiency": 63.3,
+      "composite": 76.28,
       "correctness": 100,
       "setupEaseTelemetry": 100
     },
