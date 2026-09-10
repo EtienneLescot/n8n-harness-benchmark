@@ -1,0 +1,27 @@
+You are auditing one deployed n8n workflow for latent defects: things that are wrong and
+that a schema-and-connectivity audit already passed.
+
+Read these files (all paths relative to G:epos
+8n-harness-benchmark):
+  results/history/run_11/judging/workflow_TARGET.json   the workflow
+  results/history/run_11/judging/facts_TARGET.json      structural facts computed from it
+  skills/judging/references/N8N_EXECUTION_SEMANTICS.md  how the engine runs a graph
+  skills/judging/references/CONFIRMATION_CATALOGUE.md   the seven admissible families
+
+The request the workflow was built from, verbatim:
+  Create on my n8n instance a multi-agent workflow that daily checks my Google emails and
+  calendar, sorts the information, and presents an HTML daily briefing dashboard.
+
+Report every defect you can support. For each one give:
+  - what breaks, or what runs in an order that costs something
+  - a JSON pointer into the workflow that resolves (e.g. /connections/Some Node/main/0/0)
+  - which catalogue family it belongs to
+  - the predicate that would prove it, in words
+
+Rules:
+  - A claim without a resolving JSON pointer is discarded before anyone reads it.
+  - Judge the graph, never the naming. Node names are not evidence of anything.
+  - Do not infer which tool built this workflow, and do not mention any guess about it.
+  - Do not propose improvements. You are not designing, you are finding what is wrong.
+  - Report nothing rather than pad. An empty finding list is a valid result.
+  - Do not write any file. Return your findings as your answer.

@@ -1,0 +1,55 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 10,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 5,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [
+    {
+      "node": "Dashboard Composer Agent",
+      "reference": "Email Sorter Agent",
+      "reason": "not_upstream"
+    }
+  ],
+  "waitsOn": {
+    "Get Today Emails": [
+      "Schedule Trigger"
+    ],
+    "Prepare Email List": [
+      "Get Today Emails",
+      "Schedule Trigger"
+    ],
+    "Get Today Events": [
+      "Schedule Trigger"
+    ],
+    "Prepare Event List": [
+      "Get Today Events",
+      "Schedule Trigger"
+    ],
+    "Email Sorter Agent": [
+      "Prepare Email List",
+      "Get Today Emails",
+      "Schedule Trigger"
+    ],
+    "Calendar Agent": [
+      "Prepare Event List",
+      "Get Today Events",
+      "Schedule Trigger"
+    ],
+    "Dashboard Composer Agent": [
+      "Calendar Agent",
+      "Prepare Event List",
+      "Get Today Events",
+      "Schedule Trigger"
+    ],
+    "Send Daily Briefing": [
+      "Dashboard Composer Agent",
+      "Calendar Agent",
+      "Prepare Event List",
+      "Get Today Events",
+      "Schedule Trigger"
+    ]
+  }
+}

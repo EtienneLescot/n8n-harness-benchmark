@@ -127,7 +127,7 @@ node results/history/RUN/judging/predicates/<finding-id>.mjs
 A predicate is a few lines. `run_10`'s confirmed finding is:
 
 ```js
-import { graphOf, runsAfter } from '../../../../../benchmark/harness/predicates.mjs';
+import { graphOf, runsAfter } from '../../../../benchmark/harness/predicates.mjs';
 const g = graphOf(JSON.parse(fs.readFileSync(artefact, 'utf8')));
 // The calendar fetch cannot start until an email triage LLM call it shares no data with returns.
 export default runsAfter(g, 'Fetch Todays Events', 'Email Triage Agent');

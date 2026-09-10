@@ -1,0 +1,105 @@
+{
+  "runId": "run_11",
+  "createdAt": "2026-09-10T13:31:16.349Z",
+  "userRequest": "Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.",
+  "branches": {
+    "n8nac": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\sandboxes\\run_11_n8nac",
+      "workflowToken": "bench-05df77b8",
+      "installRequest": "Install the latest prerelease of n8n-as-code (https://github.com/EtienneLescot/n8n-as-code). Credentials are in .env"
+    },
+    "native_mcp": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\sandboxes\\run_11_native_mcp",
+      "workflowToken": "bench-dcd318bb",
+      "installRequest": "Install and configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Credentials are in .env"
+    }
+  },
+  "knownChannels": [
+    {
+      "channel": "global npm install",
+      "detail": "Installer A ran npm install -g n8nac@2.6.0-rc.5, so the n8nac binary sits on the shared machine PATH at C:/Users/etien/AppData/Roaming/npm/n8nac and is reachable from the native MCP branch.",
+      "audited": false,
+      "note": "Recorded, not corrected. Reinstalling locally would rewrite what the installer actually did, and what the installer did is part of the measurement. A sandbox that is a directory on a shared machine cannot isolate a global package manager install."
+    }
+  ],
+  "dispatchIncidents": [
+    {
+      "phase": "builder",
+      "branch": "n8nac",
+      "at": "2026-09-10T13:40:15.683Z",
+      "what": "First dispatch refused. The sub-agent runtime starts a worker in the orchestrator cwd, which contradicted the sandbox path the confinement block declared, and the worker read the mismatch as a prompt injection rather than a confinement rule.",
+      "cost": {
+        "tokens": 60126,
+        "durationMs": 57293,
+        "toolUses": 0
+      },
+      "fix": "One line added to the confinement block, identically on BOTH branches, telling the worker the directory is real and to change into it first. The archived builder prompts were rewritten and re-archived before any builder ran. No builder ran under the old wording, so both branches are dispatched from identical text.",
+      "counted": false
+    },
+    {
+      "phase": "builder",
+      "branch": "n8nac",
+      "at": "2026-09-10T13:41:43.153Z",
+      "what": "Second dispatch refused for the same reason. A block that overrides the worker identity and then directs an outward-facing action on a live service reads as prompt injection to this runtime, whatever the sandbox path says.",
+      "cost": {
+        "tokens": 58784,
+        "durationMs": 41192,
+        "toolUses": 0
+      },
+      "fix": "Persona override dropped. The prompt now states plainly that this is a benchmark task from the machine owner, names the workspace, lists the operating rules, and ends with the verbatim user request. Rewritten and re-archived identically on BOTH branches before either builder ran.",
+      "counted": false
+    }
+  ],
+  "validity": {
+    "comparable": false,
+    "reason": "Branch B never exercised the tool under test. Its builder searched its own tool list for an n8n MCP tool, found none despite the .mcp.json its installer wrote, and created the workflow through the n8n REST API instead, building node parameters from general schema knowledge rather than from a live schema lookup.",
+    "evidence": "benchmark/sandboxes/run_11_native_mcp/builder_log.json, first friction entry.",
+    "consequence": "The cost axes compare n8n-as-code against a bare REST client with no schema access. Fewer tokens and less wall clock are what NOT looking anything up costs, not a property of n8n Native MCP. compositeScore is computed and stored, and must not be published as an A/B result.",
+    "attribution": "This is an orchestrator limitation, not a product one. The sub-agent runtime does not load a sandbox .mcp.json into a worker tool list. run_10 hit the same class of gap, where the native MCP workers hand-rolled an HTTP client.",
+    "validDespiteIt": [
+      "per-artefact correctness",
+      "the judging findings, which read the archived JSON and do not care how it was produced",
+      "setup telemetry, since both installers really did install what they were asked for"
+    ]
+  },
+  "setupFindings": [
+    {
+      "branch": "n8nac",
+      "deadEnd": "npm package n8n-as-code does not exist on the public registry; the published CLI is named n8nac"
+    },
+    {
+      "branch": "n8nac",
+      "deadEnd": "the GitHub release for v2.6.0-rc.5 carries no assets and no install instructions in its body; the command had to be sourced from the README"
+    },
+    {
+      "branch": "native_mcp",
+      "deadEnd": "the n8n docs Configuration JSON sample places the token under an env key rather than an explicit Authorization header, which is ambiguous"
+    }
+  ],
+  "superseded": {
+    "at": "2026-09-10T14:03:11.971Z",
+    "reason": "The prerelease under test was not correctly published. The run is void and will be redone once a good prerelease exists.",
+    "keep": "Artefacts, prompts, judging inputs and panel verdicts are retained as evidence for the kit fixes they produced. No score from this run may be published."
+  },
+  "judging": {
+    "eligible": true,
+    "tier": "full",
+    "confirmed": {
+      "alpha": 0,
+      "beta": 0
+    },
+    "latentDefects": {
+      "a": 0,
+      "b": 0,
+      "weight": 0
+    },
+    "note": "Two candidate findings, both refuted. Beta credential-slot claim refuted on three planks. Alpha broken-reference claim moved to reasoned-not-scored: the engine behaviour it depends on changed twice across n8n versions and the instance does not publish its version.",
+    "tokens": {
+      "finders": 302104,
+      "attackers": 146719,
+      "total": 448823
+    },
+    "builderTokensForCap": 219179,
+    "cap": 657537
+  }
+}

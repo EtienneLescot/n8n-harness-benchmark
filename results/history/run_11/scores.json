@@ -1,0 +1,44 @@
+{
+  "runId": "run_11",
+  "weights": {
+    "correctness": 0.35,
+    "tokenEfficiency": 0.35,
+    "buildTime": 0.3
+  },
+  "n8nac": {
+    "correctness": 100,
+    "tokenEfficiency": 45.95,
+    "buildTime": 24.78,
+    "composite": 58.52,
+    "raw": {
+      "buildMs": 413814,
+      "tokens": 132148,
+      "installMs": 211107,
+      "commands": 13,
+      "frictionEvents": 2
+    },
+    "setupEase": {
+      "score": 39.76,
+      "friction": 47.24,
+      "commands": 22.31
+    }
+  },
+  "native_mcp": {
+    "correctness": 93.33,
+    "tokenEfficiency": 100,
+    "buildTime": 100,
+    "composite": 97.67,
+    "raw": {
+      "buildMs": 214413,
+      "tokens": 87031,
+      "installMs": 134650,
+      "commands": 6,
+      "frictionEvents": 1
+    },
+    "setupEase": {
+      "score": 100,
+      "friction": 100,
+      "commands": 100
+    }
+  }
+}

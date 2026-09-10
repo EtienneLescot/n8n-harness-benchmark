@@ -60,10 +60,17 @@ A node is referenced from another node's parameters by name:
 $('Node Name')        $node["Node Name"]        $items('Node Name')
 ```
 
-Two things must hold or the reference resolves to nothing at run time:
+One condition is absolute: the named node must **exist**. A reference to a name that is not
+in the workflow cannot resolve on any version.
 
-1. The named node **exists**.
-2. The named node is **upstream** of the node holding the expression.
+Whether the named node must also be **upstream** is version-dependent, and a judge must not
+state it flatly. n8n 1.105.4 made a reference to a node that is not directly connected fail
+even when that node had already executed on a sibling branch (`n8n-io/n8n#18197`); that issue
+was closed by PR #18382. So a reference across parallel branches may or may not resolve, and
+the answer is a property of the instance, not of the workflow. n8n Cloud does not publish its
+version over the API.
+
+Report such a reference. Do not score it. See Family 4 in the confirmation catalogue.
 
 A node with no `main` edges is a sub-node; its visible scope is the union of the scopes of
 the nodes it serves.

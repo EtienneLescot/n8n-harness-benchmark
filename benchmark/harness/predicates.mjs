@@ -170,9 +170,23 @@ function stringValues(value, out = []) {
 }
 
 /**
- * FAMILY 4 — expression resolution. Every node an expression names must exist, and must be
- * upstream of the node holding the expression, or the reference resolves to nothing at run
- * time.
+ * FAMILY 4 — expression resolution. Two reasons, and only one of them is scoreable.
+ *
+ * `unknown_node` — the expression names a node that does not exist. No engine version can
+ * resolve that, so it is confirmable from the artefact alone.
+ *
+ * `not_upstream` — the node exists but is not a main-path ancestor. This is NOT confirmable,
+ * and the run_11 judging panel is why. An attacker argued that n8n resolves `$('Node')`
+ * against any node already executed in the run, not only along a connection chain. The
+ * engine history says both sides are right at different versions: 1.105.4 made a
+ * not-directly-connected reference fail (n8n-io/n8n#18197), and that issue was closed by
+ * PR #18382. So the answer depends on the instance version, the benchmark's n8n Cloud
+ * instance does not publish its version, and a predicate may not substitute a behaviour it
+ * believes the instance has.
+ *
+ * It stays reported, flagged `confirmable: false`, because a workflow whose data path
+ * depends on which patch release it lands on is worth saying out loud. It just cannot move
+ * a score.
  *
  * A node with no main edges is a sub-node: its data comes from whatever it serves, so its
  * visible scope is the union of its parents' scopes.
@@ -198,9 +212,9 @@ export function brokenReferences(graph) {
         }
         for (const target of referenced) {
             if (!graph.nodes.has(target)) {
-                findings.push({ node: name, reference: target, reason: 'unknown_node' });
+                findings.push({ node: name, reference: target, reason: 'unknown_node', confirmable: true });
             } else if (target !== name && !scope.has(target)) {
-                findings.push({ node: name, reference: target, reason: 'not_upstream' });
+                findings.push({ node: name, reference: target, reason: 'not_upstream', confirmable: false });
             }
         }
     }
@@ -287,7 +301,12 @@ function selfCheck() {
     assert.strictEqual(refs.length, 2, 'exactly the two planted references');
     assert.ok(refs.some((r) => r.node === 'Bad Ref' && r.reference === 'Ghost' && r.reason === 'unknown_node'));
     assert.ok(refs.some((r) => r.node === 'Early Ref' && r.reference === 'Fetch B' && r.reason === 'not_upstream'),
-        'a reference to a node that runs later resolves to nothing');
+        'a reference to a node outside the main-path scope must still be reported');
+    // Only one of the two reasons may move a score. A node that does not exist cannot
+    // resolve on any engine version; a node that exists but sits off the chain depends on
+    // the instance version, which the benchmark's instance does not publish.
+    assert.strictEqual(refs.find((r) => r.reason === 'unknown_node').confirmable, true);
+    assert.strictEqual(refs.find((r) => r.reason === 'not_upstream').confirmable, false);
 
     // The control: a workflow with none of the defects must report none of them.
     const clean = graphOf({

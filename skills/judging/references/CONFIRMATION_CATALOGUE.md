@@ -46,13 +46,27 @@ re-deriving it.
 
 ## 4. Expression resolution — `brokenReferences(graph)`
 
-A reference that names a node which does not exist (`unknown_node`) or one that has not run
-yet (`not_upstream`). Both resolve to nothing at execution time.
+Two reasons, and **only one of them is scoreable**. Read the `confirmable` flag.
 
 ```js
 brokenReferences(graphOf(workflow));
-// [{ node: 'Compose', reference: 'Fetch B', reason: 'not_upstream' }]
+// [{ node: 'Compose', reference: 'Ghost',   reason: 'unknown_node', confirmable: true  }]
+// [{ node: 'Compose', reference: 'Fetch B', reason: 'not_upstream', confirmable: false }]
 ```
+
+`unknown_node` — the expression names a node that is not in the workflow. No engine version
+can resolve that, so it is confirmable from the artefact alone.
+
+`not_upstream` — the node exists but is not a main-path ancestor. **Not confirmable.** In
+`run_11` an attacker argued that n8n resolves `$('Node')` against any node already executed
+in the run, not only along a connection chain. The engine history says both sides are right
+at different versions: 1.105.4 made a not-directly-connected reference fail
+(`n8n-io/n8n#18197`), and that issue was closed by PR #18382. The behaviour therefore depends
+on the instance version, the benchmark's n8n Cloud instance does not publish its version, and
+a predicate may not substitute a behaviour it believes the instance has.
+
+It is still reported. A workflow whose data path depends on which patch release it lands on
+is worth saying out loud. It just goes in the reasoned section, never the score.
 
 ## 5. Weak connectivity — `unreachableFromTrigger(graph)`
 
@@ -81,9 +95,22 @@ A node whose type requires credentials with no slot declared will fail at run ti
 server reports this through family 3 — ask `validate_node_config`, do not maintain a list of
 which node types need credentials.
 
-Note the boundary: an **empty** credential slot is expected and correct. The benchmark cannot
-provision third-party OAuth, so builders leave slots empty by design. The defect is a
-**missing** slot, not an unfilled one. Confusing the two is how `run_9` lost its agents.
+Note the boundary: an unassigned credential is expected and correct. The benchmark cannot
+provision third-party OAuth, so builders leave credentials unassigned by design.
+
+> **An absent `credentials` key is not a defect.** n8n writes that object onto a node only
+> once a credential is actually assigned, so absence *is* how n8n spells "unfilled". In
+> `run_11` two independent finders both reported the six credential-requiring nodes of one
+> workflow as a Family 7 defect on exactly this reasoning, and an attacker refuted it on
+> three planks: `validate_node_config` reported zero invalid nodes, the independently built
+> comparator workflow omitted the key identically, and the validator never sends a
+> `credentials` field to the server in the first place. An earlier version of this section
+> invited that error by contrasting a "missing" slot with an "unfilled" one. There is no
+> such contrast.
+
+What remains in this family is only what the server reports: ask `validate_node_config`, and
+cite its output. Do not maintain a list of which node types need credentials, and do not
+infer a defect from the shape of the node JSON.
 
 ---
 

@@ -1,0 +1,79 @@
+{
+  "workflowId": "results/history/run_11/workflow_native_mcp.json",
+  "workflowName": "bench-dcd318bb",
+  "metrics": {
+    "nodeCount": 11,
+    "functionalNodeCount": 11,
+    "connectionCount": 10,
+    "orphanedNodeCount": 0,
+    "validNodeCount": 11,
+    "invalidNodeCount": 0,
+    "agentNodeCount": 3
+  },
+  "scores": {
+    "requirementCoverage": 83.33,
+    "nodeSchemaValidity": 100,
+    "graphIntegrity": 100,
+    "liveExecution": 0,
+    "compositeCorrectness": 93.33
+  },
+  "correctnessWeights": {
+    "requirementCoverage": 0.4,
+    "nodeSchemaValidity": 0.4,
+    "graphIntegrity": 0.2
+  },
+  "requirementChecks": [
+    {
+      "id": "daily_trigger",
+      "label": "Daily trigger",
+      "ratio": 1,
+      "points": 16.67,
+      "maxPoints": 16.67
+    },
+    {
+      "id": "gmail_retrieval",
+      "label": "Gmail message retrieval",
+      "ratio": 1,
+      "points": 16.67,
+      "maxPoints": 16.67
+    },
+    {
+      "id": "calendar_retrieval",
+      "label": "Google Calendar event retrieval",
+      "ratio": 1,
+      "points": 16.67,
+      "maxPoints": 16.67
+    },
+    {
+      "id": "triage_step",
+      "label": "Information triage / sorting step",
+      "ratio": 1,
+      "points": 16.67,
+      "maxPoints": 16.67
+    },
+    {
+      "id": "multi_agent",
+      "label": "Multi-agent architecture",
+      "ratio": 1,
+      "points": 16.67,
+      "maxPoints": 16.67
+    },
+    {
+      "id": "html_dashboard",
+      "label": "HTML dashboard output",
+      "ratio": 0,
+      "points": 0,
+      "maxPoints": 16.67
+    }
+  ],
+  "liveExecution": {
+    "executed": false,
+    "status": "none",
+    "executionId": null,
+    "executedNodesCount": 0,
+    "executedNodes": [],
+    "durationMs": 0
+  },
+  "invalidNodes": [],
+  "timestamp": "2026-09-10T13:53:58.310Z"
+}

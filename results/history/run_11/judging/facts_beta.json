@@ -1,0 +1,50 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 11,
+  "triggers": [
+    "Daily Trigger"
+  ],
+  "maxMainDepth": 7,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Today's Emails": [
+      "Daily Trigger"
+    ],
+    "Get Today's Events": [
+      "Daily Trigger"
+    ],
+    "Email Sorting Agent": [
+      "Get Today's Emails",
+      "Daily Trigger"
+    ],
+    "Calendar Sorting Agent": [
+      "Get Today's Events",
+      "Daily Trigger"
+    ],
+    "Merge Sorted Data": [
+      "Email Sorting Agent",
+      "Calendar Sorting Agent",
+      "Get Today's Events",
+      "Daily Trigger",
+      "Get Today's Emails"
+    ],
+    "Briefing Composer Agent": [
+      "Merge Sorted Data",
+      "Email Sorting Agent",
+      "Calendar Sorting Agent",
+      "Get Today's Events",
+      "Daily Trigger",
+      "Get Today's Emails"
+    ],
+    "Send Daily Briefing": [
+      "Briefing Composer Agent",
+      "Merge Sorted Data",
+      "Email Sorting Agent",
+      "Calendar Sorting Agent",
+      "Get Today's Events",
+      "Daily Trigger",
+      "Get Today's Emails"
+    ]
+  }
+}

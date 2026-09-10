@@ -1,0 +1,295 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -960,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Today Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -720,
+        -160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      }
+    },
+    {
+      "name": "Prepare Email List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const emails = $input.all().map(i => i.json);\nreturn [{ json: { count: emails.length, emails } }];"
+      }
+    },
+    {
+      "name": "Get Today Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -720,
+        160
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "timeMin": "={{ $now.startOf('day').toISO() }}",
+        "timeMax": "={{ $now.endOf('day').toISO() }}",
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "name": "Prepare Event List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        160
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const events = $input.all().map(i => i.json);\nreturn [{ json: { count: events.length, events } }];"
+      }
+    },
+    {
+      "name": "Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        400
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Email Sorter Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -240,
+        -160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are an email triage assistant. You receive a JSON array of today's Gmail messages (subject, from, snippet). Sort them into three groups: Needs action, FYI/important, and Low priority/newsletters. For each item keep it short: sender, subject, one-line reason. Reply with a concise plain-text summary organized under those three headings."
+        }
+      }
+    },
+    {
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -240,
+        160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are a calendar assistant. You receive a JSON array of today's Google Calendar events (summary, start, end, location, attendees). Summarize the day: chronological schedule, flag any back-to-back or overlapping meetings, and note any gaps of free time. Reply with a concise plain-text summary."
+        }
+      }
+    },
+    {
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email summary:\n{{ $('Email Sorter Agent').first().json.output }}\n\nCalendar summary:\n{{ $('Calendar Agent').first().json.output }}",
+        "options": {
+          "systemMessage": "You build a daily briefing dashboard. You are given an email summary and a calendar summary as plain text. Produce a single, complete, self-contained HTML document (including <html>, <head> with inline <style>, and <body>) that presents both as a clean dashboard: a header with the date, a calendar/schedule section, and an email triage section (Needs action / FYI / Low priority). Use readable typography and simple CSS, no external assets or scripts. Reply with only the raw HTML, nothing else."
+        }
+      }
+    },
+    {
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "={{ 'Daily Briefing - ' + $now.toFormat('yyyy-LL-dd') }}",
+        "message": "={{ $json.output }}",
+        "emailType": "html",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Today Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Today Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today Emails": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today Events": {
+      "main": [
+        [
+          {
+            "node": "Prepare Event List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email List": {
+      "main": [
+        [
+          {
+            "node": "Email Sorter Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Event List": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Sorter Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}
