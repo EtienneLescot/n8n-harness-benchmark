@@ -121,3 +121,23 @@ Workers must be tested under 100% natural, realistic user conditions:
                       │   - Markdown & HTML Dashboard │
                       └───────────────────────────────┘
 ```
+
+---
+
+## 3. Judge Isolation (three barriers, not one)
+
+The rule above — *never place the rubric, the requirement list, or any scoring document
+inside a sandbox* — is necessary and not sufficient once a second, adversarial judge exists.
+A judge that carries n8n expertise **is itself a scoring document**.
+
+- **Temporal**: the judge runs only after both builds are frozen and archived. Never
+  concurrently, never as a reviewer a builder can consult.
+- **Spatial**: judge skills live in `skills/judging/`, never copied into a sandbox; the
+  judge writes only under `results/history/<runId>/judging/` and reads archived JSON, not
+  the live instance. Asserted mechanically before dispatch, not promised.
+- **Semantic**: the judge is given knowledge of how to *interrogate* a finished workflow and
+  none of how to *build* one. If judge and builders held overlapping n8n skills, the
+  benchmark would measure the gap between two skill sets rather than between two products.
+
+Full specification: `EVALUATION_RUBRIC.md` for the scored axes, `JUDGING_PROTOCOL.md` for
+the judge.

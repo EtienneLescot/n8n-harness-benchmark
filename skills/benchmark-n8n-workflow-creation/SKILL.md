@@ -233,3 +233,26 @@ This executes `benchmark/harness/compiler.mjs`, calculating:
   - 💾 `benchmark/reports/benchmark_results.json` (Machine-readable facts & scores)
 
 
+
+---
+
+### Step 7: Phase 5 — Adversarial Judging (eligibility-gated)
+
+Correctness answers *does it work*. It cannot answer *does it hold up*: in `run_10` a
+workflow scored 100/100 correctness while chaining the Calendar fetch downstream of an
+unrelated LLM agent.
+
+The second judge is specified in full in
+`references/JUDGING_PROTOCOL.md`. Two things the orchestrator must do before Phase 4, not
+after:
+
+1. **Declare eligibility.** If the runtime exposes no sub-agent dispatch, write
+   `judging.eligible = false` into `benchmark_results.json` and publish the run as
+   correctness-tier. Do NOT run the loop single-agent: a finder and an attacker sharing a
+   context confirm each other, which is the failure mode the protocol exists to prevent.
+2. **Assert spatial isolation.** No sandbox may contain a path matching `skills/judging`,
+   `JUDGING_PROTOCOL`, `EVALUATION_RUBRIC` or `benchmark.config`. Abort the run if one does.
+
+The judge itself runs only after both builds are frozen and archived, reads the archived
+JSON through `blindWorkflow()`, and scores nothing an agent merely asserted: a finding
+enters the Latent Defects axis only when a predicate over the artefact returns true.
