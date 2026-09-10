@@ -130,8 +130,15 @@ a good workflow looks like will score the builder that resembles it.
 
 ## 3. The judge's capability kit
 
-Versioned under `skills/judging/`, outside every sandbox, and recorded by content hash in
+Implemented in `skills/judging/`, outside every sandbox, and recorded by content hash in
 the run manifest so a result can be replayed against the exact kit that produced it.
+
+| File | Role |
+|---|---|
+| `skills/judging/SKILL.md` | the loop, and the fixed finder and attacker prompts |
+| `skills/judging/references/N8N_EXECUTION_SEMANTICS.md` | how the engine runs a graph. Facts only |
+| `skills/judging/references/CONFIRMATION_CATALOGUE.md` | the seven families and their predicates |
+| `benchmark/harness/predicates.mjs` | the primitives a predicate is written against |
 
 1. **n8n engine semantics** — connection kinds (`main`, `ai_languageModel`, `ai_tool`,
    `ai_memory`, `ai_outputParser`), what `settings.executionOrder` means in `v0` and `v1`,
@@ -189,7 +196,9 @@ different object from a claim an agent produced.
 > judge supplies the code that evaluates it.
 
 The judge supplies the predicate. The harness runs it, archives it next to the finding, and
-anyone can re-run it against the artefact alone. Seven admissible families:
+anyone can re-run it against the artefact alone. Seven admissible families, four of them
+backed by a shared primitive in `benchmark/harness/predicates.mjs`, two by the server RPC
+already wired into `validator.mjs`, and one written per finding:
 
 | # | Family | Confirms | Example from `run_10` |
 |---|---|---|---|
@@ -229,7 +238,18 @@ number, and that subset is a function of the archived artefact, not of the pass.
 - **Deduplicated by predicate**, not by prose: two findings that evaluate the same predicate
   on the same nodes are one defect.
 
-On `run_10` the axis yields **1** confirmed finding for n8n-as-code and **2** for native MCP.
+Applied to `run_10` by the primitives in `benchmark/harness/predicates.mjs`:
+
+| Branch | Confirmed |
+|---|---|
+| n8n-as-code | **1** — family 1: `Fetch Todays Events` waits on `Email Triage Agent` |
+| native MCP | **0** — both fetches are true siblings of the trigger; no broken reference, no unreachable node, no invalid node |
+
+Both branches scored 100/100 correctness. The axis separates them; correctness could not.
+An earlier draft of this document claimed two findings for native MCP, carried over from a
+design panel. It does not survive the predicates, so it is withdrawn — a document whose
+thesis is that nothing counts unless it is mechanically confirmable cannot carry an
+unconfirmed number.
 
 ---
 

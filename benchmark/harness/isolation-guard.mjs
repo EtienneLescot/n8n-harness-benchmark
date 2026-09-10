@@ -38,6 +38,9 @@ export const FORBIDDEN_PATHS = [
  * catch an orchestrator that copied a file, not to win an argument with one that hid it.
  */
 export const FORBIDDEN_CONTENT = [
+    // Every file in skills/judging/ carries this marker, so the kit stays catchable after a
+    // rename. `--self-check` reads the real kit and fails if a file is added without it.
+    'JUDGE-KIT:',
     'expectedCapabilities',
     'CORRECTNESS_WEIGHTS',
     'COMPOSITE_WEIGHTS',
@@ -135,7 +138,7 @@ export function auditSandbox(sandboxRoot) {
             }
             const hits = FORBIDDEN_CONTENT.filter((marker) => text.includes(marker));
             if (hits.length > 0) {
-                violations.push({ kind: 'content', file: relPath, detail: `scoring vocabulary: ${hits.join(', ')}` });
+                violations.push({ kind: 'content', file: relPath, detail: `leaked judging vocabulary: ${hits.join(', ')}` });
             }
         }
     };
@@ -213,8 +216,32 @@ function selfCheck() {
             'a link out of the sandbox must be caught');
     }
 
+    // The kit is the thing this guard exists to keep out, so assert against the real files
+    // rather than a fixture: a judge document added without the marker fails here.
+    const kitDir = 'skills/judging';
+    if (fs.existsSync(kitDir)) {
+        const kitFiles = [];
+        const collect = (dir) => {
+            for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = path.join(dir, e.name);
+                if (e.isDirectory()) collect(full);
+                else if (e.isFile()) kitFiles.push(full);
+            }
+        };
+        collect(kitDir);
+        assert.ok(kitFiles.length > 0, 'the judge kit must not be empty');
+        const planted = mk('kit_renamed');
+        for (const [i, file] of kitFiles.entries()) {
+            fs.writeFileSync(path.join(planted, `innocent_${i}.md`), fs.readFileSync(file));
+        }
+        const caught = auditSandbox(planted).violations.filter((v) => v.kind === 'content');
+        assert.strictEqual(caught.length, kitFiles.length,
+            `every judge kit file must be caught after a rename — ${kitFiles.length} files, ${caught.length} caught`);
+    }
+
     const all = auditAllSandboxes(tmp);
-    assert.strictEqual(all.sandboxes.length, 6, 'every sandbox directory must be audited');
+    const expected = fs.readdirSync(tmp, { withFileTypes: true }).filter((e) => e.isDirectory()).length;
+    assert.strictEqual(all.sandboxes.length, expected, 'every sandbox directory must be audited');
     assert.ok(all.violations.every((v) => v.sandbox), 'each violation must name its sandbox');
 
     fs.rmSync(tmp, { recursive: true, force: true });
