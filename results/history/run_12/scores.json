@@ -2,15 +2,16 @@
   "runId": "run_12",
   "underTest": "n8nac@2.6.0-rc.6",
   "weights": {
-    "correctness": 0.35,
-    "tokenEfficiency": 0.35,
-    "buildTime": 0.3
+    "quality": 0.35,
+    "correctness": 0.3,
+    "tokenEfficiency": 0.2,
+    "buildTime": 0.15
   },
   "n8nac": {
     "correctness": 100,
     "tokenEfficiency": 100,
     "buildTime": 73.66,
-    "composite": 92.1,
+    "composite": 86.25,
     "raw": {
       "buildMs": 427082,
       "tokens": 143244,
@@ -22,13 +23,15 @@
       "score": 76.69,
       "friction": 100,
       "commands": 22.31
-    }
+    },
+    "quality": 72,
+    "partial": false
   },
   "native_mcp": {
     "correctness": 100,
     "tokenEfficiency": 79.26,
     "buildTime": 100,
-    "composite": 92.74,
+    "composite": 91.3,
     "raw": {
       "buildMs": 354789,
       "tokens": 165445,
@@ -40,6 +43,69 @@
       "score": 100,
       "friction": 100,
       "commands": 100
-    }
+    },
+    "quality": 87,
+    "partial": false
+  },
+  "weightsChangedAt": "run_12",
+  "weightsNote": "Quality 35, correctness 30, tokens 20, build time 15. Runs 6-11 were scored under a three-axis composite and are comparable to this run only axis by axis, never composite to composite.",
+  "quality": {
+    "grades": [
+      {
+        "judge": "judge 1",
+        "order": "alpha first",
+        "alpha": 65,
+        "beta": 88
+      },
+      {
+        "judge": "judge 2",
+        "order": "beta first (swapped)",
+        "alpha": 72,
+        "beta": 76
+      },
+      {
+        "judge": "judge 3",
+        "order": "alpha first",
+        "alpha": 77,
+        "beta": 87
+      }
+    ],
+    "median": {
+      "alpha": 72,
+      "beta": 87
+    },
+    "disagreement": {
+      "alpha": {
+        "spread": 12,
+        "flagged": false,
+        "grades": [
+          65,
+          72,
+          77
+        ]
+      },
+      "beta": {
+        "spread": 12,
+        "flagged": false,
+        "grades": [
+          88,
+          76,
+          87
+        ]
+      }
+    },
+    "pairwise": [
+      {
+        "order": "alpha as Workflow 1",
+        "winner": "beta"
+      },
+      {
+        "order": "beta as Workflow 1",
+        "winner": "beta"
+      }
+    ],
+    "absoluteWinner": "beta",
+    "pairwiseWinner": "beta",
+    "consistent": true
   }
 }

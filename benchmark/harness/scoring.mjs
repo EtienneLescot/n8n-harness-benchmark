@@ -45,14 +45,21 @@ export const CORRECTNESS_WEIGHTS = {
 };
 
 /**
- * Composite weights across the three scored axes. Setup is not one of them — it is
+ * Composite weights across the four scored axes. Setup is not one of them — it is
  * telemetry, see SETUP_WEIGHTS below.
  *
- * Correctness and token efficiency are equal at 35 and build time takes 30: what a
- * workflow costs to produce is paid on every workflow, so the two cost axes together
- * outweigh correctness, while neither alone does.
+ * Quality carries the largest share because it is the only axis that answers the question
+ * the user actually asked. Correctness says the workflow works; quality says whether it is
+ * a good answer to the brief. run_12 is why the distinction is not academic: both branches
+ * scored 100/100 correctness, and one of them built an HTML briefing every morning and left
+ * it to die in the execution data because no node delivered it anywhere. Correctness could
+ * not see that, and the defect judge could not score it either — the brief said "presents"
+ * and named no mechanism, so the finding was refuted on the catalogue own family 6 rule.
+ *
+ * The two cost axes drop to 35 combined. What a workflow costs is paid on every workflow
+ * and still matters, but it cannot outrank what the workflow is worth.
  */
-const STATED = { correctness: 35, tokenEfficiency: 35, buildTime: 30 };
+const STATED = { quality: 35, correctness: 30, tokenEfficiency: 20, buildTime: 15 };
 const STATED_TOTAL = Object.values(STATED).reduce((a, b) => a + b, 0);
 export const COMPOSITE_WEIGHTS = Object.fromEntries(
     Object.entries(STATED).map(([k, v]) => [k, parseFloat((v / STATED_TOTAL).toFixed(4))]),
@@ -98,6 +105,13 @@ export const DECAY = 1.5;
  * the score. Exponential decay is steeper where it matters and, unlike a straight line,
  * needs no floor: it approaches zero without reaching it, so a 2x branch and a 10x branch
  * still rank in the right order instead of both flattening to nothing.
+ *
+ * QUALITY DOES NOT PASS THROUGH HERE, and that is the point of the axis. Relative scoring
+ * exists because tokens and seconds have no yardstick: 143k tokens is neither good nor bad
+ * on its own, only cheaper or dearer than the other branch, so the only meaningful figure
+ * is the A/B ratio. Quality has a yardstick — the prompt. A workflow can be measured
+ * against what was asked without any second workflow existing, so it is scored absolutely,
+ * 0 to 100, and two branches may both be excellent or both be poor.
  */
 export function relativeScore(value, otherValue) {
     const a = Math.max(0.001, Number(value) || 0.001);
@@ -298,11 +312,22 @@ export function compositeCorrectness({ requirementCoverage, nodeSchemaValidity, 
     );
 }
 
-/** Combine the four axes under COMPOSITE_WEIGHTS. Pass null for an axis this run cannot measure. */
-export function compositeScore({ correctness, buildTime, tokenEfficiency }) {
-    const axes = { correctness, buildTime, tokenEfficiency };
+/**
+ * Combine the four scored axes under COMPOSITE_WEIGHTS. Pass null for an axis this run
+ * cannot measure; the composite renormalises over what was measured and says it is partial.
+ *
+ * `quality` is an absolute 0-100 grade from the quality panel, never a relative score.
+ * `correctness` is absolute too, from validator.mjs. The two cost axes are relative.
+ */
+export function compositeScore(axes = {}) {
     // Guard the rename: an axis whose name is not in COMPOSITE_WEIGHTS would be silently
-    // dropped and the composite would quietly renormalise without it.
+    // dropped and the composite would quietly renormalise without it. That is exactly what
+    // happened when the setup axis was renamed and the caller kept destructuring `setupTime`.
+    //
+    // The guard used to sit behind a destructured parameter list, which made it dead code:
+    // destructuring discards an unknown key before any check can see it, so the very bug it
+    // was written for could still pass. Take the object whole and check what the caller
+    // actually sent.
     for (const key of Object.keys(axes)) {
         if (!(key in COMPOSITE_WEIGHTS)) throw new Error(`compositeScore: unknown axis "${key}"`);
     }
