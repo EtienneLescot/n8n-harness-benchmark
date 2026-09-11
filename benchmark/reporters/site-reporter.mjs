@@ -504,6 +504,10 @@ function render(runs) {
     <h2>Where each one gains and loses</h2>
     <p class="sub">The four scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
+      Two of the four are relative, so a branch score on them moves when the <em>other</em> branch
+      moves. Between the last two runs Native MCP was not re-run at all, same builds, same tokens,
+      same seconds, and its token score still rose from 67.8 to 77.2 because n8n-as-code got more
+      expensive. A score going up does not always mean that branch did better.
       From the deepest run on the current weights: ${esc(head?.metadata?.label || "?")}, and ${head?.metadata?.judgesPerBuild || 0} isolated judges per build.${older ? ` ${older} earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.` : ""}</p>
     <div class="legend">${legend}</div>
     <div class="radar">
