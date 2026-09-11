@@ -299,6 +299,24 @@ function qualityRadarSvg(run) {
  * across spokes at different angles. The thick line is the branch mean, the thin ones the
  * individual builds.
  */
+/**
+ * Builds whose answer-to-the-prompt score falls well below their own other three dimensions:
+ * the workflow was designed and wired, then delivered nowhere. The threshold is deliberately
+ * blunt; the chart shows the shape, this only counts it so the caption cannot go stale.
+ */
+function collapsedOnAnswer(run) {
+    const out = {};
+    for (const { key, label } of BRANCHES) {
+        out[label] = (run[key]?.builds || []).filter((b) => {
+            const d = b.dimensions || {};
+            const others = ['idea', 'structure', 'connections'].map((k) => d[k]).filter((v) => typeof v === 'number');
+            return typeof d.answer === 'number' && others.length === 3
+                && (others.reduce((x, y) => x + y, 0) / 3) - d.answer >= 8;
+        }).length;
+    }
+    return out;
+}
+
 function parallelSvg(run) {
     const W = 620, H = 306, L = 60, Rm = 58, T = 34, B = 54;
     const n = QUALITY_DIMS.length;
@@ -352,7 +370,9 @@ function render(runs) {
     const head = headlineRun(runs);
     const deepRun = (head && head.metadata?.run === target && head.n8nac?.qualityDimensions)
         ? head
-        : ([...runs].reverse().find((r) => r.n8nac?.builds?.length && r.n8nac?.qualityDimensions) || null);
+        : ([...runs].filter((r) => r.n8nac?.builds?.length && r.n8nac?.qualityDimensions)
+            .sort((a, b) => (a.n8nac.builds.length - b.n8nac.builds.length))
+            .slice(-1)[0] || null);
     // Every run on the current weight scheme. One run is one paired trial; the aggregate is
     // the whole point of collecting runs from several orchestrators and models.
     const scored = comparable(runs).length ? comparable(runs) : runs;
@@ -564,14 +584,24 @@ ${deepRun ? `<section>
 <section>
   <div class="wrap">
     <h2>Every build, one line each</h2>
-    <p class="sub">Ten builds on the same four dimensions. A radar saturates past four or five overlaid
-      shapes, so these are parallel coordinates: the axes stand side by side and heights compare directly.
-      Thin lines are individual builds, thick lines the mean of each tool.</p>
+    <p class="sub">${BRANCHES.reduce((n, { key }) => n + (deepRun[key]?.builds?.length || 0), 0)} builds on the same
+      four dimensions, from ${esc(deepRun.metadata?.label || deepRun.metadata?.run || "?")}. A radar saturates
+      past four or five overlaid shapes, so these are parallel coordinates: the axes stand side by side and
+      heights compare directly. Thin lines are individual builds, thick lines the mean of each tool.</p>
     <div class="legend">${legend}</div>
     <div class="chart">${parallelSvg(deepRun)}</div>
-    <p class="sub">The three lines that collapse on the right are the three builds that composed the HTML
-      briefing and wired it nowhere: two from n8n-as-code, one from Native MCP. Everything left of that
-      axis is a single tangle, which is the finding.</p>
+    ${(() => {
+      const c = collapsedOnAnswer(deepRun);
+      const hit = Object.entries(c).filter(([, n]) => n > 0);
+      const total = hit.reduce((n, [, v]) => n + v, 0);
+      if (!total) {
+        return '<p class="sub">No build collapses on the last axis in this run: every one of them delivered the briefing somewhere a person would see it.</p>';
+      }
+      const who = hit.map(([label, n]) => n + ' from ' + label).join(' and ');
+      return '<p class="sub">The ' + total + ' line' + (total === 1 ? '' : 's') + ' that drop' + (total === 1 ? 's' : '') +
+        ' on the right ' + (total === 1 ? 'is a build' : 'are builds') + ' that composed the briefing and wired it nowhere: ' +
+        who + '. Everything left of that axis is a single tangle, which is the finding.</p>';
+    })()}
   </div>
 </section>` : ''}
 
