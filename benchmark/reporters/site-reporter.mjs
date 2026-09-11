@@ -29,6 +29,12 @@ import { fileURLToPath } from 'node:url';
 import { COMPOSITE_WEIGHTS, CORRECTNESS_WEIGHTS } from '../harness/scoring.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+/** Mean of the runs that carry the key, or null when none do. Never zero-fills. */
+function avg(scores, key) {
+    const present = scores.map((s) => s?.[key]).filter((v) => typeof v === "number");
+    return present.length ? parseFloat((present.reduce((a, b) => a + b, 0) / present.length).toFixed(2)) : null;
+}
+
 const historyDir = path.join(repoRoot, 'results/history');
 const outFile = path.join(repoRoot, 'docs/index.html');
 
@@ -77,16 +83,35 @@ const mean = (values) => values.reduce((sum, v) => sum + v, 0) / values.length;
 const round = (n, d = 2) => parseFloat(Number(n).toFixed(d));
 
 /** Mean of per-run scores — see the header note on why this is not the score of the means. */
+/** Runs scored under the weights in force today. Anything else is history, not evidence. */
+function comparable(runs) {
+    const want = JSON.stringify(COMPOSITE_WEIGHTS);
+    return runs.filter((r) => JSON.stringify(r.weights || {}) === want);
+}
+
+/** The deepest comparable run: most builds per branch, newest on a tie. */
+function headlineRun(runs) {
+    const pool = comparable(runs);
+    if (!pool.length) return null;
+    return [...pool].sort((a, b) => (a.metadata?.buildsPerBranch || 1) - (b.metadata?.buildsPerBranch || 1))
+        .slice(-1)[0];
+}
+
 function aggregate(runs) {
     const out = {};
     for (const { key } of BRANCHES) {
         const scores = runs.map((r) => r[key]?.scores || {});
         out[key] = {
-            composite: round(mean(scores.map((s) => s.composite ?? 0))),
-            correctness: round(mean(scores.map((s) => s.correctness ?? 0))),
-            tokenEfficiency: round(mean(scores.map((s) => s.tokenEfficiency ?? 0))),
-            buildTime: round(mean(scores.map((s) => s.buildTime ?? 0))),
-            setupEaseTelemetry: round(mean(scores.map((s) => s.setupEaseTelemetry ?? 0))),
+            // Mean over the runs that actually measured the axis. Treating a missing axis
+            // as zero let one run without a quality grade drag every other run down.
+            composite: avg(scores, "composite"),
+            quality: avg(scores, "quality"),
+            correctness: avg(scores, "correctness"),
+            tokenEfficiency: avg(scores, "tokenEfficiency"),
+            buildTime: avg(scores, "buildTime"),
+            setupEaseTelemetry: avg(scores, "setupEaseTelemetry"),
+            measuredOn: Object.fromEntries(["composite", "quality", "correctness", "tokenEfficiency", "buildTime"]
+                .map((k) => [k, scores.filter((s) => typeof s[k] === "number").length])),
         };
     }
     return out;
@@ -104,6 +129,11 @@ function aggregate(runs) {
  * the chart that does not count reads as though it does, whatever the caption says.
  */
 const AXES = [
+    {
+        lines: ['Quality'],
+        sub: ['the idea, node structure,', 'connections, answer to', 'the prompt'],
+        pick: (b) => b.scores?.quality,
+    },
     {
         lines: ['Correctness'],
         sub: ['requirement coverage,', 'node validity,', 'graph integrity'],
@@ -137,7 +167,7 @@ function radarSvg(runs) {
     const series = BRANCHES.map(({ key, label, cls }) => ({
         label,
         cls,
-        values: AXES.map((a) => mean(runs.map((r) => a.pick(r[key]) ?? 0))),
+        values: AXES.map((a) => { const v = runs.map((r) => a.pick(r[key])).filter((x) => typeof x === "number"); return v.length ? mean(v) : 0; }),
     }));
 
     const joiner = NEWLINE + "      ";
@@ -196,6 +226,89 @@ function radarSvg(runs) {
     return { svg, series };
 }
 
+/**
+ * The four quality dimensions, 25 points each. A second radar rather than four more spokes
+ * on the first: these are the inside of one axis, not peers of correctness and cost.
+ */
+const QUALITY_DIMS = [
+    { key: 'idea', label: 'The idea' },
+    { key: 'structure', label: 'Node structure' },
+    { key: 'connections', label: 'Connections' },
+    { key: 'answer', label: 'Answer to the prompt' },
+];
+
+function qualityRadarSvg(run) {
+    const CX2 = 250, CY2 = 200, R2 = 120, N = QUALITY_DIMS.length;
+    const pt = (i, v, radius = R2) => {
+        const a = (-90 + i * (360 / N)) * (Math.PI / 180);
+        const r = (Math.max(0, Math.min(25, v)) / 25) * radius;
+        return [CX2 + r * Math.cos(a), CY2 + r * Math.sin(a)];
+    };
+    const out = (i, radius) => {
+        const a = (-90 + i * (360 / N)) * (Math.PI / 180);
+        return [CX2 + radius * Math.cos(a), CY2 + radius * Math.sin(a)];
+    };
+    const poly = (vals) => vals.map((v, i) => pt(i, v).map((x) => x.toFixed(1)).join(",")).join(" ");
+    const j = NEWLINE + "      ";
+    const rings = [6.25, 12.5, 18.75, 25]
+        .map((v) => `<polygon class="ring" points="${poly(QUALITY_DIMS.map(() => v))}"/>`).join(j);
+    const spokes = QUALITY_DIMS.map((_, i) => {
+        const [x, y] = out(i, R2);
+        return `<line class="spoke" x1="${CX2}" y1="${CY2}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
+    }).join(j);
+    const labels = QUALITY_DIMS.map((d, i) => {
+        const [lx, ly] = out(i, R2 + 26);
+        const anchor = lx > CX2 + 8 ? "start" : lx < CX2 - 8 ? "end" : "middle";
+        const dy = ly < CY2 - 40 ? -6 : ly > CY2 + 40 ? 14 : 4;
+        return `<text class="axis-label" text-anchor="${anchor}" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}">${esc(d.label)}</text>`;
+    }).join(j);
+    const series = BRANCHES.map(({ key, label, cls }) => ({
+        label, cls, values: QUALITY_DIMS.map((d) => run[key]?.qualityDimensions?.[d.key] ?? 0),
+    }));
+    const shapes = series.map((s) => `<polygon class="shape ${s.cls}" points="${poly(s.values)}"/>`).join(j);
+    const dots = series.map((s) => s.values.map((v, i) => {
+        const [x, y] = pt(i, v);
+        return `<circle class="dot ${s.cls}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"/>`;
+    }).join("")).join(j);
+    return [`<svg viewBox="0 0 500 400" role="img" aria-label="The four quality dimensions, 25 points each">`,
+        rings, spokes, shapes, dots, labels, `</svg>`].join(j);
+}
+
+/**
+ * Ten builds on four dimensions, as parallel coordinates rather than ten polygons.
+ *
+ * A radar saturates past four or five overlaid shapes; every source on the question says so.
+ * Parallel coordinates is the shape for many observations that share one scale: each build is
+ * one line, the axes sit side by side, and a reader compares heights directly instead of
+ * across spokes at different angles. The thick line is the branch mean, the thin ones the
+ * individual builds.
+ */
+function parallelSvg(run) {
+    const W = 620, H = 300, L = 54, Rm = 22, T = 34, B = 48;
+    const n = QUALITY_DIMS.length;
+    const x = (i) => L + (i * (W - L - Rm)) / (n - 1);
+    const y = (v) => T + (1 - Math.max(0, Math.min(25, v)) / 25) * (H - T - B);
+    const j = NEWLINE + "      ";
+    const axes = QUALITY_DIMS.map((d, i) => {
+        const xi = x(i).toFixed(1);
+        const anchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+        return `<line class="spoke" x1="${xi}" y1="${T}" x2="${xi}" y2="${H - B}"/>`
+            + `<text class="axis-label" text-anchor="${anchor}" x="${xi}" y="${H - B + 18}">${esc(d.label)}</text>`;
+    }).join(j);
+    const grid = [0, 6.25, 12.5, 18.75, 25].map((v) => {
+        const yy = y(v).toFixed(1);
+        return `<line class="ring" x1="${L}" y1="${yy}" x2="${W - Rm}" y2="${yy}"/>`
+            + `<text class="tick" text-anchor="end" x="${L - 8}" y="${(y(v) + 3.5).toFixed(1)}">${v}</text>`;
+    }).join(j);
+    const line = (vals) => vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+    const thin = BRANCHES.flatMap(({ key, cls }) => (run[key]?.builds || []).map((b) =>
+        `<polyline class="pc ${cls}" points="${line(QUALITY_DIMS.map((d) => b.dimensions[d.key]))}"/>`)).join(j);
+    const thick = BRANCHES.map(({ key, cls }) =>
+        `<polyline class="pc-mean ${cls}" points="${line(QUALITY_DIMS.map((d) => run[key]?.qualityDimensions?.[d.key] ?? 0))}"/>`).join(j);
+    return [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Every build on the four quality dimensions, one line per build">`,
+        grid, axes, thin, thick, `</svg>`].join(j);
+}
+
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** A score bar: 0-100, longer is better. Used for the composite and nothing else. */
@@ -215,7 +328,12 @@ function measureBar(label, cls, value, formatted, max) {
 
 function render(runs) {
     const n = runs.length;
-    const agg = aggregate(runs);
+    // The newest run carrying per-build detail drives the two quality charts.
+    const deepRun = [...runs].reverse().find((r) => r.n8nac?.builds?.length && r.n8nac?.qualityDimensions) || null;
+    const head = headlineRun(runs);
+    const scored = head ? [head] : runs;
+    const older = runs.length - comparable(runs).length;
+    const agg = aggregate(scored);
     const latest = runs[n - 1];
 
     const compositeRows = BRANCHES
@@ -223,7 +341,7 @@ function render(runs) {
         .join('\n          ');
 
     const measureBlocks = MEASURES.map((m) => {
-        const values = BRANCHES.map(({ key }) => mean(runs.map((r) => m.pick(r[key]) ?? 0)));
+        const values = BRANCHES.map(({ key }) => { const v = runs.map((r) => m.pick(r[key])).filter((x) => typeof x === "number"); return v.length ? mean(v) : 0; });
         const max = Math.max(...values);
         const bars = BRANCHES
             .map(({ label, cls }, i) => measureBar(label, cls, values[i], m.format(values[i]), max))
@@ -256,7 +374,7 @@ function render(runs) {
         return `        <tr><td><code>${esc(m.run || '?')}</code></td><td>${esc(m.harness || '?')}</td><td>${esc(m.model || '?')}</td>${cells}</tr>`;
     }).join('\n');
 
-    const radar = radarSvg(runs);
+    const radar = radarSvg(scored);
     const legend = radar.series
         .map((entry) => `<span class="key"><i class="swatch ${entry.cls}"></i>${esc(entry.label)}</span>`)
         .join("");
@@ -320,6 +438,13 @@ function render(runs) {
   .shape.a{fill:var(--accent);stroke:var(--accent)}
   .shape.b{fill:var(--rival);stroke:var(--rival)}
   .dot.a{fill:var(--accent)} .dot.b{fill:var(--rival)}
+  .pc{fill:none;stroke-width:1.1;opacity:.42}
+  .pc.a{stroke:var(--accent)} .pc.b{stroke:var(--rival)}
+  .pc-mean{fill:none;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+  .pc-mean.a{stroke:var(--accent)} .pc-mean.b{stroke:var(--rival)}
+  .tick{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums}
+  .chart{margin:0 0 6px}
+  .chart svg{width:100%;height:auto;display:block}
   .axis-label{font:600 11.5px var(--mono);fill:var(--muted)}
   .axis-note{font:400 10px var(--mono);fill:var(--faint)}
   .legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 14px}
@@ -372,7 +497,7 @@ function render(runs) {
     <h2>Where each one gains and loses</h2>
     <p class="sub">The three scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
-      Mean across ${n} submitted ${plural}.</p>
+      From <code>${esc(head?.metadata?.run || "?")}</code>, ${head?.metadata?.buildsPerBranch || 1} build(s) per tool and ${head?.metadata?.judgesPerBuild || 0} isolated judges per build.${older ? ` ${older} earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.` : ""}</p>
     <div class="legend">${legend}</div>
     <div class="radar">
       ${radar.svg}
@@ -394,6 +519,33 @@ function render(runs) {
     </p>
   </div>
 </section>
+
+${deepRun ? `<section>
+  <div class="wrap">
+    <h2>Inside the quality axis</h2>
+    <p class="sub">Four dimensions, 25 points each, from the run with ${deepRun.metadata.buildsPerBranch} builds per tool
+      and ${deepRun.metadata.judgesPerBuild} isolated judges per build. Median across the judges of a build,
+      then mean across builds.</p>
+    <div class="legend">${legend}</div>
+    <div class="chart">${qualityRadarSvg(deepRun)}</div>
+    <p class="sub">Three of the four dimensions are a dead heat. The whole difference sits on the last one,
+      and it is the delivery question: does the briefing reach anyone.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Every build, one line each</h2>
+    <p class="sub">Ten builds on the same four dimensions. A radar saturates past four or five overlaid
+      shapes, so these are parallel coordinates: the axes stand side by side and heights compare directly.
+      Thin lines are individual builds, thick lines the mean of each tool.</p>
+    <div class="legend">${legend}</div>
+    <div class="chart">${parallelSvg(deepRun)}</div>
+    <p class="sub">The three lines that collapse on the right are the three builds that composed the HTML
+      briefing and wired it nowhere: two from n8n-as-code, one from Native MCP. Everything left of that
+      axis is a single tangle, which is the finding.</p>
+  </div>
+</section>` : ''}
 
 <section>
   <div class="wrap">

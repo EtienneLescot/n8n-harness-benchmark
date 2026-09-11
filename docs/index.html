@@ -55,6 +55,13 @@
   .shape.a{fill:var(--accent);stroke:var(--accent)}
   .shape.b{fill:var(--rival);stroke:var(--rival)}
   .dot.a{fill:var(--accent)} .dot.b{fill:var(--rival)}
+  .pc{fill:none;stroke-width:1.1;opacity:.42}
+  .pc.a{stroke:var(--accent)} .pc.b{stroke:var(--rival)}
+  .pc-mean{fill:none;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+  .pc-mean.a{stroke:var(--accent)} .pc-mean.b{stroke:var(--rival)}
+  .tick{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums}
+  .chart{margin:0 0 6px}
+  .chart svg{width:100%;height:auto;display:block}
   .axis-label{font:600 11.5px var(--mono);fill:var(--muted)}
   .axis-note{font:400 10px var(--mono);fill:var(--faint)}
   .legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 14px}
@@ -107,29 +114,31 @@
     <h2>Where each one gains and loses</h2>
     <p class="sub">The three scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
-      Mean across 1 submitted run.</p>
+      From <code>run_13</code>, 5 build(s) per tool and 3 isolated judges per build. 1 earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.</p>
     <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
     <div class="radar">
       <svg viewBox="0 0 500 420" role="img" aria-label="Comparison across the three scored axes; further from the centre is better on every axis">
-      <polygon class="ring" points="250.0,183.5 278.1,232.3 221.9,232.3"/>
-      <polygon class="ring" points="250.0,151.0 306.3,248.5 193.7,248.5"/>
-      <polygon class="ring" points="250.0,118.5 334.4,264.8 165.6,264.8"/>
-      <polygon class="ring" points="250.0,86.0 362.6,281.0 137.4,281.0"/>
+      <polygon class="ring" points="250.0,183.5 282.5,216.0 250.0,248.5 217.5,216.0"/>
+      <polygon class="ring" points="250.0,151.0 315.0,216.0 250.0,281.0 185.0,216.0"/>
+      <polygon class="ring" points="250.0,118.5 347.5,216.0 250.0,313.5 152.5,216.0"/>
+      <polygon class="ring" points="250.0,86.0 380.0,216.0 250.0,346.0 120.0,216.0"/>
       <line class="spoke" x1="250" y1="216" x2="250.0" y2="86.0"/>
-      <line class="spoke" x1="250" y1="216" x2="362.6" y2="281.0"/>
-      <line class="spoke" x1="250" y1="216" x2="137.4" y2="281.0"/>
-      <polygon class="shape a" points="250.0,86.0 362.6,281.0 137.4,281.0"/>
-      <polygon class="shape b" points="250.0,86.0 321.3,257.1 178.2,257.4"/>
-      <circle class="dot a" cx="250.0" cy="86.0" r="3.5"/><circle class="dot a" cx="362.6" cy="281.0" r="3.5"/><circle class="dot a" cx="137.4" cy="281.0" r="3.5"/>
-      <circle class="dot b" cx="250.0" cy="86.0" r="3.5"/><circle class="dot b" cx="321.3" cy="257.1" r="3.5"/><circle class="dot b" cx="178.2" cy="257.4" r="3.5"/>
-      <text class="axis-label" text-anchor="middle" x="250.0" y="12.0"><tspan x="250.0" dy="0">Correctness</tspan><tspan class="axis-note" x="250.0" dy="12">requirement coverage,</tspan><tspan class="axis-note" x="250.0" dy="12">node validity,</tspan><tspan class="axis-note" x="250.0" dy="12">graph integrity</tspan></text>
-      <text class="axis-label" text-anchor="start" x="388.6" y="310.0"><tspan x="388.6" dy="0">Token</tspan><tspan x="388.6" dy="12">efficiency</tspan></text>
-      <text class="axis-label" text-anchor="end" x="111.4" y="310.0"><tspan x="111.4" dy="0">Workflow</tspan><tspan x="111.4" dy="12">build speed</tspan></text>
+      <line class="spoke" x1="250" y1="216" x2="380.0" y2="216.0"/>
+      <line class="spoke" x1="250" y1="216" x2="250.0" y2="346.0"/>
+      <line class="spoke" x1="250" y1="216" x2="120.0" y2="216.0"/>
+      <polygon class="shape a" points="250.0,106.3 380.0,216.0 250.0,346.0 160.7,216.0"/>
+      <polygon class="shape b" points="250.0,106.0 380.0,216.0 250.0,304.1 120.0,216.0"/>
+      <circle class="dot a" cx="250.0" cy="106.3" r="3.5"/><circle class="dot a" cx="380.0" cy="216.0" r="3.5"/><circle class="dot a" cx="250.0" cy="346.0" r="3.5"/><circle class="dot a" cx="160.7" cy="216.0" r="3.5"/>
+      <circle class="dot b" cx="250.0" cy="106.0" r="3.5"/><circle class="dot b" cx="380.0" cy="216.0" r="3.5"/><circle class="dot b" cx="250.0" cy="304.1" r="3.5"/><circle class="dot b" cx="120.0" cy="216.0" r="3.5"/>
+      <text class="axis-label" text-anchor="middle" x="250.0" y="12.0"><tspan x="250.0" dy="0">Quality</tspan><tspan class="axis-note" x="250.0" dy="12">the idea, node structure,</tspan><tspan class="axis-note" x="250.0" dy="12">connections, answer to</tspan><tspan class="axis-note" x="250.0" dy="12">the prompt</tspan></text>
+      <text class="axis-label" text-anchor="start" x="410.0" y="220.0"><tspan x="410.0" dy="0">Correctness</tspan><tspan class="axis-note" x="410.0" dy="12">requirement coverage,</tspan><tspan class="axis-note" x="410.0" dy="12">node validity,</tspan><tspan class="axis-note" x="410.0" dy="12">graph integrity</tspan></text>
+      <text class="axis-label" text-anchor="middle" x="250.0" y="390.0"><tspan x="250.0" dy="0">Token</tspan><tspan x="250.0" dy="12">efficiency</tspan></text>
+      <text class="axis-label" text-anchor="end" x="90.0" y="220.0"><tspan x="90.0" dy="0">Workflow</tspan><tspan x="90.0" dy="12">build speed</tspan></text>
       </svg>
       <div class="side">
         <div class="cell total"><div class="k">Overall score</div>
-          <div class="v a">100.0</div>
-          <div class="v b">76.3</div></div>      </div>
+          <div class="v a">89.8</div>
+          <div class="v b">88.2</div></div>      </div>
     </div>
     <h3>Correctness, in detail</h3>
     <div class="scroll">
@@ -147,6 +156,72 @@
 
 <section>
   <div class="wrap">
+    <h2>Inside the quality axis</h2>
+    <p class="sub">Four dimensions, 25 points each, from the run with 5 builds per tool
+      and 3 isolated judges per build. Median across the judges of a build,
+      then mean across builds.</p>
+    <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
+    <div class="chart"><svg viewBox="0 0 500 400" role="img" aria-label="The four quality dimensions, 25 points each">
+      <polygon class="ring" points="250.0,170.0 280.0,200.0 250.0,230.0 220.0,200.0"/>
+      <polygon class="ring" points="250.0,140.0 310.0,200.0 250.0,260.0 190.0,200.0"/>
+      <polygon class="ring" points="250.0,110.0 340.0,200.0 250.0,290.0 160.0,200.0"/>
+      <polygon class="ring" points="250.0,80.0 370.0,200.0 250.0,320.0 130.0,200.0"/>
+      <line class="spoke" x1="250" y1="200" x2="250.0" y2="80.0"/>
+      <line class="spoke" x1="250" y1="200" x2="370.0" y2="200.0"/>
+      <line class="spoke" x1="250" y1="200" x2="250.0" y2="320.0"/>
+      <line class="spoke" x1="250" y1="200" x2="130.0" y2="200.0"/>
+      <polygon class="shape a" points="250.0,95.4 354.6,200.0 250.0,312.3 166.5,200.0"/>
+      <polygon class="shape b" points="250.0,97.3 353.7,200.0 250.0,308.5 158.8,200.0"/>
+      <circle class="dot a" cx="250.0" cy="95.4" r="3.5"/><circle class="dot a" cx="354.6" cy="200.0" r="3.5"/><circle class="dot a" cx="250.0" cy="312.3" r="3.5"/><circle class="dot a" cx="166.5" cy="200.0" r="3.5"/>
+      <circle class="dot b" cx="250.0" cy="97.3" r="3.5"/><circle class="dot b" cx="353.7" cy="200.0" r="3.5"/><circle class="dot b" cx="250.0" cy="308.5" r="3.5"/><circle class="dot b" cx="158.8" cy="200.0" r="3.5"/>
+      <text class="axis-label" text-anchor="middle" x="250.0" y="48.0">The idea</text>
+      <text class="axis-label" text-anchor="start" x="396.0" y="204.0">Node structure</text>
+      <text class="axis-label" text-anchor="middle" x="250.0" y="360.0">Connections</text>
+      <text class="axis-label" text-anchor="end" x="104.0" y="204.0">Answer to the prompt</text>
+      </svg></div>
+    <p class="sub">Three of the four dimensions are a dead heat. The whole difference sits on the last one,
+      and it is the delivery question: does the briefing reach anyone.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Every build, one line each</h2>
+    <p class="sub">Ten builds on the same four dimensions. A radar saturates past four or five overlaid
+      shapes, so these are parallel coordinates: the axes stand side by side and heights compare directly.
+      Thin lines are individual builds, thick lines the mean of each tool.</p>
+    <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
+    <div class="chart"><svg viewBox="0 0 620 300" role="img" aria-label="Every build on the four quality dimensions, one line per build">
+      <line class="ring" x1="54" y1="252.0" x2="598" y2="252.0"/><text class="tick" text-anchor="end" x="46" y="255.5">0</text>
+      <line class="ring" x1="54" y1="197.5" x2="598" y2="197.5"/><text class="tick" text-anchor="end" x="46" y="201.0">6.25</text>
+      <line class="ring" x1="54" y1="143.0" x2="598" y2="143.0"/><text class="tick" text-anchor="end" x="46" y="146.5">12.5</text>
+      <line class="ring" x1="54" y1="88.5" x2="598" y2="88.5"/><text class="tick" text-anchor="end" x="46" y="92.0">18.75</text>
+      <line class="ring" x1="54" y1="34.0" x2="598" y2="34.0"/><text class="tick" text-anchor="end" x="46" y="37.5">25</text>
+      <line class="spoke" x1="54.0" y1="34" x2="54.0" y2="252"/><text class="axis-label" text-anchor="start" x="54.0" y="270">The idea</text>
+      <line class="spoke" x1="235.3" y1="34" x2="235.3" y2="252"/><text class="axis-label" text-anchor="middle" x="235.3" y="270">Node structure</text>
+      <line class="spoke" x1="416.7" y1="34" x2="416.7" y2="252"/><text class="axis-label" text-anchor="middle" x="416.7" y="270">Connections</text>
+      <line class="spoke" x1="598.0" y1="34" x2="598.0" y2="252"/><text class="axis-label" text-anchor="end" x="598.0" y="270">Answer to the prompt</text>
+      <polyline class="pc a" points="54.0,60.2 235.3,60.2 416.7,42.7 598.0,60.2"/>
+      <polyline class="pc a" points="54.0,60.2 235.3,60.2 416.7,42.7 598.0,68.9"/>
+      <polyline class="pc a" points="54.0,68.9 235.3,68.9 416.7,60.2 598.0,164.8"/>
+      <polyline class="pc a" points="54.0,68.9 235.3,68.9 416.7,51.4 598.0,164.8"/>
+      <polyline class="pc a" points="54.0,51.4 235.3,51.4 416.7,42.7 598.0,42.7"/>
+      <polyline class="pc b" points="54.0,60.2 235.3,60.2 416.7,51.4 598.0,77.6"/>
+      <polyline class="pc b" points="54.0,51.4 235.3,51.4 416.7,51.4 598.0,60.2"/>
+      <polyline class="pc b" points="54.0,60.2 235.3,51.4 416.7,51.4 598.0,51.4"/>
+      <polyline class="pc b" points="54.0,77.6 235.3,95.0 416.7,68.9 598.0,182.2"/>
+      <polyline class="pc b" points="54.0,77.6 235.3,60.2 416.7,51.4 598.0,60.2"/>
+      <polyline class="pc-mean a" points="54.0,61.9 235.3,61.9 416.7,48.0 598.0,100.3"/>
+      <polyline class="pc-mean b" points="54.0,65.4 235.3,63.6 416.7,54.9 598.0,86.3"/>
+      </svg></div>
+    <p class="sub">The three lines that collapse on the right are the three builds that composed the HTML
+      briefing and wired it nowhere: two from n8n-as-code, one from Native MCP. Everything left of that
+      axis is a single tangle, which is the finding.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <h2>Runs</h2>
     <p class="sub">Each submitted run, with its own composite. The mean above is the mean of
       these, not a score recomputed from pooled measurements: the minimax ratio is defined
@@ -156,6 +231,8 @@
       <table>
         <tr><th>Run</th><th>Harness</th><th>Model</th><th class="num">n8n-as-code</th><th class="num">Native MCP</th></tr>
         <tr><td><code>run_10</code></td><td>Claude Code</td><td>claude-opus-5</td><td class="num a-col">100</td><td class="num b-col">76.3</td></tr>
+        <tr><td><code>run_12</code></td><td>Claude-Code</td><td>claude-opus-5 orchestrator, sonnet workers</td><td class="num a-col">87</td><td class="num b-col">91.3</td></tr>
+        <tr><td><code>run_13</code></td><td>Claude-Code</td><td>claude-opus-5 orchestrator, sonnet workers</td><td class="num a-col">89.8</td><td class="num b-col">88.2</td></tr>
       </table>
     </div>
   </div>
@@ -177,7 +254,7 @@
   <div class="wrap">
     <h2>Limits</h2>
     <ul class="notes">
-      <li><strong>One run.</strong> Every figure on this page comes from a single pair of builds, so none of the gaps are separated from run-to-run variance.</li>
+      <li><strong>3 runs.</strong> Gaps smaller than the spread between runs are not resolved.</li>
       <li>Correctness is a tie whenever both branches deploy a valid workflow that covers the brief, in which case the ranking is decided by the cost axes alone.</li>
       <li><strong>Ambition is not measured.</strong> Correctness asks whether a workflow works and covers the brief. Whether it is elegant or inventive is a separate judgement, not implemented.</li>
       <li>Runs from different harnesses and models are not numerically comparable to each other; only the two branches within a run are.</li>
@@ -187,7 +264,7 @@
 
 <footer>
   <div class="wrap">
-    Latest run: <code>run_10</code> ·
+    Latest run: <code>run_13</code> ·
     <a href="https://github.com/EtienneLescot/n8n-harness-benchmark/tree/main/results/history">full reports, server audits and deployed workflows</a> ·
     <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">repository</a> ·
     <a href="https://github.com/EtienneLescot/n8n-as-code">n8n-as-code</a>

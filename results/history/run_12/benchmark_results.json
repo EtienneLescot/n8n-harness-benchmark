@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "runId": "run_12",
+    "label": "1 build par outil",
+    "date": "2026-09-10",
+    "harness": "Claude-Code",
+    "model": "claude-opus-5 orchestrator, sonnet workers",
+    "underTest": "n8nac@2.6.0-rc.6",
+    "buildsPerBranch": 1,
+    "judgesPerBuild": 3,
+    "note": "A single build per branch. Its quality figures are a draw from the distribution run_13 measures, not a property of either tool.",
+    "run": "run_12"
+  },
+  "weights": {
+    "quality": 0.35,
+    "correctness": 0.3,
+    "tokenEfficiency": 0.2,
+    "buildTime": 0.15
+  },
+  "n8nac": {
+    "scores": {
+      "composite": 86.95,
+      "quality": 74,
+      "correctness": 100,
+      "tokenEfficiency": 100,
+      "buildTime": 73.66
+    },
+    "measured": {
+      "tokens": 143244,
+      "durationMs": 427082
+    }
+  },
+  "nativeMcp": {
+    "scores": {
+      "composite": 91.3,
+      "quality": 87,
+      "correctness": 100,
+      "tokenEfficiency": 79.26,
+      "buildTime": 100
+    },
+    "measured": {
+      "tokens": 165445,
+      "durationMs": 354789
+    }
+  },
+  "notes": [
+    "Quality graded by six isolated judges, three per workflow. The first panel, which showed both workflows to each judge, was voided."
+  ]
+}

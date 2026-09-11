@@ -1,0 +1,275 @@
+{
+  "metadata": {
+    "runId": "run_13",
+    "label": "5 builds par outil",
+    "date": "2026-09-11",
+    "harness": "Claude-Code",
+    "model": "claude-opus-5 orchestrator, sonnet workers",
+    "underTest": "n8nac@2.6.0-rc.6",
+    "buildsPerBranch": 5,
+    "judgesPerBuild": 3,
+    "note": "Quality: median of the three isolated judges within a build, then mean across the five builds, applied per dimension. Cost axes: median measurement per branch, then the relative curve. Legitimate here because all ten builds ran on one harness and one model.",
+    "run": "run_13"
+  },
+  "weights": {
+    "quality": 0.35,
+    "correctness": 0.3,
+    "tokenEfficiency": 0.2,
+    "buildTime": 0.15
+  },
+  "n8nac": {
+    "scores": {
+      "composite": 89.84,
+      "quality": 84.4,
+      "correctness": 100,
+      "tokenEfficiency": 100,
+      "buildTime": 68.69
+    },
+    "measured": {
+      "tokens": 133331,
+      "durationMs": 392974,
+      "deliveredOf": [
+        3,
+        5
+      ]
+    },
+    "qualityDimensions": {
+      "idea": 21.8,
+      "structure": 21.8,
+      "connections": 23.4,
+      "answer": 17.4
+    },
+    "builds": [
+      {
+        "label": "std_nac_1",
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 24,
+          "answer": 22
+        },
+        "quality": 90,
+        "judgeTotals": [
+          92,
+          86,
+          88
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 10,
+        "tokens": 150231,
+        "durationMs": 528192
+      },
+      {
+        "label": "std_nac_2",
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 24,
+          "answer": 21
+        },
+        "quality": 89,
+        "judgeTotals": [
+          88,
+          88,
+          92
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 11,
+        "tokens": 122589,
+        "durationMs": 378026
+      },
+      {
+        "label": "std_nac_3",
+        "dimensions": {
+          "idea": 21,
+          "structure": 21,
+          "connections": 22,
+          "answer": 10
+        },
+        "quality": 74,
+        "judgeTotals": [
+          74,
+          72,
+          72
+        ],
+        "delivers": false,
+        "terminal": "agent",
+        "nodes": 10,
+        "tokens": 141352,
+        "durationMs": 487221
+      },
+      {
+        "label": "std_nac_4",
+        "dimensions": {
+          "idea": 21,
+          "structure": 21,
+          "connections": 23,
+          "answer": 10
+        },
+        "quality": 75,
+        "judgeTotals": [
+          65,
+          74,
+          77
+        ],
+        "delivers": false,
+        "terminal": "set",
+        "nodes": 12,
+        "tokens": 133001,
+        "durationMs": 361051
+      },
+      {
+        "label": "std_nac_5",
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 24,
+          "answer": 24
+        },
+        "quality": 94,
+        "judgeTotals": [
+          93,
+          94,
+          95
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 133331,
+        "durationMs": 392974
+      }
+    ]
+  },
+  "nativeMcp": {
+    "scores": {
+      "composite": 88.16,
+      "quality": 84.6,
+      "correctness": 100,
+      "tokenEfficiency": 67.76,
+      "buildTime": 100
+    },
+    "measured": {
+      "tokens": 167929,
+      "durationMs": 314293,
+      "deliveredOf": [
+        4,
+        5
+      ]
+    },
+    "qualityDimensions": {
+      "idea": 21.4,
+      "structure": 21.6,
+      "connections": 22.6,
+      "answer": 19
+    },
+    "builds": [
+      {
+        "label": "std_mcp_1",
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 23,
+          "answer": 20
+        },
+        "quality": 87,
+        "judgeTotals": [
+          87,
+          89,
+          85
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 14,
+        "tokens": 162080,
+        "durationMs": 294794
+      },
+      {
+        "label": "std_mcp_2",
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 23,
+          "answer": 22
+        },
+        "quality": 91,
+        "judgeTotals": [
+          89,
+          92,
+          93
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 167929,
+        "durationMs": 442737
+      },
+      {
+        "label": "std_mcp_3",
+        "dimensions": {
+          "idea": 22,
+          "structure": 23,
+          "connections": 23,
+          "answer": 23
+        },
+        "quality": 91,
+        "judgeTotals": [
+          91,
+          90,
+          92
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 11,
+        "tokens": 161248,
+        "durationMs": 314293
+      },
+      {
+        "label": "std_mcp_4",
+        "dimensions": {
+          "idea": 20,
+          "structure": 18,
+          "connections": 21,
+          "answer": 8
+        },
+        "quality": 67,
+        "judgeTotals": [
+          68,
+          65,
+          73
+        ],
+        "delivers": false,
+        "terminal": "set",
+        "nodes": 11,
+        "tokens": 174341,
+        "durationMs": 309681
+      },
+      {
+        "label": "std_mcp_5",
+        "dimensions": {
+          "idea": 20,
+          "structure": 22,
+          "connections": 23,
+          "answer": 22
+        },
+        "quality": 87,
+        "judgeTotals": [
+          88,
+          91,
+          87
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 196917,
+        "durationMs": 458895
+      }
+    ]
+  },
+  "notes": [
+    "Correctness returned 100/100 on all ten artefacts, so it contributes the same 30 points to both composites and discriminates nothing.",
+    "Three builds of ten compose the HTML briefing and wire it nowhere: two n8n-as-code, one Native MCP. Same prompt, same model, same toolchain. That is variance, not a property.",
+    "All thirty judges named the terminal edge as the deciding factor and nothing else ever was."
+  ]
+}
