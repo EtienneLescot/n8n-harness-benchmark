@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "run": "run_16",
-    "label": "2.7.0 stable · 1 build each · full quality panel · ZCode",
+    "run": "run_17",
+    "label": "2.7.0 stable · 1 build each · full quality panel · ZCode (executed as run_16, renumbered run_17 at publication)",
     "date": "2026-09-11",
     "harness": "ZCode",
     "model": "GLM-5.3-Flash (orchestrator and workers)",

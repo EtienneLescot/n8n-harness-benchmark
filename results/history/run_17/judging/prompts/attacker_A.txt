@@ -1,0 +1,19 @@
+Someone claims the following defect in this n8n workflow. The claim is probably wrong.
+
+  Finding (id A, target: blinded_wf1.json), catalogue family 2 (engine semantics on declared fields; also 1 reachability):
+  On any day where either source returns zero items (no Gmail messages in the 24h window, or no calendar events in the day window), the fetch node emits zero items and the branch downstream of it never runs (a node runs only once its inputs have data; no node sets alwaysOutputData), so Combine Agent Analyses never receives both inputs and never executes - Briefing Director Agent, Build HTML Dashboard and Send Briefing Email never run, and no daily briefing is produced on empty-source days, despite the brief saying daily and the agents containing unreachable empty-state instructions.
+  JSON pointer it cites: /connections/Email Analyst Agent/main/0/0
+
+You have the workflow JSON, the structural facts, the user request, and the n8n execution semantics reference.
+
+Inputs:
+- Workflow JSON: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/blinded_wf1.json
+- Structural facts: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/facts_wf1.txt
+- n8n execution semantics reference: G:/repos/n8n-harness-benchmark/skills/judging/references/N8N_EXECUTION_SEMANTICS.md
+
+The user request the workflow was built from, verbatim:
+"Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard."
+
+Refute it. Look for: a connection that makes the ordering necessary rather than accidental, an engine behaviour that makes the concern moot, a reading of the request that the claim ignores, a pointer that does not resolve to what the claim says it does.
+
+Answer REFUTED with the reason, or SURVIVES with the single predicate over the workflow JSON that would settle it. Do not soften a refutation into agreement.

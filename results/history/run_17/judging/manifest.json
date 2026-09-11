@@ -1,0 +1,45 @@
+{
+  "run": "run_17",
+  "date": "2026-09-12",
+  "eligible": true,
+  "tier": "full",
+  "orchestrator": { "harness": "ZCode", "primaryAgent": "ZCode Orchestrator", "model": "GLM-5.3-Flash", "temperature": "runtime-default-not-exposed", "subagentRuntime": "ZCode Agent tool (general-purpose)" },
+  "phases": {
+    "qualityPanel": {
+      "judges": 6, "workflows": 2, "judgesPerWorkflow": 3, "pairwiseReviewers": 2,
+      "blinding": "blindWorkflow(); sealed randomised mapping (wf1=native_mcp, wf2=n8nac)",
+      "citationCheck": "24/24 pointers resolved, all totals equal dimension sums, 0 voided",
+      "grades": { "native_mcp": [94, 94, 92], "n8nac": [86, 88, 83] },
+      "medians": { "native_mcp": 94, "n8nac": 86 },
+      "spread": { "native_mcp": 2, "n8nac": 5 },
+      "pairwise": "split 1-1, both high confidence; one rationale inverted the delivery fact; published, never scored"
+    },
+    "defectPanel": {
+      "finders": 3, "attackers": 5, "confirmed": ["C", "E"], "refuted": ["A", "D"], "discardedByPredicate": ["B"],
+      "latentDefects": { "native_mcp": 2, "n8nac": 0, "weight": 0 },
+      "predicateSource": "predicates/adjudicate.mjs, re-runnable against blinded_wf*.json"
+    }
+  },
+  "cost": {
+    "tokens": 3688175,
+    "durationMs": 6681104,
+    "budgetCapTokens": 12637467,
+    "budgetRule": "3x combined builder token spend (4,212,489)",
+    "perPhase": {
+      "qualityPanel": { "tokens": 280289, "durationMs": 1227426 },
+      "finders": { "tokens": 1054824, "durationMs": 2228527 },
+      "attackers": { "tokens": 2353062, "durationMs": 3225151 }
+    },
+    "source": "ZCode runtime usage reports per subagent (prompt + completion)"
+  },
+  "kit": {
+    "prompts": "fixed, archived verbatim under judging/prompts/ before dispatch (judge_wf1, judge_wf2, pairwise x2 orders, finder_1..3, attacker_A..E)",
+    "references": ["skills/judging/QUALITY_RUBRIC.md", "skills/judging/references/QUALITY_RUBRIC.md", "skills/judging/references/N8N_EXECUTION_SEMANTICS.md", "skills/judging/references/CONFIRMATION_CATALOGUE.md"],
+    "harness": ["benchmark/harness/predicates.mjs (self-check passed)", "benchmark/harness/scoring.mjs blindWorkflow()"]
+  },
+  "isolation": {
+    "temporal": "panel dispatched only after both builds frozen and archived to results/history/run_16/",
+    "spatial": "npm run guard: 8 sandboxes, 84 files, 0 violations; no scoring document in any sandbox",
+    "semantic": "judges received one blinded workflow each; finders received blinded pairs with randomised order and branch-stripped validate verdicts"
+  }
+}

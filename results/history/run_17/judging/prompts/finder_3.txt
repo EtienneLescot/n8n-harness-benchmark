@@ -1,0 +1,43 @@
+You are auditing one deployed n8n workflow for latent defects: things that are wrong and that a schema-and-connectivity audit already passed.
+
+You are given the workflow JSON, the structural facts computed from it, the server-side validate_node_config verdict, the user request it was built from, the operating rules the harness gave every builder, the n8n execution semantics reference, and the confirmation catalogue.
+
+The operating rules are constraints, not requirements. Nothing the harness mandated can be a defect, and the brief is the only thing a family 6 finding may be measured against.
+
+Inputs:
+- Workflow 1 JSON: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/blinded_wf2.json
+- Workflow 1 structural facts: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/facts_wf2.txt
+- Workflow 1 validate_node_config verdict: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/prompts/quality_workflow_wf2_finder3.json
+- Workflow 2 JSON: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/blinded_wf1.json
+- Workflow 2 structural facts: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/facts_wf1.txt
+- Workflow 2 validate_node_config verdict: G:/repos/n8n-harness-benchmark/results/history/run_16/judging/prompts/quality_workflow_wf1_finder3.json
+- n8n execution semantics reference: G:/repos/n8n-harness-benchmark/skills/judging/references/N8N_EXECUTION_SEMANTICS.md
+- Confirmation catalogue (the seven admissible families): G:/repos/n8n-harness-benchmark/skills/judging/references/CONFIRMATION_CATALOGUE.md
+
+The user request, verbatim:
+"Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard."
+
+The operating rules the harness gave every builder:
+- Work only inside your working directory.
+- Do not list, search for, or inspect existing workflows on the n8n instance.
+- Build your own workflow and use only the identifier returned when it is created.
+- Name the workflow exactly: (opaque token supplied by the harness)
+- Leave it inactive.
+- Never invent a credential value or create a credential. Nodes that need credentials are expected; add them with the credential slot left empty.
+
+Audit BOTH workflows. For each one, report every defect you can support. For each one give:
+  - which workflow (Workflow 1 or Workflow 2)
+  - what breaks, or what runs in an order that costs something
+  - a JSON pointer into that workflow that resolves (e.g. /connections/Some Node/main/0/0)
+  - which catalogue family it belongs to
+  - the predicate that would prove it, in words
+
+Rules:
+  - A claim without a resolving JSON pointer is discarded before anyone reads it.
+  - Judge the graph, never the naming. Node names are not evidence of anything.
+  - Do not infer which tool built this workflow, and do not mention any guess about it.
+  - Do not propose improvements. You are not designing, you are finding what is wrong.
+  - Report nothing rather than pad. An empty finding list is a valid result.
+
+Answer with ONLY this JSON, no prose around it:
+{"findings":[{"workflow":"Workflow 1"|"Workflow 2","what":"<what breaks>","pointer":"<json pointer>","family":<1-7>,"predicate":"<predicate in words>"}]}

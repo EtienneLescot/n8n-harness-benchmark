@@ -1,0 +1,665 @@
+{
+  "id": "sMRHraGNtxpoHJVp",
+  "name": "bench-81edc43c",
+  "description": "Multi-agent daily briefing: Gmail and Google Calendar digests are sorted by Email Analyst and Calendar Analyst agents, merged and compiled by a Briefing Director agent into an HTML dashboard delivered by email.",
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T21:40:17.097Z",
+  "updatedAt": "2026-09-11T21:40:17.097Z",
+  "isArchived": false,
+  "versionId": "a3980050-979d-4525-8b19-08eba1ed6112",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "9c70c100-3b1b-4cef-961a-945df3b3f1fa",
+      "name": "Daily 08:00 Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        420
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "d924987d-6376-427b-9fb2-388eaaa395f9",
+      "name": "Fetch Last 24h Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        260
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "simple": false,
+        "filters": {
+          "readStatus": "both",
+          "receivedAfter": "={{ $now.minus({ hours: 24 }).toISO() }}"
+        }
+      },
+      "webhookId": "61e78fe9-080a-4533-a959-3f8f4909c92e"
+    },
+    {
+      "id": "3e77c9b4-15b3-40d0-a46d-a6356f29bd30",
+      "name": "Digest Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        260
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const all = $input.all();\nconst rows = [];\nfor (const it of all) {\n  const j = it.json || {};\n  const labelNames = Array.isArray(j.labels) ? j.labels.map(function (l) { return (l && (l.name || l.id)) || ''; }).filter(Boolean).join(', ') : '';\n  rows.push({\n    from: j.From || j.from || '(unknown sender)',\n    subject: j.Subject || j.subject || '(no subject)',\n    snippet: String(j.snippet || '').replace(/\\s+/g, ' ').slice(0, 220),\n    received: j.internalDate || j.date || '',\n    labels: labelNames\n  });\n}\nconst lines = [];\nfor (let i = 0; i < rows.length; i++) {\n  const r = rows[i];\n  lines.push('[' + (i + 1) + '] From: ' + r.from + '\\n    Subject: ' + r.subject + '\\n    Received: ' + r.received + '\\n    Labels: ' + (r.labels || '(none)') + '\\n    Snippet: ' + r.snippet);\n}\nconst digestText = rows.length > 0 ? lines.join('\\n') : 'No emails were received in the last 24 hours.';\nreturn [{ json: { count: rows.length, emails: rows, digestText: digestText } }];"
+      }
+    },
+    {
+      "id": "d9cfd1dc-45ff-45c3-bf54-c32b907cfcef",
+      "name": "Email Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1080,
+        260
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email digest for the last 24 hours - {{ $json.count }} messages:\n{{ $json.digestText }}\n\nSort every message into the three categories and return the structured analysis.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Email Analyst agent in a multi-agent daily-briefing pipeline. You receive a compact digest of Gmail messages from the last 24 hours. Sort each message into exactly one category: priorityInbox (a reply or action is needed today), reading (worth reading, no action needed) or noise (newsletters, automated notifications, receipts). For every email assign priority high, medium or low, write a one-sentence summary and one concrete suggestedAction. Set totalAnalyzed to the number of messages and keyThemes to the recurring topics. Never invent emails that are not in the digest. Respond only with the structured output."
+        }
+      }
+    },
+    {
+      "id": "297987cd-6870-4c5b-8eee-a96cdd81d845",
+      "name": "OpenAI Model - Email Analyst",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        980,
+        440
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "e69c9e7b-c8c7-4d70-bba7-09883fc59512",
+      "name": "Email Analysis Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        440
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{ \"section\": \"email\", \"totalAnalyzed\": 12, \"priorityInbox\": [ { \"from\": \"anna@acme.com\", \"subject\": \"Q3 report due today\", \"summary\": \"Wants the final Q3 numbers before the 17:00 call\", \"priority\": \"high\", \"suggestedAction\": \"Reply with the delivery time\" } ], \"reading\": [ { \"from\": \"newsletter@industry.io\", \"subject\": \"Weekly industry news\", \"summary\": \"Roundup of market news\", \"priority\": \"low\", \"suggestedAction\": \"Read when free\" } ], \"noise\": [ { \"from\": \"no-reply@service.com\", \"subject\": \"Your monthly statement is ready\", \"summary\": \"Automated account notification\", \"priority\": \"low\", \"suggestedAction\": \"Archive\" } ], \"keyThemes\": \"Deadlines, invoices, vendor updates\" }"
+      }
+    },
+    {
+      "id": "8460efd2-4338-4b5b-882a-ce9b4bc76cbd",
+      "name": "Combine Agent Analyses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1400,
+        420
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "85516636-38b5-4e25-83b9-32e429536b5f",
+      "name": "Fetch Next 3 Days Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        520,
+        580
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 25,
+        "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+        "timeMax": "={{ $now.endOf(\"day\").plus({ days: 2 }).toISO() }}",
+        "options": {
+          "orderBy": "startTime",
+          "singleEvents": true,
+          "recurringEventHandling": "expand"
+        }
+      }
+    },
+    {
+      "id": "1eb76e64-8b61-475c-b415-4efb2f14b717",
+      "name": "Digest Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        580
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const all = $input.all();\nconst rows = [];\nfor (const it of all) {\n  const j = it.json || {};\n  const start = (j.start && (j.start.dateTime || j.start.date)) || '';\n  const end = (j.end && (j.end.dateTime || j.end.date)) || '';\n  rows.push({\n    title: j.summary || '(untitled event)',\n    start: start,\n    end: end,\n    location: j.location || '',\n    meetLink: j.hangoutLink || '',\n    attendees: Array.isArray(j.attendees) ? j.attendees.length : 0,\n    status: j.status || 'confirmed'\n  });\n}\nconst lines = [];\nfor (let i = 0; i < rows.length; i++) {\n  const r = rows[i];\n  let line = '[' + (i + 1) + '] ' + r.title + '\\n    ' + r.start + ' -> ' + r.end + '\\n    Attendees: ' + r.attendees;\n  if (r.location) { line += '\\n    Location: ' + r.location; }\n  if (r.meetLink) { line += '\\n    Meet link: ' + r.meetLink; }\n  lines.push(line);\n}\nconst digestText = rows.length > 0 ? lines.join('\\n') : 'No events are scheduled in the selected window.';\nreturn [{ json: { count: rows.length, events: rows, digestText: digestText } }];"
+      }
+    },
+    {
+      "id": "70b10ba2-53d5-4a45-817c-b029adb83456",
+      "name": "Calendar Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1080,
+        580
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Calendar digest for today and the next two days - {{ $json.count }} events:\n{{ $json.digestText }}\n\nAnalyse the schedule and return the structured analysis.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Calendar Analyst agent in a multi-agent daily-briefing pipeline. You receive a compact digest of Google Calendar events for today and the next two days. For every meeting assign priority high, medium or low, write a short prepNote and keep the attendee count. Identify the busiestPeriod, the focusWindows where the user has time for deep work, and list any overlapping events as conflicts. Set totalEvents and write a one-sentence overview of how loaded the days are. Never invent events that are not in the digest. Respond only with the structured output."
+        }
+      }
+    },
+    {
+      "id": "751706da-d329-4224-8b95-cbffb948a351",
+      "name": "OpenAI Model - Calendar Analyst",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        980,
+        760
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "c65322bc-0a4a-4b7e-a9cb-53c0da27f4e7",
+      "name": "Calendar Analysis Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        760
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{ \"section\": \"calendar\", \"totalEvents\": 5, \"busiestPeriod\": \"10:00 - 13:00\", \"overview\": \"Meeting-heavy morning, calm afternoon\", \"meetings\": [ { \"title\": \"Sprint standup\", \"start\": \"2026-09-11T09:30:00+02:00\", \"end\": \"2026-09-11T09:45:00+02:00\", \"priority\": \"medium\", \"prepNote\": \"Prepare yesterday progress summary\", \"attendees\": 6 } ], \"focusWindows\": \"13:30 - 17:00 free for deep work\", \"conflicts\": [] }"
+      }
+    },
+    {
+      "id": "e637d1be-5cb8-45d6-89a9-e3d7425d1524",
+      "name": "Assemble Briefing Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nlet emailAnalysis = null;\nlet calendarAnalysis = null;\nfor (const it of items) {\n  const raw = (it.json || {}).output;\n  let obj = raw;\n  if (typeof raw === 'string') { try { obj = JSON.parse(raw); } catch (e) { obj = null; } }\n  if (!obj) { continue; }\n  if (obj.section === 'email' && !emailAnalysis) { emailAnalysis = obj; }\n  if (obj.section === 'calendar' && !calendarAnalysis) { calendarAnalysis = obj; }\n}\nif (!emailAnalysis) { emailAnalysis = { section: 'email', totalAnalyzed: 0, priorityInbox: [], reading: [], noise: [], keyThemes: 'Email analysis unavailable in this run.' }; }\nif (!calendarAnalysis) { calendarAnalysis = { section: 'calendar', totalEvents: 0, overview: 'Calendar analysis unavailable in this run.', meetings: [], focusWindows: '', conflicts: [], busiestPeriod: '' }; }\nconst now = new Date().toISOString();\nreturn [{ json: { generatedAt: now, briefingDate: now.slice(0, 10), emailAnalysis: emailAnalysis, calendarAnalysis: calendarAnalysis } }];"
+      }
+    },
+    {
+      "id": "b64caa91-c19c-4646-9716-05a9ec473b3c",
+      "name": "Briefing Director Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1920,
+        420
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Briefing date: {{ $now.toFormat(\"cccc d LLLL yyyy\") }}\nEMAIL ANALYSIS from the Email Analyst agent:\n{{ JSON.stringify($json.emailAnalysis) }}\n\nCALENDAR ANALYSIS from the Calendar Analyst agent:\n{{ JSON.stringify($json.calendarAnalysis) }}\n\nMerge the two analyses into the final structured daily briefing.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Briefing Director agent leading a multi-agent daily-briefing pipeline. Two specialist agents have analysed the inbox (Email Analyst) and the calendar (Calendar Analyst); their structured analyses arrive in the prompt. Merge them into one crisp daily briefing: write a headline for the day, a two-sentence daySummary, choose at most 5 topPriorities across both sources, keep the most important emailHighlights and meetingHighlights, and list concrete actionItems. Never invent emails or events that are not in the analyses. Respond only with the structured output."
+        }
+      }
+    },
+    {
+      "id": "56069437-e072-44b0-b507-97b5485c2653",
+      "name": "OpenAI Model - Briefing Director",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1620,
+        600
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "0c240dd9-1a6e-466b-aa0b-1996e8ece42f",
+      "name": "Briefing Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        600
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{ \"headline\": \"Busy morning: 3 meetings and 2 priority emails\", \"daySummary\": \"Two sentences on how the day looks and what to watch out for.\", \"topPriorities\": [ { \"title\": \"Send Q3 report\", \"reason\": \"Hard deadline at 17:00\", \"source\": \"email\" } ], \"emailHighlights\": [ { \"from\": \"anna@acme.com\", \"subject\": \"Q3 report due today\", \"summary\": \"Wants the final numbers before the 17:00 call\", \"priority\": \"high\" } ], \"meetingHighlights\": [ { \"title\": \"Client demo\", \"start\": \"2026-09-11T14:00:00+02:00\", \"end\": \"2026-09-11T15:00:00+02:00\", \"note\": \"Demo environment is ready\" } ], \"actionItems\": [ { \"action\": \"Reply to Anna with the delivery time\", \"source\": \"email\" } ] }"
+      }
+    },
+    {
+      "id": "968886f7-7418-40f5-a1d8-b7e894e11e78",
+      "name": "Build HTML Dashboard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        420
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const raw = $input.first().json || {};\nlet b = raw.output !== undefined ? raw.output : raw;\nif (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }\nb = b || {};\nconst esc = function (v) { return String(v === undefined || v === null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };\nconst arr = function (v) { return Array.isArray(v) ? v : []; };\nconst priorities = arr(b.topPriorities);\nconst emails = arr(b.emailHighlights);\nconst meetings = arr(b.meetingHighlights);\nconst actions = arr(b.actionItems);\nconst COLOR = { high: '#e5484d', medium: '#f0a020', low: '#30a46c' };\nconst dot = function (p) { const c = COLOR[String(p || '').toLowerCase()] || '#8e8ea0'; return '<span style=\"display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:8px;\"></span>'; };\nconst prioBar = function (p) { const c = COLOR[String(p || '').toLowerCase()] || '#8e8ea0'; return '<span style=\"display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600;color:#ffffff;background:' + c + ';\">' + esc(String(p || 'normal').toUpperCase()) + '</span>'; };\nconst genAt = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';\n\nlet priosHtml = '';\nfor (const p of priorities) {\n  priosHtml += '<tr><td style=\"padding:8px 0;border-bottom:1px solid #ececf1;\">' + dot(p.source) + '<span style=\"font-size:14px;color:#1a1a2e;font-weight:600;\">' + esc(p.title) + '</span>' + (p.reason ? '<br><span style=\"font-size:12px;color:#6b6b80;padding-left:18px;\">' + esc(p.reason) + '</span>' : '') + '</td></tr>';\n}\nif (!priosHtml) { priosHtml = '<tr><td style=\"padding:8px 0;color:#6b6b80;font-size:13px;\">No priorities flagged today.</td></tr>'; }\n\nlet emailsHtml = '';\nfor (const m of emails) {\n  emailsHtml += '<tr><td style=\"padding:10px 12px;border-bottom:1px solid #ececf1;\">' + prioBar(m.priority) + ' <span style=\"font-size:13px;color:#1a1a2e;font-weight:600;\">' + esc(m.subject) + '</span><br><span style=\"font-size:12px;color:#6b6b80;\">From ' + esc(m.from) + '</span>' + (m.summary ? '<br><span style=\"font-size:12px;color:#3d3d56;\">' + esc(m.summary) + '</span>' : '') + '</td></tr>';\n}\nif (!emailsHtml) { emailsHtml = '<tr><td style=\"padding:10px 12px;color:#6b6b80;font-size:13px;\">No email highlights for today.</td></tr>'; }\n\nlet meetsHtml = '';\nfor (const g of meetings) {\n  const st = String(g.start || '');\n  const en = String(g.end || '');\n  const stLabel = st.length >= 16 ? st.slice(11, 16) : st;\n  const dayLabel = st.length >= 10 ? st.slice(0, 10) : '';\n  meetsHtml += '<tr><td style=\"padding:10px 12px;border-bottom:1px solid #ececf1;white-space:nowrap;font-size:13px;color:#4f46e5;font-weight:700;vertical-align:top;width:70px;\">' + esc(dayLabel) + '<br>' + esc(stLabel) + '</td><td style=\"padding:10px 12px;border-bottom:1px solid #ececf1;font-size:13px;color:#1a1a2e;font-weight:600;vertical-align:top;\">' + esc(g.title) + (g.note ? '<br><span style=\"font-size:12px;color:#6b6b80;font-weight:400;\">' + esc(g.note) + '</span>' : '') + '</td><td style=\"padding:10px 12px;border-bottom:1px solid #ececf1;vertical-align:top;\">' + prioBar(g.priority) + '</td></tr>';\n}\nif (!meetsHtml) { meetsHtml = '<tr><td style=\"padding:10px 12px;color:#6b6b80;font-size:13px;\">No meetings scheduled.</td></tr>'; }\n\nlet actsHtml = '';\nfor (const a of actions) {\n  const tag = a.source ? ' <span style=\"font-size:10px;color:#8e8ea0;\">[' + esc(a.source) + ']</span>' : '';\n  actsHtml += '<tr><td style=\"padding:7px 0;border-bottom:1px solid #ececf1;font-size:13px;color:#1a1a2e;\">' + dot('#4f46e5') + esc(a.action) + tag + '</td></tr>';\n}\nif (!actsHtml) { actsHtml = '<tr><td style=\"padding:7px 0;color:#6b6b80;font-size:13px;\">Nothing to act on right now.</td></tr>'; }\n\nconst kpi = function (num, label, bg) { return '<td style=\"background:' + bg + ';border-radius:10px;padding:14px 10px;text-align:center;width:25%;\"><div style=\"font-size:22px;font-weight:800;color:#ffffff;\">' + num + '</div><div style=\"font-size:11px;color:rgba(255,255,255,0.85);text-transform:uppercase;letter-spacing:0.5px;\">' + label + '</div></td>'; };\n\nconst html = '<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Daily Briefing</title></head>' +\n'<body style=\"margin:0;padding:0;background:#f4f4f8;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;\">' +\n'<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f4f4f8;padding:24px 0;\"><tr><td align=\"center\">' +\n'<table role=\"presentation\" width=\"720\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:720px;width:96%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(20,20,43,0.08);\">' +\n'<tr><td style=\"background:#141433;background-image:linear-gradient(135deg,#141433 0%,#4338ca 100%);padding:28px 32px;\">' +\n'<div style=\"font-size:12px;color:#a5b4fc;text-transform:uppercase;letter-spacing:2px;font-weight:700;\">Daily Briefing</div>' +\n'<div style=\"font-size:24px;font-weight:800;color:#ffffff;margin-top:6px;\">' + esc(b.headline || 'Your day at a glance') + '</div>' +\n(b.daySummary ? '<div style=\"font-size:14px;color:#c7d2fe;margin-top:10px;line-height:1.5;\">' + esc(b.daySummary) + '</div>' : '') +\n'</td></tr>' +\n'<tr><td style=\"padding:20px 32px 4px 32px;\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"8\"><tr>' +\nkpi(priorities.length, 'Priorities', '#4f46e5') + kpi(emails.length, 'Email highlights', '#e5484d') + kpi(meetings.length, 'Meetings', '#0ea5e9') + kpi(actions.length, 'Action items', '#30a46c') +\n'</tr></table></td></tr>' +\n'<tr><td style=\"padding:12px 32px;\"><div style=\"font-size:13px;font-weight:800;color:#141433;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;\">Top priorities</div><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">' + priosHtml + '</table></td></tr>' +\n'<tr><td style=\"padding:12px 32px;\"><div style=\"font-size:13px;font-weight:800;color:#141433;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;\">Meetings & events</div><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border:1px solid #ececf1;border-radius:10px;\">' + meetsHtml + '</table></td></tr>' +\n'<tr><td style=\"padding:12px 32px;\"><div style=\"font-size:13px;font-weight:800;color:#141433;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;\">Emails worth attention</div><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border:1px solid #ececf1;border-radius:10px;\">' + emailsHtml + '</table></td></tr>' +\n'<tr><td style=\"padding:12px 32px;\"><div style=\"font-size:13px;font-weight:800;color:#141433;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;\">Action items</div><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">' + actsHtml + '</table></td></tr>' +\n'<tr><td style=\"padding:16px 32px 24px 32px;border-top:1px solid #ececf1;\"><div style=\"font-size:11px;color:#9ca3af;\">Compiled by the bench-81edc43c multi-agent pipeline (Email Analyst, Calendar Analyst, Briefing Director) - generated ' + esc(genAt) + '.</div></td></tr>' +\n'</table></td></tr></table></body></html>';\n\nreturn [{ json: { subject: 'Daily Briefing - ' + esc(b.headline || 'Your day at a glance'), html: html, priorityCount: priorities.length, emailCount: emails.length, meetingCount: meetings.length, actionCount: actions.length } }];"
+      }
+    },
+    {
+      "id": "5d80b397-3bb8-4634-a5a8-4214b3459a81",
+      "name": "Send Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2480,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "you@example.com",
+        "subject": "=Daily Briefing - {{ $now.toFormat(\"yyyy-LL-dd\") }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "webhookId": "c53f62e5-4da0-4bfd-bdce-af26f940b5d7"
+    },
+    {
+      "id": "2118be31-2aa1-4d98-b270-ed993c2899df",
+      "name": "Sticky Note a535b50b",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "content": "## Setup before activating\n1. Connect your Google account on the two Gmail nodes and the Google Calendar node (credential slots are intentionally empty).\n2. Connect an OpenAI credential on the three model nodes.\n3. Replace the placeholder recipient in Send Briefing Email.\nThe briefing runs daily at 08:00 instance time and arrives as an HTML dashboard email.",
+        "color": 3
+      }
+    },
+    {
+      "id": "4085ca78-c91a-4f81-969d-cf4ddb80a60d",
+      "name": "Sticky Note f3d8bddc",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        560
+      ],
+      "parameters": {
+        "content": "## Multi-agent pipeline\nEmail Analyst and Calendar Analyst sort each source in parallel with structured output. The Briefing Director agent then merges both analyses into the final briefing rendered as the HTML dashboard.",
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Daily 08:00 Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Last 24h Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Next 3 Days Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Last 24h Emails": {
+      "main": [
+        [
+          {
+            "node": "Digest Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digest Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Analyses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Email Analyst": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Analysis Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Agent Analyses": {
+      "main": [
+        [
+          {
+            "node": "Assemble Briefing Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Next 3 Days Events": {
+      "main": [
+        [
+          {
+            "node": "Digest Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Digest Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Analyses",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Calendar Analyst": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Analysis Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Briefing Input": {
+      "main": [
+        [
+          {
+            "node": "Briefing Director Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Director Agent": {
+      "main": [
+        [
+          {
+            "node": "Build HTML Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Briefing Director": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Briefing Director Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Briefing Director Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Send Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "0801a44c-8c39-41a7-b58d-cf38ac2a25c8",
+      "name": "Check Gmail",
+      "nodeIds": [
+        "d924987d-6376-427b-9fb2-388eaaa395f9",
+        "3e77c9b4-15b3-40d0-a46d-a6356f29bd30"
+      ],
+      "description": "Pulls Gmail messages from the last 24 hours and builds a compact digest"
+    },
+    {
+      "id": "5bf01ed3-562b-4e54-99fb-cc322f6dd823",
+      "name": "Check Calendar",
+      "nodeIds": [
+        "85516636-38b5-4e25-83b9-32e429536b5f",
+        "1eb76e64-8b61-475c-b415-4efb2f14b717"
+      ],
+      "description": "Pulls Google Calendar events for today and the next two days and builds a compact digest"
+    },
+    {
+      "id": "223af90c-b8bb-44d5-8b6e-32c48bbf2d0c",
+      "name": "Email Analyst Agent",
+      "nodeIds": [
+        "d9cfd1dc-45ff-45c3-bf54-c32b907cfcef",
+        "297987cd-6870-4c5b-8eee-a96cdd81d845",
+        "e69c9e7b-c8c7-4d70-bba7-09883fc59512"
+      ],
+      "description": "Specialist agent sorting the email digest into priority, reading and noise"
+    },
+    {
+      "id": "3a5b4b63-2a39-441f-b6c8-0725b2760310",
+      "name": "Calendar Analyst Agent",
+      "nodeIds": [
+        "70b10ba2-53d5-4a45-817c-b029adb83456",
+        "751706da-d329-4224-8b95-cbffb948a351",
+        "c65322bc-0a4a-4b7e-a9cb-53c0da27f4e7"
+      ],
+      "description": "Specialist agent sorting and scoring the calendar digest"
+    },
+    {
+      "id": "380f0a95-30d0-4985-97ce-bac8e8a4cf01",
+      "name": "Briefing Director Agent",
+      "nodeIds": [
+        "b64caa91-c19c-4646-9716-05a9ec473b3c",
+        "56069437-e072-44b0-b507-97b5485c2653",
+        "0c240dd9-1a6e-466b-aa0b-1996e8ece42f"
+      ],
+      "description": "Lead agent merging both analyses into one briefing"
+    },
+    {
+      "id": "b2b4c81a-0ecc-4b0b-8c52-e676b2f9cb93",
+      "name": "Build & Send Dashboard",
+      "nodeIds": [
+        "968886f7-7418-40f5-a1d8-b7e894e11e78",
+        "5d80b397-3bb8-4634-a5a8-4214b3459a81"
+      ],
+      "description": "Renders the HTML dashboard and emails it daily"
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "sMRHraGNtxpoHJVp",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T21:40:17.098Z",
+      "updatedAt": "2026-09-11T21:40:17.098Z"
+    }
+  ],
+  "activeVersion": null
+}

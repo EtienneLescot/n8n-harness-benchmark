@@ -100,10 +100,12 @@
     <div class="eyebrow">Deterministic on three axes · judged on the fourth</div>
     <h1>n8n-as-code <span class="vs">vs</span> n8n Native MCP</h1>
     <p class="lede">
-      Two AI agents get the same one-sentence brief, the same model, and the same n8n Cloud
+      Two AI builders get the same one-sentence brief, the same model, and the same n8n Cloud
       instance. One drives the <strong>n8n-as-code</strong> CLI, the other drives n8n's own
-      <strong>native MCP server</strong>. Every figure below is computed from the deployed
-      workflow by the n8n server's own validation RPC — no model grades anything.
+      <strong>native MCP server</strong>. Correctness is computed from the deployed workflow by the
+      n8n server's own validation RPC — no model grades it. Quality is graded by three isolated,
+      blinded judges per workflow under a published rubric; the cost axes are relative to the
+      better branch, so only the gap between the two counts.
     </p>
   </div>
 </header>
@@ -115,10 +117,11 @@
     <p class="sub">The four scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
       Two of the four are relative, so a branch score on them moves when the <em>other</em> branch
-      moves. Between the last two runs Native MCP was not re-run at all, same builds, same tokens,
-      same seconds, and its token score still rose from 67.8 to 77.2 because n8n-as-code got more
-      expensive. A score going up does not always mean that branch did better.
-      From the deepest run on the current weights: Antigravity Live · 1 build each · Gemini 3.8 Flash, and 3 isolated judges per build. 2 earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.</p>
+      moves. The chart shows the latest run: 2.7.0 · one build per branch · orchestrated by ZCode
+      with GLM-5.3-Flash on every worker · full quality panel (three isolated blinded judges per
+      workflow) and an adjudicated adversarial defect panel. This run reverses the previous one's
+      cost direction: the Native MCP branch was both the faster and the cheaper build, while
+      correctness saturated at 100 on both sides.</p>
     <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
     <div class="radar">
       <svg viewBox="0 0 580 420" role="img" aria-label="Comparison across the four scored axes; further from the centre is better on every axis">
@@ -130,10 +133,10 @@
       <line class="spoke" x1="265" y1="216" x2="391.0" y2="216.0"/>
       <line class="spoke" x1="265" y1="216" x2="265.0" y2="342.0"/>
       <line class="spoke" x1="265" y1="216" x2="139.0" y2="216.0"/>
-      <polygon class="shape a" points="265.0,120.2 391.0,216.0 265.0,342.0 139.0,216.0"/>
-      <polygon class="shape b" points="265.0,103.9 391.0,216.0 265.0,259.7 144.2,216.0"/>
-      <circle class="dot a" cx="265.0" cy="120.2" r="3.5"/><circle class="dot a" cx="391.0" cy="216.0" r="3.5"/><circle class="dot a" cx="265.0" cy="342.0" r="3.5"/><circle class="dot a" cx="139.0" cy="216.0" r="3.5"/>
-      <circle class="dot b" cx="265.0" cy="103.9" r="3.5"/><circle class="dot b" cx="391.0" cy="216.0" r="3.5"/><circle class="dot b" cx="265.0" cy="259.7" r="3.5"/><circle class="dot b" cx="144.2" cy="216.0" r="3.5"/>
+      <polygon class="shape a" points="265.0,108.5 391.0,216.0 265.0,311.5 154.4,216.0"/>
+      <polygon class="shape b" points="265.0,97.6 391.0,216.0 265.0,342.0 139.0,216.0"/>
+      <circle class="dot a" cx="265.0" cy="108.5" r="3.5"/><circle class="dot a" cx="391.0" cy="216.0" r="3.5"/><circle class="dot a" cx="265.0" cy="311.5" r="3.5"/><circle class="dot a" cx="154.4" cy="216.0" r="3.5"/>
+      <circle class="dot b" cx="265.0" cy="97.6" r="3.5"/><circle class="dot b" cx="391.0" cy="216.0" r="3.5"/><circle class="dot b" cx="265.0" cy="342.0" r="3.5"/><circle class="dot b" cx="139.0" cy="216.0" r="3.5"/>
       <text class="axis-label" text-anchor="middle" x="265.0" y="16.0"><tspan x="265.0" dy="0">Quality</tspan><tspan class="axis-note" x="265.0" dy="12">the idea, node structure,</tspan><tspan class="axis-note" x="265.0" dy="12">connections, answer to</tspan><tspan class="axis-note" x="265.0" dy="12">the prompt</tspan></text>
       <text class="axis-label" text-anchor="start" x="421.0" y="220.0"><tspan x="421.0" dy="0">Correctness</tspan><tspan class="axis-note" x="421.0" dy="12">requirement coverage,</tspan><tspan class="axis-note" x="421.0" dy="12">node validity,</tspan><tspan class="axis-note" x="421.0" dy="12">graph integrity</tspan></text>
       <text class="axis-label" text-anchor="middle" x="265.0" y="386.0"><tspan x="265.0" dy="0">Token</tspan><tspan x="265.0" dy="12">efficiency</tspan></text>
@@ -141,8 +144,11 @@
       </svg>
       <div class="side">
         <div class="cell total"><div class="k">Overall score</div>
-          <div class="v a">91.6</div>
-          <div class="v b">82.5</div></div>      </div>
+          <div class="v a">88.4</div>
+          <div class="v b">97.9</div></div>
+        <div class="cell"><div class="k">Quality — median of 3 judges</div>
+          <div class="v a">86</div>
+          <div class="v b">94</div></div>      </div>
     </div>
     <h3>Correctness, in detail</h3>
     <div class="scroll">
@@ -161,9 +167,9 @@
 <section>
   <div class="wrap">
     <h2>Inside the quality axis</h2>
-    <p class="sub">Four dimensions, 25 points each, from the run with 1 builds per tool
-      and 3 isolated judges per build. Median across the judges of a build,
-      then mean across builds.</p>
+    <p class="sub">Four dimensions, 25 points each, from the latest run — one build per tool,
+      3 isolated judges per workflow. One blinded workflow per judge; the published grade is the
+      median. Every dimension citation was verified to resolve in the artefact.</p>
     <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
     <div class="chart"><svg viewBox="0 0 560 400" role="img" aria-label="The four quality dimensions, 25 points each">
       <polygon class="ring" points="280.0,170.5 309.5,200.0 280.0,229.5 250.5,200.0"/>
@@ -174,28 +180,32 @@
       <line class="spoke" x1="280" y1="200" x2="398.0" y2="200.0"/>
       <line class="spoke" x1="280" y1="200" x2="280.0" y2="318.0"/>
       <line class="spoke" x1="280" y1="200" x2="162.0" y2="200.0"/>
-      <polygon class="shape a" points="280.0,96.2 374.4,200.0 280.0,275.5 195.0,200.0"/>
-      <polygon class="shape b" points="280.0,86.7 388.6,200.0 280.0,318.0 195.0,200.0"/>
-      <circle class="dot a" cx="280.0" cy="96.2" r="3.5"/><circle class="dot a" cx="374.4" cy="200.0" r="3.5"/><circle class="dot a" cx="280.0" cy="275.5" r="3.5"/><circle class="dot a" cx="195.0" cy="200.0" r="3.5"/>
-      <circle class="dot b" cx="280.0" cy="86.7" r="3.5"/><circle class="dot b" cx="388.6" cy="200.0" r="3.5"/><circle class="dot b" cx="280.0" cy="318.0" r="3.5"/><circle class="dot b" cx="195.0" cy="200.0" r="3.5"/>
+      <polygon class="shape a" points="280.0,96.2 383.8,200.0 280.0,313.3 195.0,200.0"/>
+      <polygon class="shape b" points="280.0,91.4 388.6,200.0 280.0,313.3 171.4,200.0"/>
+      <circle class="dot a" cx="280.0" cy="96.2" r="3.5"/><circle class="dot a" cx="383.8" cy="200.0" r="3.5"/><circle class="dot a" cx="280.0" cy="313.3" r="3.5"/><circle class="dot a" cx="195.0" cy="200.0" r="3.5"/>
+      <circle class="dot b" cx="280.0" cy="91.4" r="3.5"/><circle class="dot b" cx="388.6" cy="200.0" r="3.5"/><circle class="dot b" cx="280.0" cy="313.3" r="3.5"/><circle class="dot b" cx="171.4" cy="200.0" r="3.5"/>
       <text class="axis-label" text-anchor="middle" x="280.0" y="54.0"><tspan x="280.0" dy="0">The idea</tspan></text>
       <text class="axis-label" text-anchor="start" x="420.0" y="204.0"><tspan x="420.0" dy="0">Node structure</tspan></text>
       <text class="axis-label" text-anchor="middle" x="280.0" y="354.0"><tspan x="280.0" dy="0">Connections</tspan></text>
       <text class="axis-label" text-anchor="end" x="140.0" y="204.0"><tspan x="140.0" dy="0">Answer to</tspan><tspan x="140.0" dy="12">the prompt</tspan></text>
       </svg></div>
     <p class="sub">Three of the four dimensions are a dead heat. The whole difference sits on the last one,
-      and it is the delivery question: does the briefing reach anyone.</p>
+      and it is the delivery question: does the briefing reach anyone. All three n8n-as-code judges
+      independently cited the same weakness — the workflow terminates at <code>Convert Dashboard To
+      File</code>, leaving <code>daily-briefing.html</code> as binary in execution data, with no email,
+      upload or served page. The Native MCP build renders the dashboard deterministically and emails it.</p>
   </div>
 </section>
 
 <section>
   <div class="wrap">
     <h2>Every build, one line each</h2>
-    <p class="sub">Ten builds on the same four dimensions. A radar saturates past four or five overlaid
-      shapes, so these are parallel coordinates: the axes stand side by side and heights compare directly.
-      Thin lines are individual builds, thick lines the mean of each tool.</p>
+    <p class="sub">The six judges of the latest run on the same four dimensions. A radar saturates past
+      four or five overlaid shapes, so these are parallel coordinates: the axes stand side by side and
+      heights compare directly. Thin lines are individual judges, thick lines the median shape of each
+      tool.</p>
     <div class="legend"><span class="key"><i class="swatch a"></i>n8n-as-code</span><span class="key"><i class="swatch b"></i>Native MCP</span></div>
-    <div class="chart"><svg viewBox="0 0 620 306" role="img" aria-label="Every build on the four quality dimensions, one line per build">
+    <div class="chart"><svg viewBox="0 0 620 306" role="img" aria-label="Every judge on the four quality dimensions, one line per judge">
       <line class="ring" x1="60" y1="252.0" x2="562" y2="252.0"/><text class="tick" text-anchor="end" x="52" y="255.5">0</text>
       <line class="ring" x1="60" y1="197.5" x2="562" y2="197.5"/><text class="tick" text-anchor="end" x="52" y="201.0">6.25</text>
       <line class="ring" x1="60" y1="143.0" x2="562" y2="143.0"/><text class="tick" text-anchor="end" x="52" y="146.5">12.5</text>
@@ -205,14 +215,18 @@
       <line class="spoke" x1="227.3" y1="34" x2="227.3" y2="252"/><text class="axis-label" text-anchor="middle" x="227.3" y="270"><tspan x="227.3" dy="0">Node structure</tspan></text>
       <line class="spoke" x1="394.7" y1="34" x2="394.7" y2="252"/><text class="axis-label" text-anchor="middle" x="394.7" y="270"><tspan x="394.7" dy="0">Connections</tspan></text>
       <line class="spoke" x1="562.0" y1="34" x2="562.0" y2="252"/><text class="axis-label" text-anchor="end" x="562.0" y="270"><tspan x="562.0" dy="0">Answer to</tspan><tspan x="562.0" dy="12">the prompt</tspan></text>
-      <polyline class="pc a" points="60.0,60.2 227.3,77.6 394.7,112.5 562.0,95.0"/>
-      <polyline class="pc b" points="60.0,42.7 227.3,51.4 394.7,34.0 562.0,95.0"/>
-      <polyline class="pc-mean a" points="60.0,60.2 227.3,77.6 394.7,112.5 562.0,95.0"/>
-      <polyline class="pc-mean b" points="60.0,42.7 227.3,51.4 394.7,34.0 562.0,95.0"/>
+      <polyline class="pc a" points="60.0,60.2 227.3,60.2 394.7,42.7 562.0,95.0"/>
+      <polyline class="pc a" points="60.0,60.2 227.3,51.4 394.7,34.0 562.0,95.0"/>
+      <polyline class="pc a" points="60.0,60.2 227.3,68.9 394.7,60.2 562.0,103.8"/>
+      <polyline class="pc b" points="60.0,51.4 227.3,51.4 394.7,34.0 562.0,51.4"/>
+      <polyline class="pc b" points="60.0,51.4 227.3,51.4 394.7,42.7 562.0,51.4"/>
+      <polyline class="pc b" points="60.0,42.7 227.3,60.2 394.7,42.7 562.0,51.4"/>
+      <polyline class="pc-mean a" points="60.0,60.2 227.3,60.2 394.7,42.7 562.0,95.0"/>
+      <polyline class="pc-mean b" points="60.0,51.4 227.3,51.4 394.7,42.7 562.0,51.4"/>
       </svg></div>
-    <p class="sub">The three lines that collapse on the right are the three builds that composed the HTML
-      briefing and wired it nowhere: two from n8n-as-code, one from Native MCP. Everything left of that
-      axis is a single tangle, which is the finding.</p>
+    <p class="sub">Every line that collapses on the right belongs to an n8n-as-code judge: grades of 18,
+      18 and 17 on the answer dimension, all pointing at the same undelivered dashboard. Everything left
+      of that axis is a near-tie, which is the finding.</p>
   </div>
 </section>
 
@@ -232,6 +246,7 @@
         <tr><td>2.6.0-rc.6 · 5 builds each · default agent context</td><td>Claude-Code</td><td>claude-opus-5 orchestrator, sonnet workers</td><td class="num a-col">86.8</td><td class="num b-col">90</td></tr>
         <tr><td>2.7.0-rc.1 · 5 builds each · both branches remeasured</td><td>Claude-Code</td><td>claude-opus-5 orchestrator, sonnet workers</td><td class="num a-col">94.5</td><td class="num b-col">87.3</td></tr>
         <tr><td>Antigravity Live · 1 build each · Gemini 3.8 Flash</td><td>Antigravity</td><td>Gemini 3.8 Flash Medium</td><td class="num a-col">91.6</td><td class="num b-col">82.5</td></tr>
+        <tr><td>2.7.0 · 1 build each · full quality panel · defect panel adjudicated</td><td>ZCode</td><td>GLM-5.3-Flash (orchestrator and workers)</td><td class="num a-col">88.4</td><td class="num b-col">97.9</td></tr>
       </table>
     </div>
   </div>
@@ -241,10 +256,11 @@
   <div class="wrap">
     <h2>How contamination is prevented</h2>
     <ul class="notes">
-      <li><strong>Sequenced, not parallel.</strong> One branch builds alone, is audited, and its workflow is deleted from the instance before the other is dispatched.</li>
-      <li><strong>Opaque names.</strong> Each branch gets an unguessable token, never a shared predictable format that would let the two workflows recognise each other.</li>
+      <li><strong>Hermetic, concurrent sandboxes.</strong> Both builders run at the same time in separate workspaces, each with its own <code>.env</code>, and neither prompt names the other branch's directory.</li>
+      <li><strong>Opaque names.</strong> Each branch gets an independent random token, never a shared predictable format that would let the two workflows recognise each other.</li>
       <li><strong>Fixed, archived prompt.</strong> The builder prompt is the confinement block plus the verbatim brief; the orchestrator adds nothing, and the exact text is written to disk before dispatch.</li>
-      <li><strong>No rubric in the sandbox.</strong> An agent that can read how it is graded optimises for the grader.</li>
+      <li><strong>No rubric in the sandbox.</strong> An agent that can read how it is graded optimises for the grader. Three gates enforce the rest: <code>npm run guard</code> (no scoring document reachable from any sandbox), <code>npm run ready</code> (every sandbox can discover its toolchain), <code>npm run used</code> (every builder actually drove its own).</li>
+      <li><strong>Judge isolation.</strong> Temporal: judges run only after both builds are frozen and archived. Spatial: they write nowhere near a sandbox. Semantic: each judge sees one workflow, provenance stripped, branch mapping sealed; finders get both, order randomised per finder; every claim needs a mechanical predicate to move a number.</li>
     </ul>
   </div>
 </section>
@@ -253,9 +269,10 @@
   <div class="wrap">
     <h2>Limits</h2>
     <ul class="notes">
-      <li><strong>6 runs.</strong> Gaps smaller than the spread between runs are not resolved.</li>
-      <li>Correctness is a tie whenever both branches deploy a valid workflow that covers the brief, in which case the ranking is decided by the cost axes alone.</li>
-      <li><strong>Quality is judged, not computed.</strong> Correctness, tokens and build time are deterministic. Quality is an absolute grade against the prompt from three language models per build, isolated from each other and from the branch identity, each citing a JSON pointer. It carries the largest weight and it is the one axis a reader has to take on the strength of its method rather than its arithmetic.</li>
+      <li><strong>6 runs.</strong> Gaps smaller than the spread between runs are not resolved — the last two runs rank in opposite directions on the cost axes.</li>
+      <li>Correctness is a tie whenever both branches deploy a valid workflow that covers the brief, in which case the ranking is decided by quality and the cost axes alone.</li>
+      <li><strong>Quality is judged, not computed.</strong> Correctness, tokens and build time are deterministic. Quality is an absolute grade against the prompt from three language models per workflow, isolated from each other and from the branch identity, each citing a JSON pointer. It carries the largest weight and it is the one axis a reader has to take on the strength of its method rather than its arithmetic.</li>
+      <li><strong>The defect judge is stochastic by design.</strong> Finders notice, attackers try to refute, predicates decide. Symmetric claims can therefore die on one branch and survive on the other — the verbatims are archived so a reader can re-adjudicate. The axis is penalty-only at weight 0; in the latest run both confirmed defects sit on the winning branch.</li>
       <li>Runs from different harnesses and models are not numerically comparable to each other; only the two branches within a run are.</li>
     </ul>
   </div>
@@ -263,7 +280,7 @@
 
 <footer>
   <div class="wrap">
-    Latest: Antigravity Live · 1 build each · Gemini 3.8 Flash ·
+    Latest: 2.7.0 · 1 build each · full quality panel · ZCode orchestrator, GLM-5.3-Flash workers ·
     <a href="https://github.com/EtienneLescot/n8n-harness-benchmark/tree/main/results/history">full reports, server audits and deployed workflows</a> ·
     <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">repository</a> ·
     <a href="https://github.com/EtienneLescot/n8n-as-code">n8n-as-code</a>

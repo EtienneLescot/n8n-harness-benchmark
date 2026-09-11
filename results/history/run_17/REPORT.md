@@ -1,4 +1,4 @@
-# run_16 — n8n-as-code vs n8n Native MCP
+# run_17 — (executed locally as run_17; renumbered at publication because a parallel Antigravity evaluation landed run_17 on main first) n8n-as-code vs n8n Native MCP
 
 **Winner: n8n Native MCP, 97.9 vs 88.4** (full composite: quality 35 % · correctness 30 % · tokens 20 % · build time 15 %).
 
@@ -53,9 +53,9 @@ That is attacker variance, published rather than smoothed (both verbatims are ar
 - **Mid-run incident:** the instance-level MCP token was revoked server-side between the verify pass
   and the installer probes — three independent clients got 401. A fresh key was issued from the n8n
   UI and propagated; verify green again. The run's only human intervention.
-- **21:27** gates re-run (`npm run verify`, `npm run ready -- run_16` — both green), builders
+- **21:27** gates re-run (`npm run verify`, `npm run ready -- run_17` — both green), builders
   dispatched in parallel with the verbatim archived prompt. **21:41/21:43** both delivered.
-  `npm run used -- run_16` green: each log shows its own toolchain (`tools/call` vs `n8nac push --verify`).
+  `npm run used -- run_17` green: each log shows its own toolchain (`tools/call` vs `n8nac push --verify`).
 - Judge budget: 3,688,175 tokens against a 12.6 M cap (3× builder spend). Detail: `judging/manifest.json`.
 
 ## Limits
@@ -68,5 +68,5 @@ harnesses and models are not numerically comparable; only the two branches withi
 
 `workflow_n8nac.json` · `workflow_native_mcp.json` (deployed, faithful) · `validator_*.json` ·
 `benchmark_results.json` · `judging/` (blinded artefacts, prompts, findings.json, predicates,
-report of the panel, manifest) · sandboxes preserved under `benchmark/sandboxes/run_16_*`.
-Preview: `run_16_preview.html` at the repo root (same visual language as the published page).
+report of the panel, manifest) · sandboxes preserved under `benchmark/sandboxes/run_17_*`.
+Preview: `run_17_preview.html` at the repo root (same visual language as the published page).

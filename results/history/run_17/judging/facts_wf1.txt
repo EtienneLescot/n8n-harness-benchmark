@@ -1,0 +1,91 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 18,
+  "triggers": [
+    "Daily 08:00 Trigger"
+  ],
+  "maxMainDepth": 11,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Last 24h Emails": [
+      "Daily 08:00 Trigger"
+    ],
+    "Digest Emails": [
+      "Fetch Last 24h Emails",
+      "Daily 08:00 Trigger"
+    ],
+    "Email Analyst Agent": [
+      "Digest Emails",
+      "Fetch Last 24h Emails",
+      "Daily 08:00 Trigger"
+    ],
+    "Combine Agent Analyses": [
+      "Email Analyst Agent",
+      "Calendar Analyst Agent",
+      "Digest Events",
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger",
+      "Digest Emails",
+      "Fetch Last 24h Emails"
+    ],
+    "Fetch Next 3 Days Events": [
+      "Daily 08:00 Trigger"
+    ],
+    "Digest Events": [
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger"
+    ],
+    "Calendar Analyst Agent": [
+      "Digest Events",
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger"
+    ],
+    "Assemble Briefing Input": [
+      "Combine Agent Analyses",
+      "Email Analyst Agent",
+      "Calendar Analyst Agent",
+      "Digest Events",
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger",
+      "Digest Emails",
+      "Fetch Last 24h Emails"
+    ],
+    "Briefing Director Agent": [
+      "Assemble Briefing Input",
+      "Combine Agent Analyses",
+      "Email Analyst Agent",
+      "Calendar Analyst Agent",
+      "Digest Events",
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger",
+      "Digest Emails",
+      "Fetch Last 24h Emails"
+    ],
+    "Build HTML Dashboard": [
+      "Briefing Director Agent",
+      "Assemble Briefing Input",
+      "Combine Agent Analyses",
+      "Email Analyst Agent",
+      "Calendar Analyst Agent",
+      "Digest Events",
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger",
+      "Digest Emails",
+      "Fetch Last 24h Emails"
+    ],
+    "Send Briefing Email": [
+      "Build HTML Dashboard",
+      "Briefing Director Agent",
+      "Assemble Briefing Input",
+      "Combine Agent Analyses",
+      "Email Analyst Agent",
+      "Calendar Analyst Agent",
+      "Digest Events",
+      "Fetch Next 3 Days Events",
+      "Daily 08:00 Trigger",
+      "Digest Emails",
+      "Fetch Last 24h Emails"
+    ]
+  }
+}

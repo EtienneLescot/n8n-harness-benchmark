@@ -1,0 +1,76 @@
+{
+  "run": "run_17",
+  "method": "3 independent finders over blinded artefacts (presentation order randomised per finder, wf2 first for all three by draw), deduplication by predicate, one attacker per surviving finding in a fresh context, mechanical predicates written and run by the harness",
+  "blinding": "sealed_branch_mapping.json: wf1=native_mcp, wf2=n8nac",
+  "candidates": [
+    {
+      "id": "A",
+      "targetBranch": "native_mcp",
+      "artefact": "blinded_wf1.json",
+      "claim": "Empty-source day starves Combine Agent Analyses (either input empty -> merge never fires -> no briefing)",
+      "family": "2/1",
+      "finderCount": 1,
+      "attacker": "REFUTED — Merge v3.2 declares requiredInputs: '={{ $parameter[\"mode\"] === \"chooseBranch\" ? [0, 1] : 1 }}'; in append mode it runs on one input, the engine feeds never-received inputs as empty arrays, and the assembler's declared fallbacks engage. The only dead day is when BOTH sources are empty, which is not the claim as written.",
+      "attackerEvidence": "upstream workflow-execute.ts + Merge v3 versionDescription.ts + n8n#6596",
+      "predicateResult": "not run — died at attack",
+      "outcome": "refuted"
+    },
+    {
+      "id": "B",
+      "targetBranch": "n8nac",
+      "artefact": "blinded_wf2.json",
+      "claim": "Empty-source day starves Merge Analyses (either input empty -> merge never fires -> no briefing)",
+      "family": "2/1",
+      "finderCount": 2,
+      "attacker": "SURVIVES — verified no alwaysOutputData anywhere in the 16 nodes and cited engine semantics for a starved merge input",
+      "harnessPredicate": "merge requires both inputs only if mode==='chooseBranch' or typeVersion<3",
+      "predicateResult": false,
+      "outcome": "discarded — the attacker never inspected the node configuration: Merge Analyses is typeVersion 3.2 in combine mode, so requiredInputs resolves to 1 and the merge fires on a single fed input, exactly the engine fact that refuted finding A. The claim's premise (never fires) is false on the artefact."
+    },
+    {
+      "id": "C",
+      "targetBranch": "native_mcp",
+      "artefact": "blinded_wf1.json",
+      "claim": "Fetch Last 24h Emails declares simple:false (raw path, mailparser shape: from is an AddressObject, no labels mapping, no snippet) while Digest Emails consumes the simplified contract (j.From||j.from string-concatenated, j.labels) — every email reaches the analyst with sender '[object Object]', empty snippet and labels '(none)'",
+      "family": "4/6",
+      "finderCount": 2,
+      "attacker": "SURVIVES — mechanism confirmed against GmailV2.node.ts/GenericFunctions.ts at 1.30.0, 1.64.0 and master; attacker's correction: the raw path also carries no snippet, so the claim understates the damage",
+      "harnessPredicate": "simple===false AND digest reads j.From||j.from in concatenation AND digest reads j.labels",
+      "predicateResult": true,
+      "outcome": "CONFIRMED"
+    },
+    {
+      "id": "D",
+      "targetBranch": "n8nac",
+      "artefact": "blinded_wf2.json",
+      "claim": "executionOrder v1 serialises the calendar fetch behind the email agent's LLM call",
+      "family": "2",
+      "finderCount": 1,
+      "attacker": "REFUTED — the ordering is real but temporally neutral: the engine is strictly sequential under any executionOrder, total wall clock and output are invariant to branch order, and the claim misattributed the mechanism (v1 orders by canvas position, not connection-array order)",
+      "predicateResult": "not run — died at attack",
+      "outcome": "refuted"
+    },
+    {
+      "id": "E",
+      "targetBranch": "native_mcp",
+      "artefact": "blinded_wf1.json",
+      "claim": "Same v1 traversal: Fetch Next 3 Days Events cannot start until the Email Analyst Agent's LLM call returns, though the branches share no data",
+      "family": "2",
+      "finderCount": 1,
+      "attacker": "SURVIVES — engine source (workflow-execute.ts: v1 enqueues with unshift = depth-first, topmost-first by canvas position) and live docs confirm the mechanism; the claim's one imprecision (array order vs canvas order) is immaterial because both orders coincide here",
+      "harnessPredicate": "executionOrder==='v1' AND trigger fans to both branches AND Fetch Next 3 Days Events' only main ancestor is the trigger AND email branch is topmost (y 260 < 580)",
+      "predicateResult": true,
+      "outcome": "CONFIRMED"
+    },
+    {
+      "id": "F3-variant",
+      "targetBranch": "n8nac",
+      "artefact": "blinded_wf2.json",
+      "claim": "Finder 3 attributed the Gmail simple:false digest break to this artefact",
+      "finderCount": 1,
+      "outcome": "refuted mechanically before dispatch — this artefact declares simple:true; the finding's own predicate requires simple===false, which is false here. The real occurrence of the pattern is finding C, on the other branch."
+    }
+  ],
+  "latentDefects": { "native_mcp": 2, "n8nac": 0, "weight": 0 },
+  "caveat": "D and E are symmetric claims about the two artefacts; D died by attacker refutation (harm-neutrality argument) and E survived on confirmability. That is attacker variance, published rather than smoothed: both verbatims are archived under prompts/."
+}

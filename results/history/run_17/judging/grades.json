@@ -1,0 +1,374 @@
+{
+  "grades": {
+    "wf1": [
+      {
+        "agentId": "agent_e4cc7995",
+        "g": {
+          "idea": {
+            "score": 23,
+            "citation": "/nodes/13/parameters/options/systemMessage"
+          },
+          "structure": {
+            "score": 23,
+            "citation": "/nodes/16/parameters/jsCode"
+          },
+          "connections": {
+            "score": 25,
+            "citation": "/connections/Daily 08:00 Trigger/main/0"
+          },
+          "answer": {
+            "score": 23,
+            "citation": "/nodes/17/parameters"
+          },
+          "total": 94
+        }
+      },
+      {
+        "agentId": "agent_3b3fc5f4",
+        "g": {
+          "idea": {
+            "score": 24,
+            "citation": "/nodes/13/parameters/options/systemMessage"
+          },
+          "structure": {
+            "score": 23,
+            "citation": "/nodes/6/parameters"
+          },
+          "connections": {
+            "score": 24,
+            "citation": "/connections/Daily 08:00 Trigger/main/0"
+          },
+          "answer": {
+            "score": 23,
+            "citation": "/nodes/17/parameters"
+          },
+          "total": 94
+        }
+      },
+      {
+        "agentId": "agent_e093bf5b",
+        "g": {
+          "idea": {
+            "score": 23,
+            "citation": "/nodes/3/parameters/options/systemMessage"
+          },
+          "structure": {
+            "score": 22,
+            "citation": "/nodes/12/parameters"
+          },
+          "connections": {
+            "score": 24,
+            "citation": "/connections/Calendar Analyst Agent/main/0/0"
+          },
+          "answer": {
+            "score": 23,
+            "citation": "/nodes/16/parameters/jsCode"
+          },
+          "total": 92
+        }
+      }
+    ],
+    "wf2": [
+      {
+        "agentId": "agent_6c470dc4",
+        "g": {
+          "idea": {
+            "score": 22,
+            "citation": "/nodes/12/parameters/options/systemMessage"
+          },
+          "structure": {
+            "score": 22,
+            "citation": "/nodes/1/parameters"
+          },
+          "connections": {
+            "score": 24,
+            "citation": "/connections/Prepare Calendar Analysis/main/0/0"
+          },
+          "answer": {
+            "score": 18,
+            "citation": "/nodes/15/parameters"
+          },
+          "total": 86
+        }
+      },
+      {
+        "agentId": "agent_5d5aa86f",
+        "g": {
+          "idea": {
+            "score": 22,
+            "citation": "/nodes/3/parameters/options/systemMessage"
+          },
+          "structure": {
+            "score": 23,
+            "citation": "/nodes/11/parameters"
+          },
+          "connections": {
+            "score": 25,
+            "citation": "/connections/Schedule Trigger/main/0"
+          },
+          "answer": {
+            "score": 18,
+            "citation": "/nodes/15/parameters"
+          },
+          "total": 88
+        }
+      },
+      {
+        "agentId": "agent_df1a62a1",
+        "g": {
+          "idea": {
+            "score": 22,
+            "citation": "/nodes/3/parameters/options/systemMessage"
+          },
+          "structure": {
+            "score": 21,
+            "citation": "/nodes/11/parameters"
+          },
+          "connections": {
+            "score": 23,
+            "citation": "/connections/Schedule Trigger/main/0"
+          },
+          "answer": {
+            "score": 17,
+            "citation": "/nodes/15/parameters/options/fileName"
+          },
+          "total": 83
+        }
+      }
+    ]
+  },
+  "validation": [
+    {
+      "slot": "wf1",
+      "agentId": "agent_e4cc7995",
+      "total": 94,
+      "totalMatchesSum": true,
+      "sum": 94,
+      "citations": [
+        {
+          "dim": "idea",
+          "citation": "/nodes/13/parameters/options/systemMessage",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "structure",
+          "citation": "/nodes/16/parameters/jsCode",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "connections",
+          "citation": "/connections/Daily 08:00 Trigger/main/0",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "answer",
+          "citation": "/nodes/17/parameters",
+          "resolves": true,
+          "why": null
+        }
+      ]
+    },
+    {
+      "slot": "wf1",
+      "agentId": "agent_3b3fc5f4",
+      "total": 94,
+      "totalMatchesSum": true,
+      "sum": 94,
+      "citations": [
+        {
+          "dim": "idea",
+          "citation": "/nodes/13/parameters/options/systemMessage",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "structure",
+          "citation": "/nodes/6/parameters",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "connections",
+          "citation": "/connections/Daily 08:00 Trigger/main/0",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "answer",
+          "citation": "/nodes/17/parameters",
+          "resolves": true,
+          "why": null
+        }
+      ]
+    },
+    {
+      "slot": "wf1",
+      "agentId": "agent_e093bf5b",
+      "total": 92,
+      "totalMatchesSum": true,
+      "sum": 92,
+      "citations": [
+        {
+          "dim": "idea",
+          "citation": "/nodes/3/parameters/options/systemMessage",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "structure",
+          "citation": "/nodes/12/parameters",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "connections",
+          "citation": "/connections/Calendar Analyst Agent/main/0/0",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "answer",
+          "citation": "/nodes/16/parameters/jsCode",
+          "resolves": true,
+          "why": null
+        }
+      ]
+    },
+    {
+      "slot": "wf2",
+      "agentId": "agent_6c470dc4",
+      "total": 86,
+      "totalMatchesSum": true,
+      "sum": 86,
+      "citations": [
+        {
+          "dim": "idea",
+          "citation": "/nodes/12/parameters/options/systemMessage",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "structure",
+          "citation": "/nodes/1/parameters",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "connections",
+          "citation": "/connections/Prepare Calendar Analysis/main/0/0",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "answer",
+          "citation": "/nodes/15/parameters",
+          "resolves": true,
+          "why": null
+        }
+      ]
+    },
+    {
+      "slot": "wf2",
+      "agentId": "agent_5d5aa86f",
+      "total": 88,
+      "totalMatchesSum": true,
+      "sum": 88,
+      "citations": [
+        {
+          "dim": "idea",
+          "citation": "/nodes/3/parameters/options/systemMessage",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "structure",
+          "citation": "/nodes/11/parameters",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "connections",
+          "citation": "/connections/Schedule Trigger/main/0",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "answer",
+          "citation": "/nodes/15/parameters",
+          "resolves": true,
+          "why": null
+        }
+      ]
+    },
+    {
+      "slot": "wf2",
+      "agentId": "agent_df1a62a1",
+      "total": 83,
+      "totalMatchesSum": true,
+      "sum": 83,
+      "citations": [
+        {
+          "dim": "idea",
+          "citation": "/nodes/3/parameters/options/systemMessage",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "structure",
+          "citation": "/nodes/11/parameters",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "connections",
+          "citation": "/connections/Schedule Trigger/main/0",
+          "resolves": true,
+          "why": null
+        },
+        {
+          "dim": "answer",
+          "citation": "/nodes/15/parameters/options/fileName",
+          "resolves": true,
+          "why": null
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "wf1": {
+      "grades": [
+        94,
+        94,
+        92
+      ],
+      "median": 94,
+      "spread": 2
+    },
+    "wf2": {
+      "grades": [
+        86,
+        88,
+        83
+      ],
+      "median": 86,
+      "spread": 5
+    }
+  },
+  "dimensionMedians": {
+    "wf1": {
+      "idea": 23,
+      "structure": 23,
+      "connections": 24,
+      "answer": 23
+    },
+    "wf2": {
+      "idea": 22,
+      "structure": 22,
+      "connections": 24,
+      "answer": 18
+    }
+  }
+}

@@ -1,0 +1,451 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Recent Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        180
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "simple": true,
+        "returnAll": false,
+        "limit": 25,
+        "filters": {
+          "readStatus": "both",
+          "receivedAfter": "={{ $now.minus({ days: 1 }).toISO() }}"
+        }
+      }
+    },
+    {
+      "name": "Normalize Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst emails = items.map(function (i) {\n  const j = i.json || {};\n  const h = j.headers || {};\n  return {\n    from: j.From || h.From || 'unknown sender',\n    subject: j.Subject || h.Subject || '(no subject)',\n    date: j.Date || h.Date || j.internalDate || '',\n    snippet: String(j.snippet || '').slice(0, 300),\n    labels: j.labelIds || []\n  };\n});\nreturn [{ json: { emailCount: emails.length, emails: emails } }];"
+      }
+    },
+    {
+      "name": "Email Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        180
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are the Email Analyst Agent in a multi-agent daily briefing team.\nYou receive a JSON array of Gmail messages fetched in the last 24 hours (fields: from, subject, date, snippet, labels).\nSort and classify every email into exactly one category: Urgent (act today), Needs Reply, Meetings & Invites, FYI, or Noise & Newsletters.\nFor each email give: category, sender, subject, a one-line gist, and a priority (high / medium / low).\nFinish with a \"Top 3 Actions\" list. If the list is empty, say so explicitly.\nReply in concise plain text using short section headers and bullet lines.\nDo not invent emails that are not present in the data."
+        }
+      }
+    },
+    {
+      "name": "Email Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        420
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "name": "Prepare Email Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        180
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [{ json: { emailAnalysis: $json.output } }];"
+      }
+    },
+    {
+      "name": "Get Todays Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        620
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+        "timeMax": "={{ $now.endOf(\"day\").toISO() }}",
+        "returnAll": false,
+        "limit": 50,
+        "options": {
+          "orderBy": "startTime",
+          "recurringEventHandling": "expand"
+        }
+      }
+    },
+    {
+      "name": "Normalize Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        620
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst events = items.map(function (i) {\n  const j = i.json || {};\n  const start = (j.start && (j.start.dateTime || j.start.date)) || '';\n  const end = (j.end && (j.end.dateTime || j.end.date)) || '';\n  return {\n    summary: j.summary || '(no title)',\n    start: start,\n    end: end,\n    location: j.location || '',\n    attendees: Array.isArray(j.attendees) ? j.attendees.length : 0,\n    meetLink: j.hangoutLink || '',\n    description: String(j.description || '').slice(0, 300)\n  };\n});\nevents.sort(function (a, b) { return String(a.start).localeCompare(String(b.start)); });\nreturn [{ json: { eventCount: events.length, events: events } }];"
+      }
+    },
+    {
+      "name": "Calendar Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        620
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are the Calendar Analyst Agent in a multi-agent daily briefing team.\nYou receive a JSON array of today's Google Calendar events (fields: summary, start, end, location, attendees, meetLink, description), already sorted by start time.\nProduce a chronological run of day: for each event give start-end time, title, location or meeting link, and attendee count.\nHighlight the first event of the day, back-to-back or overlapping blocks, and remaining free windows.\nIf there are no events, say so explicitly.\nReply in concise plain text using short section headers and bullet lines.\nDo not invent events that are not present in the data."
+        }
+      }
+    },
+    {
+      "name": "Calendar Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        860
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "name": "Prepare Calendar Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        620
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [{ json: { calendarAnalysis: $json.output } }];"
+      }
+    },
+    {
+      "name": "Merge Analyses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1200,
+        400
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    },
+    {
+      "name": "Briefing Director Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1440,
+        400
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify({ emailAnalysis: $json.emailAnalysis, calendarAnalysis: $json.calendarAnalysis }) }}",
+        "options": {
+          "systemMessage": "You are the Briefing Director Agent leading a multi-agent daily briefing team.\nYou receive two analyst reports in a JSON object: emailAnalysis (sorted email briefing) and calendarAnalysis (sorted day agenda).\nCompose ONE polished, self-contained HTML daily briefing dashboard as a single HTML document:\n- Start with <!DOCTYPE html> and include a <head> with embedded <style> (modern dark dashboard look, cards, accent colors, readable typography, responsive layout).\n- The <body> must contain: a header titled \"Daily Briefing\" with today's date, a summary card with key stats (emails processed, urgent items, first meeting, busiest block), an \"Emails\" section grouping the analyst's emails by category, and an \"Agenda\" section with the day timeline.\n- Use the analysts' content faithfully and never invent new emails or meetings.\n- Escape HTML-special characters inside any data values.\nOutput ONLY the raw HTML document, with no markdown fences and no explanations."
+        }
+      }
+    },
+    {
+      "name": "Director Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        640
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "name": "Format Dashboard HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const raw = String($json.output || '').trim();\nconst isHtml = /<!doctype\\s+html/i.test(raw) || /<html[\\s>]/i.test(raw);\nlet html = raw;\nif (!isHtml) {\n  const body = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\n  html = '<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>Daily Briefing</title><style>body{margin:0;padding:40px;background:#0f172a;color:#e2e8f0;font-family:Segoe UI,Arial,sans-serif}h1{color:#38bdf8;font-weight:600}pre{white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.6;background:#1e293b;padding:24px;border-radius:12px}</style></head><body><h1>Daily Briefing</h1><pre>' + body + '</pre></body></html>';\n}\nreturn [{ json: { html: html, generatedAt: new Date().toISOString(), source: 'briefing-director-agent' } }];"
+      }
+    },
+    {
+      "name": "Convert Dashboard To File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        400
+      ],
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "daily-briefing.html"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Recent Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Todays Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Recent Emails": {
+      "main": [
+        [
+          {
+            "node": "Normalize Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Todays Events": {
+      "main": [
+        [
+          {
+            "node": "Normalize Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Calendar Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Analysis": {
+      "main": [
+        [
+          {
+            "node": "Merge Analyses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Calendar Analysis": {
+      "main": [
+        [
+          {
+            "node": "Merge Analyses",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Analyses": {
+      "main": [
+        [
+          {
+            "node": "Briefing Director Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Director Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Dashboard HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Dashboard HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert Dashboard To File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Director Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Briefing Director Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

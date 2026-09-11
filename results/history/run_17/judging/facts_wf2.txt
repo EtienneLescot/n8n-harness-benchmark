@@ -1,0 +1,98 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 16,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 12,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Recent Emails": [
+      "Schedule Trigger"
+    ],
+    "Normalize Emails": [
+      "Get Recent Emails",
+      "Schedule Trigger"
+    ],
+    "Email Analyst Agent": [
+      "Normalize Emails",
+      "Get Recent Emails",
+      "Schedule Trigger"
+    ],
+    "Prepare Email Analysis": [
+      "Email Analyst Agent",
+      "Normalize Emails",
+      "Get Recent Emails",
+      "Schedule Trigger"
+    ],
+    "Get Todays Events": [
+      "Schedule Trigger"
+    ],
+    "Normalize Events": [
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Calendar Analyst Agent": [
+      "Normalize Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Prepare Calendar Analysis": [
+      "Calendar Analyst Agent",
+      "Normalize Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Merge Analyses": [
+      "Prepare Email Analysis",
+      "Prepare Calendar Analysis",
+      "Calendar Analyst Agent",
+      "Normalize Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Analyst Agent",
+      "Normalize Emails",
+      "Get Recent Emails"
+    ],
+    "Briefing Director Agent": [
+      "Merge Analyses",
+      "Prepare Email Analysis",
+      "Prepare Calendar Analysis",
+      "Calendar Analyst Agent",
+      "Normalize Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Analyst Agent",
+      "Normalize Emails",
+      "Get Recent Emails"
+    ],
+    "Format Dashboard HTML": [
+      "Briefing Director Agent",
+      "Merge Analyses",
+      "Prepare Email Analysis",
+      "Prepare Calendar Analysis",
+      "Calendar Analyst Agent",
+      "Normalize Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Analyst Agent",
+      "Normalize Emails",
+      "Get Recent Emails"
+    ],
+    "Convert Dashboard To File": [
+      "Format Dashboard HTML",
+      "Briefing Director Agent",
+      "Merge Analyses",
+      "Prepare Email Analysis",
+      "Prepare Calendar Analysis",
+      "Calendar Analyst Agent",
+      "Normalize Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Analyst Agent",
+      "Normalize Emails",
+      "Get Recent Emails"
+    ]
+  }
+}
