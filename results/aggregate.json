@@ -1,16 +1,15 @@
 {
   "metadata": {
-    "totalRuns": 1,
+    "totalRuns": 2,
     "availableAgents": [
-      "Antigravity"
+      "Antigravity",
+      "ZCode"
     ],
     "availableModels": [
-      "Gemini 3.8 Flash Medium"
+      "Gemini 3.8 Flash Medium",
+      "GLM-5.3-Flash (orchestrator and workers)"
     ],
-    "availablePrompts": [
-      "Multi-Agent Daily Email & Calendar Briefing"
-    ],
-    "lastUpdated": "2026-09-11T21:59:58.732Z"
+    "lastUpdated": "2026-09-11T22:47:00.782Z"
   },
   "runs": [
     {
@@ -99,6 +98,58 @@
       "winner": "n8nac",
       "winnerName": "n8n-as-code",
       "compositeDelta": 9.13
+    },
+    {
+      "id": "run-017",
+      "name": "Run 17 (run_17_n8nac)",
+      "timestamp": "2026-09-11T22:47:00.782Z",
+      "codingAgent": "ZCode",
+      "model": "GLM-5.3-Flash (orchestrator and workers)",
+      "temperature": null,
+      "promptId": "daily-briefing",
+      "promptTitle": "Multi-Agent Daily Email & Calendar Briefing",
+      "promptText": "Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.",
+      "weights": {
+        "quality": 0.35,
+        "correctness": 0.3,
+        "tokenEfficiency": 0.2,
+        "buildTime": 0.15
+      },
+      "n8nac": {
+        "tool": "n8n-as-code",
+        "workflowId": "4hNuea9QQb6KdHUr",
+        "workflowName": "bench-2139e14f",
+        "buildSec": 883.344,
+        "tokens": 2284234,
+        "quality": 86,
+        "correctness": 100,
+        "scores": {
+          "composite": 88.43,
+          "quality": 86,
+          "correctness": 100,
+          "tokenEfficiency": 75.81,
+          "buildTime": 87.8
+        }
+      },
+      "nativeMcp": {
+        "tool": "n8n-native-mcp",
+        "workflowId": "sMRHraGNtxpoHJVp",
+        "workflowName": "bench-81edc43c",
+        "buildSec": 812.822,
+        "tokens": 1928255,
+        "quality": 94,
+        "correctness": 100,
+        "scores": {
+          "composite": 97.9,
+          "quality": 94,
+          "correctness": 100,
+          "tokenEfficiency": 100,
+          "buildTime": 100
+        }
+      },
+      "winner": "nativeMcp",
+      "winnerName": "n8n Native MCP",
+      "compositeDelta": 9.47
     }
   ]
 }

@@ -1,12 +1,16 @@
 {
   "metadata": {
-    "harness": "Antigravity",
-    "primaryAgent": "Antigravity Orchestrator",
-    "model": "Gemini 3.8 Flash Medium",
-    "temperature": 0.2,
-    "subagentRuntime": "invoke_subagent",
-    "evaluationEngine": "Deterministic n8n API validator + scale-invariant relative cost scoring",
-    "timestamp": "2026-09-11T21:59:58.728Z",
+    "run": "run_17",
+    "label": "2.7.0 stable · 1 build each · full quality panel · ZCode (executed as run_16, renumbered run_17 at publication)",
+    "date": "2026-09-11",
+    "harness": "ZCode",
+    "model": "GLM-5.3-Flash (orchestrator and workers)",
+    "temperature": "runtime-default-not-exposed",
+    "subagentRuntime": "ZCode Agent tool (general-purpose)",
+    "underTest": "n8nac@2.7.0 (npm) vs n8n Native MCP (instance-level, built-in)",
+    "buildsPerBranch": 1,
+    "judgesPerBuild": 3,
+    "note": "First run on a non-Claude harness and a non-Anthropic model. The instance-level MCP token was revoked server-side mid-run (after installers, before builders); a fresh key was issued from the n8n UI — the run's only human intervention. Builders were re-gated (verify + ready) before dispatch.",
     "environment": {
       "os": "win32 (x64)",
       "nodeVersion": "v24.14.0",
@@ -14,10 +18,16 @@
     },
     "workflows": {
       "n8nac": {
-        "id": "iFPWd4ferUh3BBbG"
+        "id": "4hNuea9QQb6KdHUr",
+        "name": "bench-2139e14f",
+        "nodes": 16,
+        "agents": 3
       },
       "nativeMcp": {
-        "id": "jIKUJ610pigqaKVx"
+        "id": "sMRHraGNtxpoHJVp",
+        "name": "bench-81edc43c",
+        "nodes": 20,
+        "agents": 3
       }
     }
   },
@@ -25,245 +35,111 @@
     "quality": 0.35,
     "correctness": 0.3,
     "tokenEfficiency": 0.2,
-    "buildTime": 0.15,
-    "correctnessComponents": {
-      "requirementCoverage": 0.4,
-      "nodeSchemaValidity": 0.4,
-      "graphIntegrity": 0.2
-    },
-    "setupTelemetryComponents": {
-      "friction": 0.7,
-      "commands": 0.3
-    }
-  },
-  "setupEase": {
-    "a": {
-      "score": 98.25,
-      "friction": 100,
-      "commands": 94.18
-    },
-    "b": {
-      "score": 100,
-      "friction": 100,
-      "commands": 100
-    },
-    "weights": {
-      "friction": 0.7,
-      "commands": 0.3
-    }
+    "buildTime": 0.15
   },
   "n8nac": {
-    "runId": "run_16_n8nac",
-    "toolName": "n8n-as-code",
     "scores": {
-      "setupEaseTelemetry": 98.25,
-      "setupTime": 98.25,
-      "creationTime": 100,
-      "buildTime": 100,
-      "tokenConsumption": 100,
-      "tokenEfficiency": 100,
-      "workflowQuality": 76,
-      "quality": 76,
+      "composite": 88.43,
+      "quality": 86,
       "correctness": 100,
-      "composite": 91.6
+      "tokenEfficiency": 75.81,
+      "buildTime": 87.8
     },
-    "qualityAudit": {
-      "workflowId": "iFPWd4ferUh3BBbG",
-      "workflowName": "bench-17dc0a4f",
-      "metrics": {
-        "nodeCount": 10,
-        "functionalNodeCount": 10,
-        "connectionCount": 9,
-        "orphanedNodeCount": 0,
-        "validNodeCount": 10,
-        "invalidNodeCount": 0,
-        "agentNodeCount": 3
-      },
-      "scores": {
-        "requirementCoverage": 100,
-        "nodeSchemaValidity": 100,
-        "graphIntegrity": 100,
-        "liveExecution": 0,
-        "compositeCorrectness": 100
-      },
-      "correctnessWeights": {
-        "requirementCoverage": 0.4,
-        "nodeSchemaValidity": 0.4,
-        "graphIntegrity": 0.2
-      },
-      "requirementChecks": [
-        {
-          "id": "daily_trigger",
-          "label": "Daily trigger",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "gmail_retrieval",
-          "label": "Gmail message retrieval",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "calendar_retrieval",
-          "label": "Google Calendar event retrieval",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "triage_step",
-          "label": "Information triage / sorting step",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "multi_agent",
-          "label": "Multi-agent architecture",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "html_dashboard",
-          "label": "HTML dashboard output",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        }
-      ],
-      "liveExecution": {
-        "executed": false,
-        "status": "none",
-        "executionId": null,
-        "executedNodesCount": 0,
-        "executedNodes": [],
-        "durationMs": 0
-      },
-      "invalidNodes": [],
-      "timestamp": "2026-09-11T21:59:58.506Z"
+    "measured": {
+      "tokens": 2284234,
+      "durationMs": 883344,
+      "toolUses": 68,
+      "deliveredOf": [
+        1,
+        1
+      ]
     },
-    "rawMetrics": {
-      "setupTimeSec": 312,
-      "setupCommandsCount": 25,
-      "totalDurationSec": 251,
-      "totalDurationMs": 251000,
-      "tokenUsage": {
-        "totalTokens": 54670
-      },
-      "interactions": {
-        "turns": 1
-      }
+    "qualityDimensions": {
+      "idea": 22,
+      "structure": 22,
+      "connections": 24,
+      "answer": 18
+    },
+    "judgeTotals": [
+      86,
+      88,
+      83
+    ],
+    "spread": 5,
+    "correctnessAudit": {
+      "requirementCoverage": 100,
+      "nodeSchemaValidity": 100,
+      "graphIntegrity": 100,
+      "orphanedNodes": 0
+    },
+    "setup": {
+      "seconds": 498,
+      "commands": 28,
+      "deadEnds": 3,
+      "telemetryOnly": true
     }
   },
   "nativeMcp": {
-    "runId": "run_16_native_mcp",
-    "toolName": "n8n-native-mcp",
     "scores": {
-      "setupEaseTelemetry": 100,
-      "setupTime": 100,
-      "creationTime": 95.9,
-      "buildTime": 95.9,
-      "tokenConsumption": 34.68,
-      "tokenEfficiency": 34.68,
-      "workflowQuality": 89,
-      "quality": 89,
+      "composite": 97.9,
+      "quality": 94,
       "correctness": 100,
-      "composite": 82.47
+      "tokenEfficiency": 100,
+      "buildTime": 100
     },
-    "qualityAudit": {
-      "workflowId": "jIKUJ610pigqaKVx",
-      "workflowName": "bench-e2c2118f",
-      "metrics": {
-        "nodeCount": 20,
-        "functionalNodeCount": 17,
-        "connectionCount": 16,
-        "orphanedNodeCount": 0,
-        "validNodeCount": 20,
-        "invalidNodeCount": 0,
-        "agentNodeCount": 3
-      },
-      "scores": {
-        "requirementCoverage": 100,
-        "nodeSchemaValidity": 100,
-        "graphIntegrity": 100,
-        "liveExecution": 0,
-        "compositeCorrectness": 100
-      },
-      "correctnessWeights": {
-        "requirementCoverage": 0.4,
-        "nodeSchemaValidity": 0.4,
-        "graphIntegrity": 0.2
-      },
-      "requirementChecks": [
-        {
-          "id": "daily_trigger",
-          "label": "Daily trigger",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "gmail_retrieval",
-          "label": "Gmail message retrieval",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "calendar_retrieval",
-          "label": "Google Calendar event retrieval",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "triage_step",
-          "label": "Information triage / sorting step",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "multi_agent",
-          "label": "Multi-agent architecture",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        },
-        {
-          "id": "html_dashboard",
-          "label": "HTML dashboard output",
-          "ratio": 1,
-          "points": 16.67,
-          "maxPoints": 16.67
-        }
-      ],
-      "liveExecution": {
-        "executed": false,
-        "status": "none",
-        "executionId": null,
-        "executedNodesCount": 0,
-        "executedNodes": [],
-        "durationMs": 0
-      },
-      "invalidNodes": [],
-      "timestamp": "2026-09-11T21:59:58.727Z"
+    "measured": {
+      "tokens": 1928255,
+      "durationMs": 812822,
+      "toolUses": 47,
+      "deliveredOf": [
+        1,
+        1
+      ]
     },
-    "rawMetrics": {
-      "setupTimeSec": 197,
-      "setupCommandsCount": 3,
-      "totalDurationSec": 258,
-      "totalDurationMs": 258000,
-      "tokenUsage": {
-        "totalTokens": 93265
-      },
-      "interactions": {
-        "turns": 1
-      }
+    "qualityDimensions": {
+      "idea": 23,
+      "structure": 23,
+      "connections": 24,
+      "answer": 23
+    },
+    "judgeTotals": [
+      94,
+      94,
+      92
+    ],
+    "spread": 2,
+    "correctnessAudit": {
+      "requirementCoverage": 100,
+      "nodeSchemaValidity": 100,
+      "graphIntegrity": 100,
+      "orphanedNodes": 0
+    },
+    "setup": {
+      "seconds": 404,
+      "commands": 16,
+      "deadEnds": 5,
+      "telemetryOnly": true
     }
-  }
+  },
+  "judging": {
+    "eligible": true,
+    "tier": "full",
+    "latentDefects": {
+      "n8nac": 0,
+      "nativeMcp": 2,
+      "weight": 0
+    },
+    "tokens": 3688175,
+    "durationMs": 6681104,
+    "detail": "judging/manifest.json"
+  },
+  "notes": [
+    "Native MCP wins the full composite on the largest axis: quality 94 vs 86, and the five-point gap is one dimension — answer to the prompt (23 vs 18). All three n8n-as-code judges independently cited the same defect: the workflow terminates at Convert Dashboard To File, leaving the briefing in execution data with no delivery step, so on the daily schedule nobody ever receives it. The Native MCP build emails the rendered dashboard.",
+    "Correctness saturated at 100 on both branches — every requirement covered, every node schema-valid, zero orphans, three real LangChain agents each. The axis separated nothing this run.",
+    "This run reverses run_15's cost direction: the Native MCP branch was 8% faster (812.8s vs 883.3s) and 15.6% cheaper in tokens (1.93M vs 2.28M). One build per branch cannot separate a tool from its variance; run_15 measured five builds per branch.",
+    "The blind pairwise check split 1-1 with one inverted rationale (it attributed email delivery to the workflow that terminates at Convert-to-File). Published verbatim; per the rubric it never enters the grades. The non-inverted review matches the isolated grades' ranking.",
+    "The adversarial defect panel confirmed two latent defects, both on the winning branch (weight-0 axis this run): the Native MCP build declares Gmail simple:false while its digest code reads the simplified contract, so senders reach the analyst as '[object Object]' (mechanism verified against GmailV2.node.ts at three releases); and its v1 execution order serialises the calendar fetch behind the email agent's LLM call. The mirror-image claims on the n8n-as-code branch died: one by engine-source refutation (Merge v3.2 fires on a single input, so the empty-source stall does not exist), one by attacker refutation (v1 ordering is temporally neutral).",
+    "Setup asymmetry, reported not scored: n8nac needed 28 commands and hit 3 dead ends (npm hoisting into an ancestor workspace being the notable one) but landed a self-describing workspace via update-ai; Native MCP is built into n8n so installation is configuration, and its installer's 5 dead ends were mostly probing the MCP token that the server had revoked mid-run.",
+    "Publishing the run required one human intervention: the instance-level MCP token was rotated server-side between the harness verify (39 tools, 21:09 UTC) and the installer probes (401, 21:14). Three independent clients confirmed; a fresh key was issued from the n8n UI."
+  ]
 }

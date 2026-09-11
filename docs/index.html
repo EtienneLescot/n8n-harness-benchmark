@@ -269,7 +269,7 @@
   <div class="wrap">
     <h2>Limits</h2>
     <ul class="notes">
-      <li><strong>6 runs.</strong> Gaps smaller than the spread between runs are not resolved — the last two runs rank in opposite directions on the cost axes.</li>
+      <li><strong>7 runs.</strong> Gaps smaller than the spread between runs are not resolved — the last two runs rank in opposite directions on the cost axes.</li>
       <li>Correctness is a tie whenever both branches deploy a valid workflow that covers the brief, in which case the ranking is decided by quality and the cost axes alone.</li>
       <li><strong>Quality is judged, not computed.</strong> Correctness, tokens and build time are deterministic. Quality is an absolute grade against the prompt from three language models per workflow, isolated from each other and from the branch identity, each citing a JSON pointer. It carries the largest weight and it is the one axis a reader has to take on the strength of its method rather than its arithmetic.</li>
       <li><strong>The defect judge is stochastic by design.</strong> Finders notice, attackers try to refute, predicates decide. Symmetric claims can therefore die on one branch and survive on the other — the verbatims are archived so a reader can re-adjudicate. The axis is penalty-only at weight 0; in the latest run both confirmed defects sit on the winning branch.</li>
