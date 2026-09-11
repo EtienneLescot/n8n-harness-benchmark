@@ -1,0 +1,467 @@
+{
+  "id": "yTqSScu7DcATe9sz",
+  "name": "bench-1fbb1429",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T16:53:01.396Z",
+  "updatedAt": "2026-09-11T16:53:01.396Z",
+  "isArchived": false,
+  "versionId": "6b962281-0ca6-47fd-bbf0-8029d467eebe",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "1d6823ce-d321-46c3-a9e4-e39e9cbaa5d0",
+      "name": "Daily 07:00 Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -320,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b553a58c-67ff-4023-a6e5-56170a1d76fc",
+      "name": "Fetch Overnight Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -60,
+        -160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "readStatus": "unread",
+          "includeSpamTrash": false,
+          "receivedAfter": "={{ $now.minus({ hours: 24 }).toISO() }}"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "webhookId": "d13a189e-1c3c-496e-8cd8-d592e6b9e5b0"
+    },
+    {
+      "id": "547445ca-b5f9-48d3-bb83-6cdf636d5d8c",
+      "name": "Collect Email Batch",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -160
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails",
+        "include": "allFields",
+        "options": {}
+      }
+    },
+    {
+      "id": "eea0062c-abc7-4eed-ac9a-c131f2a7ca3c",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        400,
+        -160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "hasOutputParser": true,
+        "text": "=Today is {{ $now.toFormat(\"cccc d LLLL yyyy\") }}.\n\nUNREAD EMAILS: {{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are the email triage agent of a daily briefing crew.\nSort the unread messages you are given into three buckets: actionRequired (needs a reply or a decision today), waitingOnOthers (the ball is in someone else court), and fyi (read-only noise).\nJudge priority from sender, subject and snippet. Rank actionRequired most urgent first and keep every \"why\" under 15 words.\nIf the list is empty or contains only empty objects, return empty arrays, unreadCount 0 and a headline saying the inbox is clear.\nNever invent a sender or a subject that is not in the input. Answer with JSON matching the schema, no prose outside the JSON."
+        }
+      }
+    },
+    {
+      "id": "627bdac0-e525-4b04-867c-14b76e292b31",
+      "name": "Briefing Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        340
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "114bcb25-150f-4211-9181-b17416bb4e81",
+      "name": "Email Triage Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        340
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"headline\":\"3 mails need you today, 9 can wait\",\"unreadCount\":12,\"actionRequired\":[{\"from\":\"jane@acme.com\",\"subject\":\"Contract review\",\"why\":\"Asks for sign-off before Friday\",\"priority\":\"high\",\"suggestedAction\":\"Reply with redlines\"}],\"fyi\":[{\"from\":\"news@digest.com\",\"subject\":\"Weekly digest\",\"why\":\"Newsletter, no action\"}],\"waitingOnOthers\":[{\"from\":\"sam@acme.com\",\"subject\":\"Budget numbers\",\"why\":\"Sam owes the figures\"}]}"
+      }
+    },
+    {
+      "id": "768bd56b-7c33-4ad7-8817-c1af0fe931e9",
+      "name": "Combine Analyses",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        660,
+        -10
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "f3fd1a60-7603-4805-b826-20b9d034d553",
+      "name": "Fetch Today Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -60,
+        140
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary",
+          "cachedResultName": "Primary calendar"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+        "timeMax": "={{ $now.endOf(\"day\").toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "4f12580c-f3ab-40de-865d-931755edd29e",
+      "name": "Collect Day Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        160,
+        140
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events",
+        "include": "allFields",
+        "options": {}
+      }
+    },
+    {
+      "id": "d279cd88-4d39-4dc5-8a34-de204e1e1e44",
+      "name": "Calendar Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        400,
+        140
+      ],
+      "parameters": {
+        "promptType": "define",
+        "hasOutputParser": true,
+        "text": "=Today is {{ $now.toFormat(\"cccc d LLLL yyyy\") }}.\n\nTODAY EVENTS: {{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are the calendar analyst of a daily briefing crew.\nTurn the events you are given into a readable day plan: a chronological schedule with local HH:mm ranges, overlapping meetings listed as conflicts, and the free gaps longer than 45 minutes listed as focusBlocks.\nAdd a one-line prep note only where it is obvious from the title or description.\nIf the list is empty or contains only empty objects, return empty arrays, meetingCount 0 and a headline saying the day is clear.\nNever invent a meeting or a time that is not in the input. Answer with JSON matching the schema, no prose outside the JSON."
+        }
+      }
+    },
+    {
+      "id": "e9ffdf0f-99de-4a80-9aed-c68091f307f6",
+      "name": "Calendar Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        580,
+        340
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\"headline\":\"4 meetings, first at 09:30, 2h of focus time left\",\"meetingCount\":4,\"firstStart\":\"09:30\",\"lastEnd\":\"17:00\",\"schedule\":[{\"time\":\"09:30-09:45\",\"title\":\"Standup\",\"location\":\"Google Meet\",\"attendees\":4,\"prep\":\"Skim the board before joining\"}],\"conflicts\":[\"11:00 Design review overlaps 1:1 with Sam\"],\"focusBlocks\":[\"13:00-15:00 free\"]}"
+      }
+    },
+    {
+      "id": "83e09905-4799-4958-9a26-21e67bfdaf8c",
+      "name": "Briefing Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        880,
+        -10
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Build the briefing dashboard for {{ $now.toFormat(\"cccc d LLLL yyyy\") }}.\n\nEMAIL TRIAGE: {{ JSON.stringify($(\"Email Triage Agent\").first().json.output) }}\n\nCALENDAR ANALYSIS: {{ JSON.stringify($(\"Calendar Analyst Agent\").first().json.output) }}",
+        "options": {
+          "systemMessage": "You are the briefing designer of a daily briefing crew. You receive the triaged email JSON and the analysed calendar JSON and you return the HTML daily briefing dashboard.\nOutput ONE complete HTML document and nothing else: no markdown fences, no commentary, no explanation before or after.\nDocument rules: inline CSS only (mail clients drop style sheets and scripts), no JavaScript, no external images, a layout that stays readable at 600px wide, system font stack, dark text on a light card background.\nStructure: a header with the date and a one-sentence state of the day; a row of KPI tiles (unread emails, mails needing action, meetings today, free focus time); a \"Needs you today\" section listing the action-required mail with sender, subject, why and suggested action, most urgent first; a \"Today schedule\" section as a time-ordered table with any conflict called out in red; a \"Focus blocks\" line; and a muted \"FYI and waiting on others\" section at the end.\nIf a section has no data, print a short reassuring line instead of an empty block. Never invent an email, a meeting or a number that is not in the JSON you were given."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "b4ccba0d-3215-4c03-8299-4942e552a5bc",
+      "name": "Send HTML Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -10
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "<__PLACEHOLDER_VALUE__Where the briefing is delivered, e.g. you@yourdomain.com__>",
+        "subject": "=Daily briefing - {{ $now.toFormat(\"cccc d LLLL\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Daily Briefing"
+        }
+      },
+      "webhookId": "0524e538-12de-4449-9857-b3a00e09481e"
+    },
+    {
+      "id": "11ee063a-edf0-4c19-82cc-c6594ed8cfa7",
+      "name": "Sticky Note a31608b1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "content": "## Before activating\n\n1. Attach your Gmail, Google Calendar and OpenAI credentials to the four nodes that ask for them.\n2. Set the recipient on **Send HTML Briefing** (it is a placeholder).\n3. Adjust the 07:00 trigger to your timezone.\n\nThe two analyst agents sort the raw Gmail and Calendar data into JSON; the composer agent turns that JSON into the HTML dashboard that is emailed to you.",
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Daily 07:00 Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Overnight Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Overnight Email": {
+      "main": [
+        [
+          {
+            "node": "Collect Email Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Email Batch": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Analyses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Briefing Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Analyses": {
+      "main": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Calendar": {
+      "main": [
+        [
+          {
+            "node": "Collect Day Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Day Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Analyses",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Calendar Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send HTML Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "yTqSScu7DcATe9sz",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T16:53:01.398Z",
+      "updatedAt": "2026-09-11T16:53:01.398Z"
+    }
+  ],
+  "activeVersion": null
+}

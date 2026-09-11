@@ -1,0 +1,305 @@
+{
+  "id": "Ebe8l6xnMxBIky6H",
+  "name": "bench-12b7c1db",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T17:00:53.340Z",
+  "updatedAt": "2026-09-11T17:00:53.340Z",
+  "isArchived": false,
+  "versionId": "0bdf7074-e0bf-4ccb-8b68-78340f2bab34",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "66b0f4c7-310c-448a-a79d-8d5fbcd4dfc3",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -220,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4a871727-2f4c-4831-b808-524d0cb1c230",
+      "name": "Briefing Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        40,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Build today's briefing for {{ $now.toFormat('cccc d LLLL yyyy') }}. Ask the Email Triage Agent for the last 24 hours of mail and the Calendar Agent for today's schedule, then merge both into the HTML dashboard.",
+        "options": {
+          "systemMessage": "You orchestrate a daily briefing. You have two specialist agents as tools:\n- \"Email Triage Agent\": summarises and ranks the last 24 hours of Gmail.\n- \"Calendar Agent\": reports today's Google Calendar schedule.\n\nCall BOTH tools before answering. Then sort the information into: urgent items needing a reply today, meetings and their prep, FYI items, and everything safely ignorable.\n\nOutput ONE complete HTML document and nothing else. No markdown, no code fences, no commentary.\nRequirements for the document:\n- Inline CSS only (mail clients strip linked stylesheets), system font stack, max-width 720px, centred.\n- A header with the date, then dashboard cards: \"Needs You Today\", \"Schedule\", \"Inbox Digest\", \"FYI\".\n- Each email item shows sender, subject and a one-line summary. Each event shows time, title and attendees.\n- Empty sections say so explicitly instead of being dropped.\n- Never invent emails or events. If a tool returns nothing, report the section as empty.",
+          "maxIterations": 12
+        }
+      }
+    },
+    {
+      "id": "4fec52ba-4989-4195-a883-04e1098aa151",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        -40,
+        260
+      ],
+      "parameters": {
+        "toolDescription": "Reads and triages the Gmail inbox for the last 24 hours. Ask it for a ranked summary of incoming mail. Returns sender, subject, a one-line summary and an urgency rating per message.",
+        "text": "={{ $fromAI('request', 'What the email triage agent should report on', 'string') }}",
+        "options": {
+          "systemMessage": "You are an email triage specialist. Use the Gmail tool to read the last 24 hours of messages.\nFor every message return: sender, subject, a one-line summary, and an urgency rating of high, medium or low.\nHigh means it asks the user a direct question, has a deadline today, or comes from a person rather than a system.\nGroup newsletters, notifications and automated mail under low and summarise them as a single count per category.\nNever invent messages. If the tool returns nothing, say the inbox is empty for the window.",
+          "maxIterations": 8
+        }
+      }
+    },
+    {
+      "id": "ab05a4d4-5f6e-4a63-ad79-c052cd4090b8",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        200,
+        260
+      ],
+      "parameters": {
+        "toolDescription": "Reads today's Google Calendar. Ask it for the day's schedule. Returns start time, end time, title, location and attendees per event, plus the free blocks.",
+        "text": "={{ $fromAI('request', 'What the calendar agent should report on', 'string') }}",
+        "options": {
+          "systemMessage": "You are a calendar specialist. Use the Google Calendar tool to list today's events.\nFor every event return: start time, end time, title, location and attendees.\nOrder events chronologically, flag back-to-back meetings, and name the longest free block of the day.\nNever invent events. If the tool returns nothing, say the day is clear.",
+          "maxIterations": 8
+        }
+      }
+    },
+    {
+      "id": "1d0c31e3-3712-4c5a-bf88-3762e65b7b37",
+      "name": "Briefing Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -220,
+        480
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4f0febe2-a541-4351-9244-120c78892d7a",
+      "name": "Search Gmail Messages",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        -40,
+        480
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 40,
+        "simple": true,
+        "filters": {
+          "receivedAfter": "={{ $now.minus({ days: 1 }).toISO() }}",
+          "includeSpamTrash": false
+        },
+        "descriptionType": "manual",
+        "toolDescription": "Returns Gmail messages received in the last 24 hours, with sender, subject and snippet."
+      },
+      "webhookId": "cfac6d4e-d5cc-4776-9f15-17a26065c58d"
+    },
+    {
+      "id": "35b80d74-7562-4990-87a2-d390f205fdf5",
+      "name": "List Calendar Events",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        200,
+        480
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "returnAll": false,
+        "limit": 50,
+        "timeMin": "={{ $now.startOf('day').toISO() }}",
+        "timeMax": "={{ $now.endOf('day').toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        },
+        "descriptionType": "manual",
+        "toolDescription": "Returns today's Google Calendar events with start, end, summary, location and attendees."
+      }
+    },
+    {
+      "id": "23297316-5a9e-43e2-8ffc-a31de7c3f2a1",
+      "name": "Send Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "=Daily Briefing - {{ $now.toFormat('cccc d LLLL yyyy') }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "webhookId": "66fc4501-8111-424d-b026-4cb8509a8a50"
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Briefing Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Send Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Briefing Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Gmail Messages": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Calendar Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Ebe8l6xnMxBIky6H",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T17:00:53.342Z",
+      "updatedAt": "2026-09-11T17:00:53.342Z"
+    }
+  ],
+  "activeVersion": null
+}

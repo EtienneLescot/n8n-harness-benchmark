@@ -43,7 +43,11 @@ export const BRANCHES = {
             { path: 'AGENTS.md', why: 'the agent-facing guide written by `npx n8nac update-ai`' },
             { path: 'node_modules/n8nac', why: 'the CLI itself' },
         ],
-        usedPattern: /n8nac(@[\w.-]+)?\s+(env|skills|push|pull|list|verify|workflow|workspace|promote|setup|update-ai)\b/,
+        // Matches both documented forms: the bare or dist-tagged binary (`npx --yes n8nac@next push`)
+        // and the local entry point that `update-ai` has written since 2.7.0-rc.1
+        // (`node node_modules/n8nac/dist/index.js push`). Widened after inspecting run_15's logs,
+        // where five builders drove the CLI thirty-odd times and the gate read zero.
+        usedPattern: /(?:n8nac(?:@[\w.-]+)?|n8nac[\/\\]dist[\/\\]index\.js)\s+(env|skills|push|pull|list|verify|workflow|workspace|promote|setup|update-ai)\b/,
         usedLabel: 'n8nac CLI invocation',
     },
     native_mcp: {
@@ -52,7 +56,10 @@ export const BRANCHES = {
             { path: '.mcp.json', why: 'the client configuration n8n documents' },
             { path: 'mcp_call.ps1', why: 'a usable MCP caller, seeded from benchmark/config/native-mcp-windows-helper' },
         ],
-        usedPattern: /tools\/call/,
+        // `tools/call` is the JSON-RPC envelope, but the seeded helper writes it for the caller,
+        // so a log can show real MCP work without carrying the literal. An MCP tool name is
+        // equally conclusive: none of these are reachable over plain REST.
+        usedPattern: /tools\/call|mcp_(?:call|code|validate_nodes)\.ps1|create_workflow_from_code|validate_workflow|get_node_essentials|validate_node_config|search_nodes/,
         usedLabel: 'tools/call against the MCP endpoint',
     },
 };
@@ -180,6 +187,12 @@ function selfCheck() {
     // an earlier pattern that omitted it read 30 real CLI calls as none.
     mk('u4_n8nac', { 'builder_log.json': '{"c":["npx --yes n8nac@next skills validate x.workflow.ts"]}' });
     assert.deepStrictEqual(checkUsed('u4', tmp).problems, [], 'n8nac@next must count as an invocation');
+
+    // run_15: the local-install command form that update-ai now writes, and a branch B log that
+    // names MCP tools through the seeded helper without carrying the raw JSON-RPC envelope.
+    mk('u5_n8nac', { 'builder_log.json': '{"c":["node node_modules/n8nac/dist/index.js push workflows/dev/x.workflow.ts --verify"]}' });
+    mk('u5_native_mcp', { 'builder_log.json': '{"c":["& ./mcp_call.ps1 create_workflow_from_code"]}' });
+    assert.deepStrictEqual(checkUsed('u5', tmp).problems, [], 'the local entry point and the seeded helper must both count');
 
     // A missing log is a problem, not a pass.
     mk('u3_n8nac', {});

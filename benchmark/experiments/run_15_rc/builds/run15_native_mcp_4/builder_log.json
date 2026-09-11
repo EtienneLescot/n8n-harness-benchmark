@@ -1,0 +1,211 @@
+{
+  "startedAt": "2026-09-11T16:55:42Z",
+  "completedAt": "2026-09-11T17:06:10Z",
+  "workflowId": "fijRZsXWxZUAU0VU",
+  "workflowName": "bench-3d3b8036",
+  "nodeCount": 14,
+  "active": false,
+  "workspace": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_native_mcp_4",
+  "source": "workflow.ts",
+  "transport": "native n8n MCP over HTTP via the sandbox PowerShell helpers (native_mcp.ps1 / mcp_call.ps1 / mcp_code.ps1); protocol negotiated 2025-06-18",
+  "steps": [
+    {
+      "n": 1,
+      "kind": "bash",
+      "command": "cd <workspace> && pwd && ls -la",
+      "result": "workspace confirmed: .env, .mcp.json, README.md, 4 helper scripts"
+    },
+    {
+      "n": 2,
+      "kind": "bash",
+      "command": "cat README.md; cat .mcp.json; sed -E 's/=.*/=<redacted>/' .env",
+      "result": "helper contract read; .env keys present (N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN), values never printed"
+    },
+    {
+      "n": 3,
+      "kind": "bash",
+      "command": "cat native_mcp.ps1; cat mcp_call.ps1",
+      "result": "readiness and generic tools/call helpers reviewed"
+    },
+    {
+      "n": 4,
+      "kind": "bash",
+      "command": "date -u +%Y-%m-%dT%H:%M:%SZ; cat mcp_code.ps1",
+      "result": "startedAt captured; validate_workflow / create_workflow_from_code helper reviewed"
+    },
+    {
+      "n": 5,
+      "kind": "powershell",
+      "command": ".\\native_mcp.ps1 -Action readiness",
+      "result": "{\"authenticated\":true,\"initialize\":\"ok\",\"tools_list\":\"ok\",\"protocolVersion\":\"2025-06-18\",\"tool_count\":39}"
+    },
+    {
+      "n": 6,
+      "kind": "mcp_tool",
+      "tool": "tools/list",
+      "command": ".\\mcp_call.ps1 -ToolName __list",
+      "result": "39 tools returned"
+    },
+    {
+      "n": 7,
+      "kind": "mcp_tool",
+      "tool": "get_workflow_sdk_reference",
+      "arguments": {},
+      "result": "SDK language reference saved to a scratch file and read (forbidden constructs, expr/placeholder/newCredential rules, agent patterns, coding and design guidance)"
+    },
+    {
+      "n": 8,
+      "kind": "bash",
+      "command": "sed / grep over the saved SDK reference (sections: patterns, ai_agent_*, Coding Guidelines, Design Guidance, sticky())",
+      "result": "builder constraints absorbed"
+    },
+    {
+      "n": 9,
+      "kind": "mcp_tool",
+      "tool": "search_nodes",
+      "arguments": { "query": "gmail" },
+      "result": "FAILED - Input validation error: queries: Required"
+    },
+    {
+      "n": 10,
+      "kind": "mcp_tool",
+      "tool": "get_workflow_best_practices",
+      "arguments": {},
+      "result": "FAILED - Input validation error: technique: Invalid input"
+    },
+    {
+      "n": 11,
+      "kind": "mcp_tool",
+      "tool": "search_nodes",
+      "arguments": { "queries": ["gmail", "google calendar", "schedule trigger", "html", "ai agent"] },
+      "result": "OK - identified n8n-nodes-base.gmail 2.2, googleCalendar 1.3, scheduleTrigger 1.4, html 1.2, @n8n/n8n-nodes-langchain.agent 3.1"
+    },
+    {
+      "n": 12,
+      "kind": "mcp_tool",
+      "tool": "get_workflow_best_practices",
+      "arguments": { "technique": "all" },
+      "result": "FAILED - Input validation error: technique: Invalid input; tool abandoned, SDK reference used instead"
+    },
+    {
+      "n": 13,
+      "kind": "mcp_tool",
+      "tool": "get_node_types",
+      "arguments": { "nodeIds": [{ "nodeId": "n8n-nodes-base.scheduleTrigger" }, { "nodeId": "n8n-nodes-base.gmail", "resource": "message", "operation": "getAll" }, { "nodeId": "n8n-nodes-base.googleCalendar", "resource": "event", "operation": "getAll" }] },
+      "result": "OK - parameter shapes and builderHints captured (notably: keep Gmail simple=true unless the raw body is needed)"
+    },
+    {
+      "n": 14,
+      "kind": "mcp_tool",
+      "tool": "get_node_types",
+      "arguments": { "nodeIds": [{ "nodeId": "n8n-nodes-base.html", "operation": "generateHtmlTemplate" }, { "nodeId": "n8n-nodes-base.gmail", "resource": "message", "operation": "send" }, { "nodeId": "n8n-nodes-base.merge" }] },
+      "result": "OK"
+    },
+    {
+      "n": 15,
+      "kind": "mcp_tool",
+      "tool": "get_node_types",
+      "arguments": { "nodeIds": [{ "nodeId": "@n8n/n8n-nodes-langchain.agent" }, { "nodeId": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini" }, { "nodeId": "@n8n/n8n-nodes-langchain.outputParserStructured" }] },
+      "result": "OK - agent 3.1 subnode contract, Gemini 1.1 (googlePalmApi credential), structured parser 1.3"
+    },
+    {
+      "n": 16,
+      "kind": "bash",
+      "command": "cat > workflow.ts <<'EOF' ... EOF",
+      "result": "FAILED - bash heredoc aborted with 'unexpected EOF while looking for matching quote' on the large file"
+    },
+    {
+      "n": 17,
+      "kind": "write",
+      "command": "Write tool -> workflow.ts",
+      "result": "OK - 14-node SDK source written"
+    },
+    {
+      "n": 18,
+      "kind": "mcp_tool",
+      "tool": "validate_workflow",
+      "command": ".\\mcp_code.ps1 -Action validate -CodeFile workflow.ts",
+      "result": "valid:true, nodeCount:14, 4 warnings (3x MISSING_REQUIRED_INPUT from autoFix on the output parsers, 1x INVALID_PARAMETER on Fetch Calendar Today calendar field)"
+    },
+    {
+      "n": 19,
+      "kind": "bash",
+      "command": "sed -i autoFix true->false; sed -i replace placeholder() on the calendar field with the resourceLocator object",
+      "result": "OK"
+    },
+    {
+      "n": 20,
+      "kind": "mcp_tool",
+      "tool": "validate_workflow",
+      "command": ".\\mcp_code.ps1 -Action validate -CodeFile workflow.ts",
+      "result": "valid:true, nodeCount:14, no warnings"
+    },
+    {
+      "n": 21,
+      "kind": "mcp_tool",
+      "tool": "create_workflow_from_code",
+      "command": ".\\mcp_code.ps1 -Action create -CodeFile workflow.ts",
+      "result": "OK - workflowId fijRZsXWxZUAU0VU, name bench-3d3b8036, nodeCount 14, personal project; response also reported autoAssignedCredentials for Gemini Briefing Model"
+    },
+    {
+      "n": 22,
+      "kind": "mcp_tool",
+      "tool": "get_workflow_details",
+      "arguments": { "workflowId": "fijRZsXWxZUAU0VU" },
+      "result": "OK - active:false, isArchived:false, nodeCount:14, connections as designed, no credentials key on any node"
+    },
+    {
+      "n": 23,
+      "kind": "bash",
+      "command": "rm -f <scratch research files>; date -u",
+      "result": "workspace left with the helpers, workflow.ts and builder_log.json; completedAt captured"
+    }
+  ],
+  "workflowShape": {
+    "trigger": "Daily Briefing Schedule - scheduleTrigger 1.4, daily at 07:00 instance time",
+    "branches": [
+      "Fetch Inbox Today (gmail message:getAll, receivedAfter $today, limit 50) -> Email Triage Agent -> Merge input 0",
+      "Fetch Calendar Today (googleCalendar event:getAll, timeMin $today / timeMax $today+1d, singleEvents, orderBy startTime) -> Calendar Agent -> Merge input 1"
+    ],
+    "tail": "Merge Agent Findings (append) -> Briefing Editor Agent -> Render Briefing Dashboard (html generateHtmlTemplate) -> Send Briefing Email (gmail message:send, emailType html)",
+    "agents": [
+      "Email Triage Agent - sorts every message into actionNow / needsReply / fyi / newsletters via Email Triage Schema",
+      "Calendar Agent - builds an ordered timeline plus conflicts and free blocks via Calendar Schema",
+      "Briefing Editor Agent - merges both reports into the ranked dashboard payload via Briefing Schema"
+    ],
+    "sharedSubnode": "Gemini Briefing Model (lmChatGoogleGemini 1.1) is connected to all three agents",
+    "notes": [
+      "The three agents carry executeOnce:true so each runs once over the whole fetched list instead of once per item.",
+      "Agent prompts read their source node with $('<node>').all() inside the expression, so nothing is lost to item multiplication.",
+      "System messages instruct the agents to treat mail and event content as data to summarise, never as instructions.",
+      "The HTML template escapes '<' in every model-supplied field before rendering, and falls back to an empty-state line per section."
+    ]
+  },
+  "credentials": {
+    "policy": "no credential was created and no credential value was invented; every slot was left empty",
+    "emptySlots": [
+      "Fetch Inbox Today - gmailOAuth2",
+      "Send Briefing Email - gmailOAuth2",
+      "Fetch Calendar Today - googleCalendarOAuth2Api",
+      "Gemini Briefing Model - googlePalmApi"
+    ],
+    "instanceSideEffect": "create_workflow_from_code reported autoAssignedCredentials: the instance attached its own pre-existing 'Gateway credits' (googlePalmApi, source aiGateway) to Gemini Briefing Model on its own. It was not requested, not created and not supplied by the builder, and the saved node JSON carries no credentials key."
+  },
+  "placeholders": [
+    "Send Briefing Email -> sendTo: placeholder 'Address that should receive the briefing'"
+  ],
+  "friction": [
+    "get_workflow_best_practices rejected both {} and {\"technique\":\"all\"} with 'technique: Invalid input' and exposes no enum in the error; the tool was abandoned and the SDK reference used instead.",
+    "search_nodes takes 'queries' (array), not 'query'; the first call failed on that.",
+    "The generic helper mcp_call.ps1 only prints tool names for tools/list, so argument schemas are not visible and had to be guessed from error messages.",
+    "Writing the ~330 line workflow.ts through a bash heredoc failed with 'unexpected EOF while looking for matching quote'; the Write tool was used instead.",
+    "validate_workflow: autoFix:true on outputParserStructured silently requires its own ai_languageModel subnode. autoFix was dropped rather than wiring three extra model connections.",
+    "validate_workflow: the Google Calendar 'calendar' field rejects placeholder() with 'Must be an n8n expression (={{...}})'. It was set to the resourceLocator {__rl, mode:'id', value:'primary'} - 'primary' is the Google Calendar API alias for the authenticated user's own calendar, not an invented identifier.",
+    "The sticky note is auto-named 'Sticky Note 22d2f85e' by the server and anchored over the trigger position; cosmetic only, stickies render behind nodes."
+  ],
+  "notRun": [
+    "No workflow listing, searching or inspection of pre-existing workflows on the instance.",
+    "No publish_workflow / activation call; the workflow was verified active:false.",
+    "No execution or test run: every external node is intentionally credential-less, so a run would only produce auth errors."
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "startedAt": "2026-09-11T16:55:41Z",
+  "completedAt": "2026-09-11T17:01:02Z",
+  "workflowId": "Ebe8l6xnMxBIky6H",
+  "workflowName": "bench-12b7c1db",
+  "nodeCount": 8,
+  "workflowFile": "workflows/dev/bench-12b7c1db.workflow.ts",
+  "active": false,
+  "task": "Multi-agent daily briefing: checks Gmail + Google Calendar on a schedule, sorts the information, renders an HTML daily briefing dashboard.",
+  "design": {
+    "trigger": "Daily Trigger (scheduleTrigger v1.4) - every day at 07:00",
+    "orchestrator": "Briefing Orchestrator (@n8n/n8n-nodes-langchain.agent v3.1) - calls both sub-agents, sorts into Needs You Today / Schedule / Inbox Digest / FYI, emits one complete inline-CSS HTML document",
+    "subAgents": [
+      "Email Triage Agent (@n8n/n8n-nodes-langchain.agentTool v3) -> Search Gmail Messages (n8n-nodes-base.gmailTool v2.2, message:getAll, receivedAfter = now-1d, limit 40)",
+      "Calendar Agent (@n8n/n8n-nodes-langchain.agentTool v3) -> List Calendar Events (n8n-nodes-base.googleCalendarTool v1.3, event:getAll, calendar id 'primary', timeMin/timeMax = today)"
+    ],
+    "sharedModel": "Briefing Model (@n8n/n8n-nodes-langchain.lmChatOpenAi v1.3) - one model node wired as ai_languageModel to all three agents",
+    "output": "Send Briefing Email (n8n-nodes-base.gmail v2.2, message:send, emailType html, message = {{ $json.output }})"
+  },
+  "credentials": {
+    "policy": "No credential was created or invented. Every credentialed node was pushed with its credential slot empty, to be selected in the n8n UI.",
+    "slotsLeftEmpty": [
+      "Briefing Model -> openAiApi",
+      "Search Gmail Messages -> gmailOAuth2",
+      "List Calendar Events -> googleCalendarOAuth2Api",
+      "Send Briefing Email -> gmailOAuth2"
+    ]
+  },
+  "commands": [
+    {
+      "order": 1,
+      "tool": "Bash",
+      "command": "ls -la <workspace>",
+      "purpose": "inventory the workspace",
+      "result": "ok"
+    },
+    {
+      "order": 2,
+      "tool": "Bash",
+      "command": "cat AGENTS.md; cat n8nac-config.json; cat package.json; sed -E 's/=.*/=<redacted>/' .env",
+      "purpose": "read workspace docs, config and .env key names only (values never printed)",
+      "result": "ok - n8nac 2.7.0-rc.1, native MCP level 0, env keys N8N_HOST / N8N_API_KEY / N8N_NATIVE_MCP_URL / N8N_NATIVE_MCP_TOKEN present"
+    },
+    {
+      "order": 3,
+      "tool": "Bash",
+      "command": "cat .github/agents/n8n-architect.agent.md; sed -n '200,400p' .github/agents/n8n-architect.agent.md",
+      "purpose": "read the required local agent instructions",
+      "result": "ok"
+    },
+    {
+      "order": 4,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js update-ai",
+      "purpose": "bootstrap step 2 - refresh AI context files",
+      "result": "ok"
+    },
+    {
+      "order": 5,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js env status --json",
+      "purpose": "bootstrap step 3 - resolve effective environment",
+      "result": "accessStatus=ready, env Dev (dev-2), project Personal, workflowsPath workflows/dev"
+    },
+    {
+      "order": 6,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills search \"agent tool\" --compact; skills search \"gmail\" --compact; skills search \"google calendar\" --compact",
+      "purpose": "discover candidate node types",
+      "result": "ok - agentTool, gmail/gmailTool, googleCalendar/googleCalendarTool"
+    },
+    {
+      "order": 7,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info scheduleTrigger agent agentTool lmChatOpenAi --compact",
+      "purpose": "exact types, typeVersions and required params",
+      "result": "scheduleTrigger v1.4, agent v3.1, agentTool v3, lmChatOpenAi v1.3"
+    },
+    {
+      "order": 8,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-schema agent; skills node-info agent",
+      "purpose": "agent parameter shape and gating flags",
+      "result": "ok - promptType/text/options, gating flags hasOutputParser + needsFallback left false"
+    },
+    {
+      "order": 9,
+      "tool": "Bash",
+      "command": "node -e \"<read node_modules/@n8n-as-code/skills/dist/assets/n8n-nodes-technical.json>\" (several invocations)",
+      "purpose": "read the bundled ontology directly for the option-collection members the compact CLI output elides: agent/agentTool options, gmail message getAll filters, gmail message send params, googleCalendar event getAll params, calendar resourceLocator modes, scheduleTrigger rule.interval shape, lmChatOpenAi model/options, credential names per node",
+      "result": "ok - confirmed systemMessage/maxIterations, filters.receivedAfter, emailType html, timeMin/timeMax, calendar modes list|id, rule.interval fields"
+    },
+    {
+      "order": 10,
+      "tool": "Bash",
+      "command": "find/grep node_modules/@n8n-as-code/transformer/dist/types.d.ts for CredentialReference",
+      "purpose": "confirm how credentials are expressed in the @node decorator",
+      "result": "credentials?: Record<string, {id, name}> - omitted entirely so the slot stays empty"
+    },
+    {
+      "order": 11,
+      "tool": "Bash",
+      "command": "cat > workflows/dev/bench-12b7c1db.workflow.ts <<'EOF' ... EOF",
+      "purpose": "write the workflow file",
+      "result": "FAILED - bash heredoc parse error (see friction #1)"
+    },
+    {
+      "order": 12,
+      "tool": "Write",
+      "command": "Write workflows/dev/bench-12b7c1db.workflow.ts",
+      "purpose": "write the workflow file (fallback after heredoc failure)",
+      "result": "ok"
+    },
+    {
+      "order": 13,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-12b7c1db.workflow.ts",
+      "purpose": "schema validation",
+      "result": "FAILED - dynamic expression not supported in node parameters (see friction #2)"
+    },
+    {
+      "order": 14,
+      "tool": "Edit",
+      "command": "Edit x3 - replace array .join('\\n') systemMessage values with plain string concatenation",
+      "purpose": "make the systemMessage values statically parseable",
+      "result": "ok"
+    },
+    {
+      "order": 15,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-12b7c1db.workflow.ts",
+      "purpose": "re-validate",
+      "result": "Workflow is valid"
+    },
+    {
+      "order": 16,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js list --local",
+      "purpose": "confirm the new local file is tracked (--local so no remote workflow is listed or inspected)",
+      "result": "EXIST_ONLY_LOCALLY, 1 local-only workflow"
+    },
+    {
+      "order": 17,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js push workflows/dev/bench-12b7c1db.workflow.ts --verify",
+      "purpose": "create the workflow on the instance and verify it",
+      "result": "Pushed; workflow id Ebe8l6xnMxBIky6H; post-push fetch returned \"bench-12b7c1db\" (8 nodes); no issues found. Push rewrote the local file with instance ids and normalised formatting."
+    },
+    {
+      "order": 18,
+      "tool": "Bash",
+      "command": "date -u",
+      "purpose": "completedAt timestamp",
+      "result": "2026-09-11T17:01:02Z"
+    },
+    {
+      "order": 19,
+      "tool": "Write",
+      "command": "Write builder_log.json",
+      "purpose": "this log",
+      "result": "ok"
+    }
+  ],
+  "friction": [
+    {
+      "id": 1,
+      "where": "Bash tool, writing the workflow file",
+      "detail": "A quoted heredoc (cat > file <<'EOF') aborted with \"unexpected EOF while looking for matching\" despite balanced content. Worked around it with the Write tool. Cost: one wasted round trip.",
+      "blocking": false
+    },
+    {
+      "id": 2,
+      "where": "n8nac skills validate",
+      "detail": "systemMessage values written as ['line', 'line'].join('\\n') were rejected: \"Dynamic expression not supported in node parameters ... only inline literal values are supported\". String concatenation with + across lines IS accepted, and the push normalised it into a template literal. The error message lists only literals as supported, so the fact that + concatenation works is not discoverable from it. Cost: one failed validation plus three edits.",
+      "blocking": false
+    },
+    {
+      "id": 3,
+      "where": "n8nac push",
+      "detail": "Validation ran against the bundled schema only. Toolchain message, verbatim: \"Validated against the bundled schema only (native MCP level 0 - discouraged, the instance may differ). Connect the instance MCP for instance-exact validation: n8nac native-mcp configure --level 1.\" Per the agent instructions the level was NOT changed; reported as-is. Consequence: node parameters were checked against the bundled ontology, not against the live n8n 2.37.7 instance.",
+      "blocking": false
+    },
+    {
+      "id": 4,
+      "where": "ontology lookups",
+      "detail": "skills node-info/node-schema --compact do not print the members of collection-type parameters (for example agent options.systemMessage, gmail filters.receivedAfter). Reading node_modules/@n8n-as-code/skills/dist/assets/n8n-nodes-technical.json directly was needed to author those without guessing. Cost: about six extra node -e invocations.",
+      "blocking": false
+    },
+    {
+      "id": 5,
+      "where": "unverifiable at build time",
+      "detail": "Because no credentials exist and the workflow was left inactive, the run was never executed. The Gmail, Google Calendar and OpenAI slots must be filled in the n8n UI before the first run. The Google Calendar node uses the literal calendar id 'primary' (mode: 'id') rather than a picked list entry, since the list picker needs a credential to resolve.",
+      "blocking": false
+    }
+  ],
+  "constraintsObserved": [
+    "All work done inside the workspace directory; no parent or sibling directory was read or used.",
+    "No remote workflow was listed, searched or inspected; `list` was run with --local only, and no native MCP discovery tool was called.",
+    "Only the identifier returned by push (Ebe8l6xnMxBIky6H) is referenced.",
+    "Workflow name is exactly bench-12b7c1db and active is false.",
+    "No credential was created and no credential value was invented or written anywhere.",
+    "No secrets in this log; .env values were redacted at read time."
+  ]
+}

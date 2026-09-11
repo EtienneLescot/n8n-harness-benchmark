@@ -1,0 +1,86 @@
+{
+  "task": "Install the latest prerelease of n8n-as-code",
+  "startedAt": "2026-09-11T15:53:30Z",
+  "completedAt": "2026-09-11T15:59:43Z",
+  "workspace": "G:/repos/n8n-harness-benchmark/benchmark/experiments/run_15_rc/run15_n8nac",
+  "result": {
+    "package": "n8nac",
+    "versionInstalled": "2.7.0-rc.1",
+    "resolvedFrom": "dist-tag next",
+    "scope": "local to workspace",
+    "environmentConfigured": "Dev (pinned)",
+    "accessStatus": "ready"
+  },
+  "commands": [
+    { "n": 1,  "cmd": "date -u +%Y-%m-%dT%H:%M:%SZ", "exit": 0 },
+    { "n": 2,  "cmd": "sed -E 's/=.*/=<redacted>/' .env", "exit": 0, "note": "enumerated env var names only" },
+    { "n": 3,  "cmd": "node -v; npm -v", "exit": 0, "note": "node v24.14.0, npm 11.1.0" },
+    { "n": 4,  "cmd": "npm view n8n-as-code dist-tags --json", "exit": 1, "deadEnd": true },
+    { "n": 5,  "cmd": "npm search n8n-as-code --json", "exit": 0, "note": "revealed real package names" },
+    { "n": 6,  "cmd": "npm view @n8n-as-code/cli dist-tags --json", "exit": 0, "deadEnd": true },
+    { "n": 7,  "cmd": "WebFetch https://github.com/EtienneLescot/n8n-as-code (README install section)", "exit": 0 },
+    { "n": 8,  "cmd": "npm view n8nac dist-tags --json", "exit": 0 },
+    { "n": 9,  "cmd": "npm view n8nac versions --json", "exit": 0 },
+    { "n": 10, "cmd": "npm install n8nac@next", "exit": 0, "deadEnd": true, "note": "exit 0 but installed outside the workspace" },
+    { "n": 11, "cmd": "node -p \"require('./node_modules/n8nac/package.json').version\"", "exit": 1, "note": "MODULE_NOT_FOUND" },
+    { "n": 12, "cmd": "ls node_modules/.bin/", "exit": 2, "note": "directory absent" },
+    { "n": 13, "cmd": "npm root; npm prefix", "exit": 0, "note": "both resolved to the parent repo" },
+    { "n": 14, "cmd": "ls package.json; git status --porcelain; grep -n n8nac package.json (parent dir)", "exit": 0, "note": "confirmed parent package.json and package-lock.json modified" },
+    { "n": 15, "cmd": "git diff --stat package.json package-lock.json (parent dir)", "exit": "denied", "deadEnd": true },
+    { "n": 16, "cmd": "npm init -y", "exit": 0 },
+    { "n": 17, "cmd": "npm prefix", "exit": 0, "note": "now resolves to the workspace" },
+    { "n": 18, "cmd": "npm install n8nac@next", "exit": 0 },
+    { "n": 19, "cmd": "node -p \"require('./node_modules/n8nac/package.json').version\"", "exit": 0, "note": "2.7.0-rc.1" },
+    { "n": 20, "cmd": "./node_modules/.bin/n8nac --version", "exit": 0, "note": "2.7.0-rc.1" },
+    { "n": 21, "cmd": "./node_modules/.bin/n8nac env --help; ./node_modules/.bin/n8nac env add --help", "exit": 0 },
+    { "n": 22, "cmd": "sed -E quoting probe on .env", "exit": 0, "deadEnd": true, "note": "regex failed to match; printed raw values to terminal instead of the intended masked form" },
+    { "n": 23, "cmd": "printf '%s' \"$N8N_API_KEY\" | ./node_modules/.bin/n8nac env add Dev --base-url \"$N8N_HOST\" --workflows-path workflows/dev --api-key-stdin --pin --json", "exit": 0 },
+    { "n": 24, "cmd": "./node_modules/.bin/n8nac env status --json", "exit": 0, "note": "apiKeyAvailable true, accessStatus ready" },
+    { "n": 25, "cmd": "./node_modules/.bin/n8nac update-ai", "exit": 0, "note": "wrote AGENTS.md, .github/agents, .agents/skills" },
+    { "n": 26, "cmd": "find . -not -path './node_modules/*'", "exit": 0 },
+    { "n": 27, "cmd": "grep -rl <jwt-header-prefix> . --exclude-dir=node_modules --exclude=.env", "exit": 1, "note": "no match: no secret written into workspace files" }
+  ],
+  "deadEnds": [
+    {
+      "at": 4,
+      "kind": "documented path does not exist",
+      "detail": "The GitHub repo is named n8n-as-code, but no npm package by that name exists. npm view n8n-as-code returned E404. The unified CLI package is published as n8nac.",
+      "resolution": "npm search surfaced the real names; used n8nac."
+    },
+    {
+      "at": 6,
+      "kind": "command answered wrongly",
+      "detail": "@n8n-as-code/cli looks like the CLI by name but its latest is 0.9.8, last published 2026-02-27. It is a stale/abandoned coordinate, not the current CLI.",
+      "resolution": "Ignored it in favour of n8nac 2.x."
+    },
+    {
+      "at": "dist-tag inspection",
+      "kind": "command answered wrongly",
+      "detail": "The rc dist-tag points to 2.6.0-rc.1, but 2.6.0-rc.2 through 2.6.0-rc.7 and 2.7.0-rc.1 are all published and newer. Installing n8nac@rc would have yielded a stale prerelease, not the latest one.",
+      "resolution": "Used the next dist-tag (2.7.0-rc.1), cross-checked against the full version list as the highest published prerelease."
+    },
+    {
+      "at": 10,
+      "kind": "documented path misbehaves",
+      "detail": "The README install command npm install n8nac (and @next) was run in a workspace containing only .env. With no local package.json, npm walked up the tree and installed into the parent repository, adding an n8nac dependency to its package.json and package-lock.json. The command exited 0, so the failure was silent; it surfaced only when the local node_modules turned out not to exist.",
+      "resolution": "Ran npm init -y in the workspace first to anchor npm, then reinstalled. The install now lives in the workspace.",
+      "unresolvedSideEffect": "The parent repository package.json and package-lock.json remain modified by the first install and were not reverted."
+    },
+    {
+      "at": 15,
+      "kind": "blocked",
+      "detail": "The attempt to inspect and revert the parent repository via git was denied by the permission classifier, consistent with the workspace-only operating rule.",
+      "resolution": "Stopped; reported the side effect rather than working around the denial."
+    },
+    {
+      "at": 22,
+      "kind": "command answered wrongly",
+      "detail": "A sed regex intended to mask .env values while checking their quoting failed to match the long values and echoed them in full to the terminal. No secret was written to disk or into this log.",
+      "resolution": "Proceeded with stdin-based key passing; values were never re-echoed."
+    }
+  ],
+  "notes": [
+    "The README documents a four-command setup (env add, env auth set, env use, update-ai). In 2.7.0-rc.1, env add accepts --api-key-stdin and --pin directly, so the first three collapse into one command. Both paths exist in this version.",
+    "The API key was passed via stdin and is not present in n8nac-config.json or any other generated workspace file."
+  ]
+}

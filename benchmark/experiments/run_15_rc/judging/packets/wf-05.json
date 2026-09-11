@@ -1,0 +1,406 @@
+{
+  "workflowId": "wf-05",
+  "workflow": {
+    "description": null,
+    "active": false,
+    "activeVersionId": null,
+    "isArchived": false,
+    "sourceWorkflowId": null,
+    "nodes": [
+      {
+        "name": "Every Morning At 7",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          -260,
+          0
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "days",
+                "daysInterval": 1,
+                "triggerAtHour": 7,
+                "triggerAtMinute": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Get Last 24h Emails",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "alwaysOutputData": true,
+        "position": [
+          -40,
+          -160
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 25,
+          "simple": true,
+          "filters": {
+            "receivedAfter": "={{ $now.minus({ hours: 24 }).toISO() }}",
+            "readStatus": "both"
+          }
+        }
+      },
+      {
+        "name": "Collect Emails",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          180,
+          -160
+        ],
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "emails"
+        }
+      },
+      {
+        "name": "Email Triage Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          400,
+          -160
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Emails received in the last 24 hours, raw JSON:\n\n{{ JSON.stringify($json.emails) }}",
+          "options": {
+            "systemMessage": "You are the Email Triage Agent of a daily briefing crew. You receive the raw JSON of the emails received in the last 24 hours. Sort every email into exactly one bucket: ACTION REQUIRED, WAITING ON REPLY, FYI, or NOISE. For each email output one line formatted as: BUCKET | sender | subject | short reason. Then output a final line starting with TOP3: followed by the three most urgent subjects, most urgent first. Be terse, no preamble. Never invent an email that is not in the input. If the input list is empty or contains no real message, output exactly: NO EMAILS."
+          }
+        }
+      },
+      {
+        "name": "Get Today Events",
+        "type": "n8n-nodes-base.googleCalendar",
+        "typeVersion": 1.3,
+        "alwaysOutputData": true,
+        "position": [
+          -40,
+          160
+        ],
+        "parameters": {
+          "resource": "event",
+          "operation": "getAll",
+          "calendar": {
+            "__rl": true,
+            "value": "primary",
+            "mode": "id"
+          },
+          "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+          "timeMax": "={{ $now.endOf(\"day\").toISO() }}",
+          "returnAll": false,
+          "limit": 50,
+          "options": {
+            "singleEvents": true,
+            "orderBy": "startTime"
+          }
+        }
+      },
+      {
+        "name": "Collect Events",
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          180,
+          160
+        ],
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "events"
+        }
+      },
+      {
+        "name": "Calendar Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          400,
+          160
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Google Calendar events for today, raw JSON:\n\n{{ JSON.stringify($json.events) }}",
+          "options": {
+            "systemMessage": "You are the Calendar Agent of a daily briefing crew. You receive the raw JSON of today Google Calendar events. Output a chronological timeline, one line per event formatted as: HH:mm-HH:mm | title | location or meeting link | number of attendees. Then output a line starting with OVERLAPS: listing any events that collide, a line starting with FREE: giving the largest free block between 08:00 and 19:00, and a line starting with PREP: listing events that need preparation. Be terse, no preamble. Never invent an event that is not in the input. If the input list is empty or contains no real event, output exactly: NO EVENTS TODAY."
+          }
+        }
+      },
+      {
+        "name": "Wait For Both Agents",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          660,
+          0
+        ],
+        "parameters": {
+          "mode": "chooseBranch",
+          "numberInputs": 2,
+          "chooseBranchMode": "waitForAll",
+          "output": "specifiedInput",
+          "useDataOfInput": 1
+        }
+      },
+      {
+        "name": "Briefing Editor Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          880,
+          0
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Date: {{ $now.toFormat(\"cccc d LLLL yyyy\") }}\n\nEMAIL TRIAGE REPORT:\n{{ $(\"Email Triage Agent\").first().json.output }}\n\nCALENDAR REPORT:\n{{ $(\"Calendar Agent\").first().json.output }}",
+          "options": {
+            "systemMessage": "You are the Briefing Editor Agent. You merge the Email Triage Agent report and the Calendar Agent report into one self contained HTML daily briefing dashboard. Output rules: return raw HTML only, starting with <!DOCTYPE html> and ending with </html>, no markdown, no code fences, no commentary before or after. Single file, inline CSS only, no external asset, no JavaScript. Layout: a header with the date, then a row of summary cards showing emails needing action, meetings today, first meeting time and largest free block, then two columns, left column Schedule as a vertical timeline, right column Inbox grouped by bucket with ACTION REQUIRED first, then a closing Top 3 Priorities section that merges both reports. Style: light neutral background, system font stack, rounded cards with soft borders, max width 900px centered, and a media query that stacks the two columns below 700px. Use colour only to mark priority, red for action required, amber for waiting on reply, grey for FYI and noise. Use only facts present in the two reports, never invent an email, an event or a number."
+          }
+        }
+      },
+      {
+        "name": "Briefing Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          640,
+          320
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-5-mini",
+            "mode": "list"
+          },
+          "options": {}
+        }
+      },
+      {
+        "name": "Email The Briefing",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          1140,
+          0
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "etienne@etiennelescot.fr",
+          "subject": "=Daily briefing - {{ $now.toFormat(\"dd LLL yyyy\") }}",
+          "emailType": "html",
+          "message": "={{ $json.output.replace(/```html/g, \"\").replace(/```/g, \"\").trim() }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Every Morning At 7": {
+        "main": [
+          [
+            {
+              "node": "Get Last 24h Emails",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get Today Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Last 24h Emails": {
+        "main": [
+          [
+            {
+              "node": "Collect Emails",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Collect Emails": {
+        "main": [
+          [
+            {
+              "node": "Email Triage Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Today Events": {
+        "main": [
+          [
+            {
+              "node": "Collect Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Collect Events": {
+        "main": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Triage Agent": {
+        "main": [
+          [
+            {
+              "node": "Wait For Both Agents",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calendar Agent": {
+        "main": [
+          [
+            {
+              "node": "Wait For Both Agents",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Wait For Both Agents": {
+        "main": [
+          [
+            {
+              "node": "Briefing Editor Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Briefing Editor Agent": {
+        "main": [
+          [
+            {
+              "node": "Email The Briefing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Briefing Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Email Triage Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "Calendar Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "Briefing Editor Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true
+    },
+    "staticData": null,
+    "activeVersion": null
+  },
+  "structuralFacts": {
+    "executionOrder": "v1",
+    "functionalNodeCount": 11,
+    "triggers": [
+      "Every Morning At 7"
+    ],
+    "maxMainDepth": 9,
+    "unreachableFromTrigger": [],
+    "brokenReferences": [],
+    "waitsOn": {
+      "Get Last 24h Emails": [
+        "Every Morning At 7"
+      ],
+      "Collect Emails": [
+        "Get Last 24h Emails",
+        "Every Morning At 7"
+      ],
+      "Email Triage Agent": [
+        "Collect Emails",
+        "Get Last 24h Emails",
+        "Every Morning At 7"
+      ],
+      "Get Today Events": [
+        "Every Morning At 7"
+      ],
+      "Collect Events": [
+        "Get Today Events",
+        "Every Morning At 7"
+      ],
+      "Calendar Agent": [
+        "Collect Events",
+        "Get Today Events",
+        "Every Morning At 7"
+      ],
+      "Wait For Both Agents": [
+        "Email Triage Agent",
+        "Calendar Agent",
+        "Collect Events",
+        "Get Today Events",
+        "Every Morning At 7",
+        "Collect Emails",
+        "Get Last 24h Emails"
+      ],
+      "Briefing Editor Agent": [
+        "Wait For Both Agents",
+        "Email Triage Agent",
+        "Calendar Agent",
+        "Collect Events",
+        "Get Today Events",
+        "Every Morning At 7",
+        "Collect Emails",
+        "Get Last 24h Emails"
+      ],
+      "Email The Briefing": [
+        "Briefing Editor Agent",
+        "Wait For Both Agents",
+        "Email Triage Agent",
+        "Calendar Agent",
+        "Collect Events",
+        "Get Today Events",
+        "Every Morning At 7",
+        "Collect Emails",
+        "Get Last 24h Emails"
+      ]
+    }
+  }
+}

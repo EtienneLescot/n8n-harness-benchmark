@@ -1,0 +1,98 @@
+{
+  "startedAt": "2026-09-11T16:36:12Z",
+  "completedAt": "2026-09-11T16:45:10Z",
+  "workflowId": "KIldXeR9YxI4L4X3",
+  "workflowName": "bench-425ceb62",
+  "nodeCount": 10,
+  "active": false,
+  "workspace": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_2",
+  "workflowFile": "workflows/dev/bench-425ceb62.workflow.ts",
+  "environment": {
+    "name": "Dev",
+    "environmentId": "dev-2",
+    "kind": "external-instance",
+    "project": "Personal",
+    "nativeMcpLevel": 0
+  },
+  "task": "Multi-agent workflow that daily checks Google email and calendar, sorts the information, and presents an HTML daily briefing dashboard.",
+  "nodes": [
+    { "name": "Daily Trigger", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.4, "credentialSlot": null },
+    { "name": "Briefing Model", "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi", "typeVersion": 1.3, "credentialSlot": "openAiApi (left empty)" },
+    { "name": "Gmail Inbox Tool", "type": "n8n-nodes-base.gmailTool", "typeVersion": 2.2, "credentialSlot": "gmailOAuth2 (left empty)" },
+    { "name": "Inbox Analyst Agent", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "credentialSlot": null },
+    { "name": "Google Calendar Day Tool", "type": "n8n-nodes-base.googleCalendarTool", "typeVersion": 1.3, "credentialSlot": "googleCalendarOAuth2Api (left empty)" },
+    { "name": "Schedule Analyst Agent", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "credentialSlot": null },
+    { "name": "Briefing Schema", "type": "@n8n/n8n-nodes-langchain.outputParserStructured", "typeVersion": 1.3, "credentialSlot": null },
+    { "name": "Chief Of Staff Agent", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "credentialSlot": null },
+    { "name": "Render Briefing Dashboard", "type": "n8n-nodes-base.code", "typeVersion": 2, "credentialSlot": null },
+    { "name": "Email Daily Briefing", "type": "n8n-nodes-base.gmail", "typeVersion": 2.2, "credentialSlot": "gmailOAuth2 (left empty)" }
+  ],
+  "design": {
+    "shape": "Daily Trigger -> Inbox Analyst Agent -> Schedule Analyst Agent -> Chief Of Staff Agent -> Render Briefing Dashboard -> Email Daily Briefing",
+    "agentCount": 3,
+    "aiConnections": [
+      "Inbox Analyst Agent.uses({ ai_languageModel: Briefing Model, ai_tool: [Gmail Inbox Tool] })",
+      "Schedule Analyst Agent.uses({ ai_languageModel: Briefing Model, ai_tool: [Google Calendar Day Tool] })",
+      "Chief Of Staff Agent.uses({ ai_languageModel: Briefing Model, ai_outputParser: Briefing Schema })"
+    ],
+    "decisions": [
+      "Agents chained sequentially rather than fanned out through a Merge node; the Chief Of Staff prompt reads the first report through a specific-node expression on 'Inbox Analyst Agent', which removes one node and the merge-mode configuration.",
+      "One shared lmChatOpenAi sub-node feeds all three agents instead of three separate model nodes.",
+      "HTML is rendered deterministically in the Code node from a schema-validated object; the agent supplies data, never markup.",
+      "Gmail tool query fixed to the last 24 hours of the primary inbox, and the calendar tool bounded to start-of-day..end-of-day, instead of letting the agents author their own filters.",
+      "autoFix on the structured output parser was dropped because it requires its own ai_languageModel connection."
+    ]
+  },
+  "commands": [
+    { "kind": "bash", "command": "ls -la <workspace>", "result": "Listed workspace root." },
+    { "kind": "bash", "command": "cat AGENTS.md n8nac-config.json package.json; sed 's/=.*/=<redacted>/' .env", "result": "Read bootstrap context and config. Env var names read with values redacted; no secret was opened or printed." },
+    { "kind": "bash", "command": "cat .agents/skills/n8n-architect/SKILL.md (head -200)", "result": "Read the required local agent skill, part 1." },
+    { "kind": "bash", "command": "sed -n '200,400p' .agents/skills/n8n-architect/SKILL.md", "result": "Read the required local agent skill, part 2." },
+    { "kind": "bash", "command": "date -u", "result": "startedAt timestamp." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js update-ai", "result": "Regenerated AGENTS.md, .github/agents, .agents/skills, TypeScript stubs. OK." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js env status --json", "result": "accessStatus ready; environment Dev (dev-2); workflowsPath workflows/dev; project Personal; native MCP level 0." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills batch --compact --calls [scheduleTrigger, merge, code]", "result": "Returned only stub decorators with no parameter list. See friction[0]." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills node-info scheduleTrigger", "result": "Got the rule.interval fixedCollection shape and typeVersion 1.4." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills search \"gmail\"", "result": "Found gmail, gmailTrigger, gmailTool." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills search \"google calendar\"", "result": "Found googleCalendar, googleCalendarTrigger, googleCalendarTool." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills node-info agent", "result": "Got agent v3.1 parameters plus the hasOutputParser and needsFallback gating flags." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills node-schema agent | grep systemMessage", "result": "The options collection was not expanded. See friction[1]." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills examples search \"AI agent daily briefing email calendar\"", "result": "No workflows found; proceeded from schemas alone." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills node-info lmChatOpenAi outputParserStructured", "result": "Got lmChatOpenAi v1.3 model resourceLocator and outputParserStructured v1.3 parameters." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills node-info gmailTool", "result": "Got gmailTool v2.2 parameters including descriptionType and toolDescription." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills node-schema gmail | grep filters", "result": "The filters collection options were not surfaced. See friction[1]." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills docs \"gmail\"", "result": "Returned the docs page only, with no parameter option names. See friction[1]." },
+    { "kind": "bash", "command": "node -e '<read node_modules/@n8n-as-code/skills/dist/assets/n8n-nodes-technical.json>' (6 invocations)", "result": "Read the bundled ontology directly for: gmail message:getAll filters (q, receivedAfter, receivedBefore, readStatus, includeSpamTrash, labelIds, sender); gmail message:send options; googleCalendar event:getAll (calendar resourceLocator modes list and id, timeMin, timeMax, options.singleEvents, options.orderBy); agent options (systemMessage, maxIterations); agent promptType and text displayOptions; outputParserStructured schemaType and inputSchema gating; code mode/language/jsCode gating; and the node type, valid typeVersions and credential names for all eight node types used." },
+    { "kind": "bash", "command": "cat node_modules/@n8n-as-code/transformer/dist/decorators/*.d.ts and dist/types.d.ts", "result": "Confirmed the @node decorator takes credentials as a map of credential type to an {id, name} reference. Chose to omit the key entirely so the credential slot renders empty in n8n rather than fabricating an id." },
+    { "kind": "write", "command": "write workflows/dev/bench-425ceb62.workflow.ts", "result": "Authored the 10-node workflow file." },
+    { "kind": "bash", "command": "python - (patch 1)", "result": "Replaced a JSON.stringify(...) inputSchema with an inline literal and removed autoFix from the output parser." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-425ceb62.workflow.ts", "result": "FAILED: 'Dynamic expression not supported in node parameters' on the jsCode array join. See friction[2]." },
+    { "kind": "bash", "command": "python - (patch 2)", "result": "FAILED: ValueError, substring not found while locating the jsCode block." },
+    { "kind": "bash", "command": "python - (patch 3)", "result": "FAILED: AssertionError comparing backslash-escaped marker strings. See friction[4]." },
+    { "kind": "bash", "command": "cygpath -w /tmp/js_body.js", "result": "Resolved the Git Bash tmp path so Windows Python could read the staged Code-node body. See friction[3]." },
+    { "kind": "bash", "command": "python - (patch 4)", "result": "Replaced the jsCode array with a literal template string, located by line prefix. OK, 4096 chars of JS inlined." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-425ceb62.workflow.ts", "result": "Workflow is valid." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js list --local", "result": "bench-425ceb62 listed as EXIST_ONLY_LOCALLY. Local-only listing; no instance enumeration." },
+    { "kind": "n8nac", "command": "node node_modules/n8nac/dist/index.js push workflows/dev/bench-425ceb62.workflow.ts --verify", "result": "Pushed, then post-push verification fetched 'bench-425ceb62' (10 nodes) with no issues. Returned workflow id KIldXeR9YxI4L4X3." },
+    { "kind": "bash", "command": "date -u", "result": "completedAt timestamp." },
+    { "kind": "write", "command": "write builder_log.json", "result": "This file." }
+  ],
+  "credentialHandling": "No credential was created and no credential value was invented or supplied. The credentials key is omitted from every node decorator, so all four credential-bearing nodes render with an empty credential selector in n8n.",
+  "manualStepsLeftForTheUser": [
+    "Attach an OpenAI credential to 'Briefing Model'.",
+    "Attach a Gmail OAuth2 credential to 'Gmail Inbox Tool' and to 'Email Daily Briefing'.",
+    "Attach a Google Calendar OAuth2 credential to 'Google Calendar Day Tool'.",
+    "Set the 'To Email' field on 'Email Daily Briefing'; it was left blank rather than guessed.",
+    "Activate the workflow when ready. It was left inactive as instructed."
+  ],
+  "friction": [
+    "skills batch --compact returned only stub @node decorators with a '/* parameters */' placeholder and no parameter list, so it was unusable for schema research. Fell back to full node-info per node.",
+    "Neither 'skills node-schema gmail' nor 'skills docs gmail' surfaced the option names inside the message:getAll 'filters' collection, and 'skills node-schema agent' did not expand the agent 'options' collection. Had to read the bundled ontology JSON in node_modules directly to obtain q, receivedAfter, systemMessage, maxIterations and the googleCalendar event:getAll shape.",
+    "The transformer parses .workflow.ts statically. Both a JSON.stringify(...) call for the JSON schema and a string-array join for the Code node's jsCode were rejected with 'Dynamic expression not supported in node parameters'. Both had to be rewritten as literal template strings, which makes a long Code-node body awkward to author because it can then contain no backticks.",
+    "Windows Python could not open the Git Bash '/tmp' path used to stage the Code-node body; cygpath -w was needed to convert it.",
+    "Two patch attempts failed on backslash-escaped marker strings passed through a shell heredoc, and one attempt to write this log through a heredoc failed with a bash quoting error. Resolved by matching on line prefixes and by writing the file directly.",
+    "Native MCP is at level 0 for this environment, so push validated against the bundled schema only. Toolchain message, verbatim: 'Validated against the bundled schema only (native MCP level 0 - discouraged, the instance may differ). Connect the instance MCP for instance-exact validation: n8nac native-mcp configure --level 1.' Per AGENTS.md the level was not changed.",
+    "No community example matched 'AI agent daily briefing email calendar', so the wiring was derived from node schemas alone."
+  ],
+  "instanceInspection": "No listing, search or inspection of pre-existing instance workflows was performed. 'list --local' covered local state only; the sole instance reads were the push write and its post-push verification fetch of the workflow created here."
+}

@@ -1,0 +1,465 @@
+{
+  "id": "lS4BJHhW6S55WYzK",
+  "name": "bench-e87df2d3",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T17:11:50.154Z",
+  "updatedAt": "2026-09-11T17:13:08.711Z",
+  "isArchived": false,
+  "versionId": "0d4053ed-b3be-4270-852a-e293715d48ae",
+  "versionCounter": 2,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "8148bda5-1832-4495-a0fc-c2e23d666b02",
+      "name": "Every Morning At 7",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5eec7811-b3a4-47bf-a5be-f1466c77cad8",
+      "name": "Fetch Last 24h Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        240
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "includeSpamTrash": false,
+          "readStatus": "both",
+          "receivedAfter": "={{ $now.minus({ hours: 24 }).toISO() }}"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "71f26083-43e2-4d99-9534-6f4c17115b3e"
+    },
+    {
+      "id": "fc7d817c-8839-4ac2-bb23-9be29fe3deb7",
+      "name": "Bundle Email Into One Item",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        480,
+        240
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails",
+        "include": "allFields"
+      }
+    },
+    {
+      "id": "42f27b2c-078a-45d3-b2de-167db02a90c0",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        760,
+        240
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Triage this batch of Gmail messages from the last 24 hours.\nReturn markdown only, no preamble.\n\nMESSAGES (JSON):\n{{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are the Email Triage Agent in a daily briefing crew. You never write the final briefing, you only hand structured findings to the Briefing Composer Agent.\n\nSort every message into exactly one bucket: NEEDS REPLY TODAY, WAITING ON OTHERS, FYI, or NOISE.\nFor each non-noise message give one line: sender - subject - why it matters (max 15 words).\nThen list explicit action items you can extract, each with a deadline if one is stated.\nClose with a one-sentence inbox summary, e.g. \"12 new, 3 need a reply today\".\nCollapse NOISE to a single count. Never invent senders, subjects or deadlines. If the batch is empty, say so plainly."
+        }
+      }
+    },
+    {
+      "id": "8067ff02-96b0-4c1a-9030-9a76bcc12472",
+      "name": "Briefing Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        760,
+        880
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "b7eaec94-ce88-4d06-ae46-2c8d29f66b24",
+      "name": "Collect Agent Findings",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1020,
+        420
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      }
+    },
+    {
+      "id": "d3226161-d9c9-4610-a004-ba2fe874b187",
+      "name": "Fetch Today's Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        600
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+        "timeMax": "={{ $now.endOf(\"day\").toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime",
+          "recurringEventHandling": "expand"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "4068c5cf-f5ec-4c07-8cea-821cc32b65f9",
+      "name": "Bundle Events Into One Item",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        480,
+        600
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events",
+        "include": "allFields"
+      }
+    },
+    {
+      "id": "869902a0-f00e-44f3-810a-2916c1587177",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        760,
+        600
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyse today's Google Calendar events.\nReturn markdown only, no preamble.\n\nEVENTS (JSON):\n{{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are the Calendar Agent in a daily briefing crew. You never write the final briefing, you only hand structured findings to the Briefing Composer Agent.\n\nProduce a chronological timeline of the day: local start-end time, title, and who called it. Flag overlapping events as CONFLICT and back-to-back blocks with no gap.\nCall out the longest free block as focus time.\nList any event whose description implies preparation, with what to prepare.\nClose with a one-sentence load summary, e.g. \"5 meetings, 4h booked, 1 conflict\".\nTimes come from the event start/end fields, never guess them. If there are no events, say the day is clear."
+        }
+      }
+    },
+    {
+      "id": "2ac48149-ffbb-4f0c-af6d-1dd55c03cb0e",
+      "name": "Briefing Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1280,
+        420
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Compose the HTML body of my daily briefing dashboard from the two specialist reports below.\n\n=== EMAIL TRIAGE REPORT ===\n{{ $('Email Triage Agent').item.json.output }}\n\n=== CALENDAR REPORT ===\n{{ $('Calendar Agent').item.json.output }}",
+        "options": {
+          "systemMessage": "You are the Briefing Composer Agent. Two specialist agents hand you their reports; you merge them into one scannable dashboard body.\n\nOutput rules, follow exactly:\n- Return raw HTML only. No markdown, no code fences, no commentary.\n- No <html>, <head>, <body> or <style> tags. Fragment markup only.\n- Wrap each section in <section class=\"card\"><h2>Title</h2>...</section>.\n- Emit the sections in this order: Top Priorities (max 5 <li>, email and calendar items interleaved by urgency), Schedule (an <ol> timeline), Inbox (grouped by the triage buckets), Prep &amp; Follow-ups.\n- Mark anything urgent with <span class=\"tag tag-urgent\">urgent</span> and conflicts with <span class=\"tag tag-warn\">conflict</span>.\n- Use <ul>/<ol>/<li>/<p>/<strong>/<span> only. No tables, no inline style attributes, no scripts, no images.\n- Carry over only facts present in the two reports. Never invent a meeting, sender or deadline. If a section has nothing, render <p class=\"empty\">Nothing today.</p>."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "82664797-19f1-46ee-b760-1fa0e2c5cad1",
+      "name": "Render Dashboard HTML",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        420
+      ],
+      "parameters": {
+        "operation": "generateHtmlTemplate",
+        "html": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n<title>Daily Briefing</title>\n<style>\n:root { color-scheme: light; }\nbody { margin: 0; padding: 24px; background: #f4f5f7; font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color: #1c1e21; line-height: 1.55; }\n.wrap { max-width: 760px; margin: 0 auto; }\nheader.top { padding-bottom: 16px; border-bottom: 2px solid #d8dade; margin-bottom: 20px; }\nh1 { margin: 0; font-size: 24px; letter-spacing: -0.01em; }\n.sub { margin: 4px 0 0; color: #616770; font-size: 14px; }\n.card { background: #ffffff; border: 1px solid #e2e4e8; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; }\n.card h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; color: #4b5058; }\n.card ul, .card ol { margin: 0; padding-left: 20px; }\n.card li { margin-bottom: 6px; }\n.tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; vertical-align: middle; }\n.tag-urgent { background: #fde2e1; color: #97231c; }\n.tag-warn { background: #fdf0d5; color: #8a5a00; }\n.empty { color: #888d94; font-style: italic; margin: 0; }\nfooter.foot { color: #888d94; font-size: 12px; text-align: center; padding-top: 8px; }\n</style>\n</head>\n<body>\n<div class=\"wrap\">\n<header class=\"top\">\n<h1>Daily Briefing</h1>\n<p class=\"sub\">{{ $now.toFormat(\"cccc d LLLL yyyy\") }} &middot; Gmail + Google Calendar</p>\n</header>\n{{ $json.output }}\n<footer class=\"foot\">Assembled by the Email Triage, Calendar and Briefing Composer agents at {{ $now.toFormat(\"HH:mm\") }}.</footer>\n</div>\n</body>\n</html>"
+      }
+    },
+    {
+      "id": "59310d6e-7e67-433e-98a8-2c148cb7cb8e",
+      "name": "Email The Dashboard",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1800,
+        420
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "<__PLACEHOLDER_VALUE__Where to send the briefing (e.g. you@gmail.com)__>",
+        "subject": "=Daily Briefing - {{ $now.toFormat(\"cccc d LLLL\") }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "webhookId": "a556d3f1-6883-4c92-b04d-5df910a59d3d"
+    },
+    {
+      "id": "ccda498a-17f9-4930-b63a-cac53bb1e8a3",
+      "name": "Sticky Note cb1b9bf5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        40
+      ],
+      "parameters": {
+        "content": "## 1. Collect\nTwo independent lanes off one daily schedule. Each Aggregate rolls its lane into a single item so its agent runs once, not once per email or event.",
+        "color": 4
+      }
+    },
+    {
+      "id": "8665efb6-35ff-4ba8-b277-53abd207559b",
+      "name": "Sticky Note a501a822",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        740,
+        40
+      ],
+      "parameters": {
+        "content": "## 2. Sort\nTwo specialist agents, one shared chat model. They classify and structure; neither writes the final briefing.",
+        "color": 3
+      }
+    },
+    {
+      "id": "01f79a70-ec83-4919-b2bf-194184e2cd5f",
+      "name": "Sticky Note 7b350a7f",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        40
+      ],
+      "parameters": {
+        "content": "## 3. Present\nThe composer agent merges both reports into HTML fragments, the HTML node wraps them in the dashboard shell, Gmail delivers it.\n\nConnect the Gmail, Google Calendar and OpenAI credential slots, then set the recipient on the last node.",
+        "color": 5
+      }
+    }
+  ],
+  "connections": {
+    "Every Morning At 7": {
+      "main": [
+        [
+          {
+            "node": "Fetch Last 24h Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today's Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Last 24h Email": {
+      "main": [
+        [
+          {
+            "node": "Bundle Email Into One Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bundle Email Into One Item": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Collect Agent Findings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Briefing Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Agent Findings": {
+      "main": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today's Calendar": {
+      "main": [
+        [
+          {
+            "node": "Bundle Events Into One Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bundle Events Into One Item": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Collect Agent Findings",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Briefing Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Render Dashboard HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Dashboard HTML": {
+      "main": [
+        [
+          {
+            "node": "Email The Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "lS4BJHhW6S55WYzK",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T17:11:50.156Z",
+      "updatedAt": "2026-09-11T17:11:50.156Z"
+    }
+  ],
+  "activeVersion": null
+}

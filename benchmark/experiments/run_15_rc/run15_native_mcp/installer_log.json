@@ -1,0 +1,77 @@
+{
+  "task": "Install and configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server)",
+  "startedAt": "2026-09-11T15:53:40Z",
+  "completedAt": "2026-09-11T15:58:45Z",
+  "workspace": "G:/repos/n8n-harness-benchmark/benchmark/experiments/run_15_rc/run15_native_mcp",
+  "artifacts": [
+    ".mcp.json - MCP client config: http transport, url from N8N_NATIVE_MCP_URL, 'Authorization: Bearer <token>' from N8N_NATIVE_MCP_TOKEN, both copied programmatically from .env",
+    "verify_mcp_config.ps1 - re-runnable check: initialize + tools/list using only values read from .mcp.json"
+  ],
+  "commands": [
+    { "step": 1, "tool": "bash", "command": "ls -la", "exitStatus": 0, "note": "workspace inventory: .env, README.md, 4 reference .ps1 helpers" },
+    { "step": 2, "tool": "bash", "command": "cat README.md; sed -E 's/=.*/=<redacted>/' .env", "exitStatus": 0, "note": "env keys present: N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN" },
+    { "step": 3, "tool": "bash", "command": "cat native_mcp.ps1", "exitStatus": 0 },
+    { "step": 4, "tool": "bash", "command": "awk -F= over .env printing key + first 12 chars + value length", "exitStatus": 0, "note": "value shapes only, no full secret printed" },
+    { "step": 5, "tool": "WebFetch", "command": "GET https://docs.n8n.io/connect/connect-to-n8n-mcp-server", "exitStatus": 0, "note": "documented endpoint path /mcp-server/http ; auth header 'Authorization: Bearer <personal access token>' ; enable via Settings > Instance-level MCP ; disable via N8N_DISABLED_MODULES=mcp" },
+    { "step": 6, "tool": "bash", "command": "date -u; which claude; claude --version", "exitStatus": 127, "note": "DEAD END - see deadEnds[0]" },
+    { "step": 7, "tool": "bash", "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./native_mcp.ps1", "exitStatus": "denied", "note": "DEAD END - see deadEnds[1]" },
+    { "step": 8, "tool": "PowerShell", "command": "./native_mcp.ps1", "exitStatus": 0, "note": "no explicit exit code emitted = success path. Output: authenticated true, initialize ok, tools_list ok, protocolVersion 2025-06-18, tool_count 39" },
+    { "step": 9, "tool": "PowerShell", "command": "Get-Command claude ; Test-Path %APPDATA%/npm/claude.cmd ; Test-Path %USERPROFILE%/.local/bin/claude.exe", "exitStatus": 0, "note": "DEAD END - see deadEnds[2]; all three probes negative" },
+    { "step": 10, "tool": "PowerShell", "command": "Get-Content .env filtered to the N8N_NATIVE_MCP_URL line", "exitStatus": 0, "note": "url https://etiennel.app.n8n.cloud/mcp-server/http matches the documented /mcp-server/http path" },
+    { "step": 11, "tool": "PowerShell", "command": "parse .env -> ConvertTo-Json -> Out-File .mcp.json", "exitStatus": 0, "note": "config written; token copied from .env, never retyped; console echo-back redacted" },
+    { "step": 12, "tool": "Write", "command": "create verify_mcp_config.ps1", "exitStatus": 0 },
+    { "step": 13, "tool": "PowerShell", "command": "./verify_mcp_config.ps1", "exitStatus": 0, "note": "no explicit exit code emitted = success path. Output: authenticated true, url https://etiennel.app.n8n.cloud/mcp-server/http, protocolVersion 2025-06-18, serverInfo 'n8n MCP Server 1.1.0', tool_count 39" },
+    { "step": 14, "tool": "bash", "command": "heredoc write of installer_log.json + python json.load validation", "exitStatus": 1, "note": "DEAD END - see deadEnds[3]" },
+    { "step": 15, "tool": "bash", "command": "rm installer_log.json", "exitStatus": 0 },
+    { "step": 16, "tool": "Write", "command": "rewrite installer_log.json (this file) with forward-slash paths", "exitStatus": 0 },
+    { "step": 17, "tool": "bash", "command": "python json.load on installer_log.json and .mcp.json + regex scan for leaked tokens", "exitStatus": 1, "note": "installer_log.json valid and token-free; .mcp.json failed to parse - DEAD END, see deadEnds[4]" },
+    { "step": 18, "tool": "PowerShell", "command": "System.IO.File ReadAllText + WriteAllText with UTF8Encoding($false) to strip the BOM from .mcp.json", "exitStatus": 0, "note": "first three bytes now 123,13,10 (open brace, CRLF) instead of EF BB BF" },
+    { "step": 19, "tool": "bash", "command": "python json.load on .mcp.json", "exitStatus": 0, "note": "parses; server key 'n8n', type http, url https://etiennel.app.n8n.cloud/mcp-server/http, Authorization 'Bearer ' + 272-char token" },
+    { "step": 20, "tool": "PowerShell", "command": "./verify_mcp_config.ps1 (re-run after BOM fix)", "exitStatus": 0, "note": "no explicit exit code emitted = success path. Output: authenticated true, protocolVersion 2025-06-18, serverInfo 'n8n MCP Server 1.1.0', tool_count 39" },
+    { "step": 21, "tool": "Edit", "command": "append steps 17-21 and deadEnds[4] to installer_log.json", "exitStatus": 0 }
+  ],
+  "deadEnds": [
+    {
+      "at": "step 6",
+      "path": "bash: which claude / claude --version",
+      "result": "exit 127, 'claude: command not found'",
+      "impact": "the docs' CLI install path for Claude Code / Codex ('Run install command shown', i.e. claude mcp add) is unavailable on this machine"
+    },
+    {
+      "at": "step 7",
+      "path": "invoking powershell.exe -File ./native_mcp.ps1 through the Bash tool",
+      "result": "refused by the harness auto-mode permission classifier; no process started",
+      "impact": "none - the same script ran through the PowerShell tool at step 8"
+    },
+    {
+      "at": "step 9",
+      "path": "locating a claude CLI binary off PATH (%APPDATA%/npm/claude.cmd, %USERPROFILE%/.local/bin/claude.exe)",
+      "result": "Get-Command returned nothing; both Test-Path probes returned False",
+      "impact": "confirms step 6. Configuration was therefore written as a JSON config file, which is the docs' stated alternative: add the manual configuration snippet to the client config file"
+    },
+    {
+      "at": "step 14",
+      "path": "writing this log via an unquoted bash heredoc containing escaped Windows paths",
+      "result": "the heredoc collapsed the backslash escapes, producing invalid JSON (json.decoder.JSONDecodeError: Invalid escape, line 5)",
+      "impact": "file removed and rewritten at steps 15-16 using forward-slash paths"
+    },
+    {
+      "at": "step 17",
+      "path": "writing .mcp.json with PowerShell 5.1 'Out-File -Encoding utf8' (step 11)",
+      "result": "that cmdlet emits a UTF-8 BOM (EF BB BF); strict JSON parsers reject it - json.decoder.JSONDecodeError: Expecting value, line 1 column 1. The earlier verify at step 13 had passed because ConvertFrom-Json tolerates a BOM, so the defect was only caught by the independent parser",
+      "impact": "rewritten BOM-less at step 18 and re-verified at steps 19-20"
+    },
+    {
+      "at": "docs prerequisite",
+      "path": "Settings > Instance-level MCP > Enable MCP access",
+      "result": "not performed - no UI action was taken in this run",
+      "impact": "none observed: the pre-existing N8N_NATIVE_MCP_TOKEN authenticated at steps 8 and 13, so instance-level MCP was already enabled on this instance"
+    }
+  ],
+  "notes": [
+    "No workflow on the n8n instance was listed, searched or inspected. The only MCP methods called were initialize, notifications/initialized and tools/list; tools/list enumerates MCP tools, not workflows.",
+    "No secret value was invented. Url and token were read from .env programmatically and never retyped.",
+    "The Authorization header in .mcp.json holds the literal token, as the n8n docs' Configuration JSON block does, so the config resolves with no extra environment setup. The same value already lives in .env in this same directory.",
+    "This log records what was run and what failed. It contains no assessment of whether the task was completed correctly."
+  ]
+}

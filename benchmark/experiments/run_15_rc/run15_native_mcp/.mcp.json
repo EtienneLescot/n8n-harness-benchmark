@@ -1,0 +1,11 @@
+{
+    "mcpServers":  {
+                       "n8n":  {
+                                   "url":  "https://etiennel.app.n8n.cloud/mcp-server/http",
+                                   "headers":  {
+                                                   "Authorization":  "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiYzU4MGRjNC1jODBkLTRkZjktODEwMy1jMDYyZjA0YzhiMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjdhOGRlZTU3LWZiZGMtNGY5OS05YmI1LWYzODM3MjQ5Yjc0NSIsImlhdCI6MTc4ODg2OTcxNn0.MjZjvDIjB7Tbj16q4PE_0-R8XHJ3Dr6AHjV6uDNYb4I"
+                                               },
+                                   "type":  "http"
+                               }
+                   }
+}

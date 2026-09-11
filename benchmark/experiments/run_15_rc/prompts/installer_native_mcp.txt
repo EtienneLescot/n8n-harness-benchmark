@@ -1,0 +1,12 @@
+Benchmark task, requested by the owner of this machine.
+
+Your workspace for this task is G:\repos\n8n-harness-benchmark\benchmark\experiments\run_15_rc\run15_native_mcp. It exists; change into it first and stay there. Its .env holds the credentials you need.
+
+Operating rules:
+- Work only inside that directory. Do not read or run commands in parent or sibling directories.
+- Do not list, search for, or inspect existing workflows on the n8n instance.
+- Never invent a secret value. Use only what .env already contains.
+- Write installer_log.json at the workspace root: startedAt and completedAt in UTC ISO, every command in order with its exit status, and every dead end (a command that answered wrongly, a documented path that does not exist). No secrets. Do not grade your own work.
+
+Task:
+Install and configure n8n Native MCP (https://docs.n8n.io/connect/connect-to-n8n-mcp-server). Credentials are in .env

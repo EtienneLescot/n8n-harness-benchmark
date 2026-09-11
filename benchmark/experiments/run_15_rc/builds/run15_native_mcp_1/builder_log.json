@@ -1,0 +1,111 @@
+{
+  "startedAt": "2026-09-11T16:23:46Z",
+  "completedAt": "2026-09-11T16:34:12Z",
+  "workflowId": "d3fydL2Zvupzu9OP",
+  "workflowName": "bench-b0e4a323",
+  "nodeCount": 16,
+  "workflowUrl": "https://etiennel.app.n8n.cloud/workflow/d3fydL2Zvupzu9OP",
+  "active": false,
+  "targetProject": "personal",
+  "task": "Multi-agent daily workflow: reads Gmail and Google Calendar, sorts the information, renders an HTML daily briefing dashboard.",
+  "transport": "n8n native MCP over the sandbox PowerShell helpers (native_mcp.ps1 / mcp_call.ps1 / mcp_code.ps1); no n8n MCP tools were exposed natively in the agent session",
+  "calls": [
+    { "seq": 1, "kind": "bash", "command": "ls -la (workspace root)", "result": "8 scaffolding files: .env, .mcp.json, README.md, 4 helper scripts" },
+    { "seq": 2, "kind": "bash", "command": "cat README.md .mcp.json", "result": "helper usage notes; MCP endpoint config" },
+    { "seq": 3, "kind": "bash", "command": "sed redact .env", "result": "keys present: N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN (values never printed or logged)" },
+    { "seq": 4, "kind": "bash", "command": "cat native_mcp.ps1", "result": "read readiness helper" },
+    { "seq": 5, "kind": "bash", "command": "cat mcp_call.ps1 mcp_code.ps1", "result": "read generic tools/call + validate/create helpers" },
+    { "seq": 6, "kind": "tool", "tool": "ToolSearch", "args": "n8n workflow create", "result": "no n8n MCP tools available in session; confirmed helper scripts are the only path" },
+    { "seq": 7, "kind": "powershell", "command": ".\\native_mcp.ps1", "result": "authenticated=true, initialize=ok, tools_list=ok, protocolVersion=2025-06-18, tool_count=39" },
+    { "seq": 8, "kind": "mcp", "tool": "tools/list", "via": ".\\mcp_call.ps1 -ToolName __list", "result": "39 tool names returned" },
+    { "seq": 9, "kind": "mcp", "tool": "get_workflow_sdk_reference", "args": "{}", "result": "50 KB SDK reference saved to scratch and read in 4 passes" },
+    { "seq": 10, "kind": "bash", "command": "sed -n ranges over the SDK reference", "result": "read patterns: linear chain, parallel+merge, ai_agent_with_tools, ai_agent_with_structured_output, credential rules, expression rules" },
+    { "seq": 11, "kind": "mcp", "tool": "get_workflow_best_practices", "args": "{}", "result": "FRICTION: input validation error, technique is required" },
+    { "seq": 12, "kind": "mcp", "tool": "get_workflow_best_practices", "args": "{\"technique\":\"__probe__\"}", "result": "FRICTION: same error, enum values not disclosed in the message" },
+    { "seq": 13, "kind": "bash", "command": "sed 's/.../.../' mcp_call.ps1 > _tools_schema.ps1", "result": "FRICTION: failed, '/' delimiter collided with the [string] cast in the pattern" },
+    { "seq": 14, "kind": "bash", "command": "sed 's#...#...#' mcp_call.ps1 > _tools_schema.ps1", "result": "ok, variant of the helper that dumps full tool inputSchemas instead of names only" },
+    { "seq": 15, "kind": "mcp", "tool": "tools/list", "via": ".\\_tools_schema.ps1 -ToolName __list", "result": "112 KB schema dump" },
+    { "seq": 16, "kind": "bash", "command": "grep technique enum from schema dump", "result": "17 techniques discovered; picked scheduling, triage, content_generation" },
+    { "seq": 17, "kind": "bash", "command": "grep schemas for search_nodes/get_node_types/create_workflow_from_code/validate_workflow", "result": "argument shapes confirmed" },
+    { "seq": 18, "kind": "mcp", "tool": "get_workflow_best_practices", "args": "{\"technique\":\"scheduling\"}", "result": "ok" },
+    { "seq": 19, "kind": "mcp", "tool": "get_workflow_best_practices", "args": "{\"technique\":\"triage\"}", "result": "ok" },
+    { "seq": 20, "kind": "mcp", "tool": "get_workflow_best_practices", "args": "{\"technique\":\"content_generation\"}", "result": "ok" },
+    { "seq": 21, "kind": "bash", "command": "cat the three best-practice docs", "result": "applied: schedule trigger interval mode, structured output for classification, fallback for empty buckets, prefer dedicated nodes over HTTP Request" },
+    { "seq": 22, "kind": "mcp", "tool": "search_nodes", "args": "{\"queries\":[\"gmail\",\"google calendar\",\"schedule trigger\",\"ai agent\",\"html\",\"merge\",\"code\"]}", "result": "node ids and current versions: gmail 2.2, googleCalendar 1.3, scheduleTrigger 1.4, agent 3.1, html 1.2, merge 3.2" },
+    { "seq": 23, "kind": "mcp", "tool": "get_node_types", "args": "gmail(message/getAll), googleCalendar(event/getAll)", "result": "exact params: filters.receivedAfter, simple, calendar resourceLocator, timeMin/timeMax" },
+    { "seq": 24, "kind": "mcp", "tool": "get_node_types", "args": "scheduleTrigger, html(generateHtmlTemplate), aggregate, gmail(message/send)", "result": "exact params: rule.interval, html template field, aggregateAllItemData, sendTo/subject/emailType/message" },
+    { "seq": 25, "kind": "mcp", "tool": "get_node_types", "args": "agent, outputParserStructured, lmChatOpenAi, merge(combine)", "result": "exact params: promptType/text/hasOutputParser/options.systemMessage, jsonSchemaExample, model resourceLocator, combineBy" },
+    { "seq": 26, "kind": "bash", "command": "cat > workflow.ts <<'SDKEOF'", "result": "FRICTION: bash heredoc failed to parse the SDK source (quote/backtick handling); fell back to the Write tool" },
+    { "seq": 27, "kind": "tool", "tool": "Write", "args": "workflow.ts", "result": "SDK source written" },
+    { "seq": 28, "kind": "mcp", "tool": "validate_workflow", "via": ".\\mcp_code.ps1 -Action validate -CodeFile workflow.ts", "result": "FRICTION: valid=true but 6 warnings, MISSING_REQUIRED_INPUT + INVALID_PARAMETER on all three agents. Cause: subnodes had been nested inside config.parameters; it must sit beside parameters inside config." },
+    { "seq": 29, "kind": "tool", "tool": "Edit x3", "args": "workflow.ts", "result": "moved subnodes out of parameters on the three agent nodes" },
+    { "seq": 30, "kind": "mcp", "tool": "validate_workflow", "via": ".\\mcp_code.ps1 -Action validate -CodeFile workflow.ts", "result": "valid=true, nodeCount=16, no warnings" },
+    { "seq": 31, "kind": "mcp", "tool": "create_workflow_from_code", "via": ".\\mcp_code.ps1 -Action create -CodeFile workflow.ts", "result": "created: workflowId d3fydL2Zvupzu9OP, 16 nodes, personal project" },
+    { "seq": 32, "kind": "mcp", "tool": "get_workflow_details", "args": "{\"workflowId\":\"d3fydL2Zvupzu9OP\"}", "result": "active=false, isArchived=false, name=bench-b0e4a323, nodeCount=16" },
+    { "seq": 33, "kind": "bash", "command": "python inspect of the returned workflow JSON", "result": "verified node list, credential slots and all 17 connections" },
+    { "seq": 34, "kind": "powershell", "command": "Remove-Item scratch dumps", "result": "removed the reference/type/schema dumps; kept workflow.ts and _tools_schema.ps1" }
+  ],
+  "design": {
+    "shape": "one schedule trigger fanning out to two independent data branches, each ending in a specialist agent, merged into a composer agent, rendered to HTML, delivered by Gmail",
+    "agents": [
+      "Email Triage Agent - sorts the inbox into urgent / needsReply / fyi with counts, structured output",
+      "Calendar Planner Agent - turns today events into an ordered day plan with conflicts and free blocks, structured output",
+      "Briefing Composer Agent - merges both findings into the dashboard content model, structured output"
+    ],
+    "nodes": [
+      "Every Morning At 07:00 (scheduleTrigger 1.4, daily 07:00)",
+      "Fetch Inbox Since Midnight (gmail 2.2, message:getAll, receivedAfter $today, simple, limit 50)",
+      "Bundle Emails (aggregate 1, aggregateAllItemData -> emails)",
+      "Email Triage Agent (agent 3.1) + Email Triage Schema (outputParserStructured 1.3)",
+      "Fetch Calendar For Today (googleCalendar 1.3, event:getAll, timeMin $today, timeMax $today+1d, singleEvents, orderBy startTime)",
+      "Bundle Events (aggregate 1, aggregateAllItemData -> events)",
+      "Calendar Planner Agent (agent 3.1) + Day Plan Schema (outputParserStructured 1.3)",
+      "Combine Agent Findings (merge 3.2, combine / combineByPosition, inputs 0 and 1)",
+      "Briefing Composer Agent (agent 3.1) + Dashboard Content Schema (outputParserStructured 1.3)",
+      "Briefing Model (lmChatOpenAi 1.3, shared by all three agents)",
+      "Render Briefing Dashboard (html 1.2, generateHtmlTemplate)",
+      "Deliver Briefing Dashboard (gmail 2.2, message:send, emailType html)",
+      "Sticky Note (setup instructions)"
+    ],
+    "decisions": [
+      "Two data branches run off the same trigger rather than chained, so the calendar fetch does not run once per email item.",
+      "Aggregate before each agent so the agent runs once over the whole bundle instead of once per message.",
+      "alwaysOutputData on the two Aggregate nodes only: without it a morning with zero new mail or zero events would skip the merge and no briefing would go out. Prompts read $json.emails ?? [] so the empty case renders as an empty bundle, not a fake item.",
+      "One shared language model node feeds all three agents, so the user fills one model credential instead of three.",
+      "The HTML node owns the styling and layout; the agent only produces the content model. Deterministic dashboard chrome, no LLM-authored CSS.",
+      "Rendered fields run through replace(/[<>]/g, '') and the composer is instructed to emit plain text, so an email subject cannot inject markup into the briefing.",
+      "Table-based layout and inline-safe CSS rather than flexbox, since the dashboard is delivered as an HTML email."
+    ]
+  },
+  "credentials": {
+    "policy": "No credential value was ever invented and no credential was created by the builder. Nodes that need auth were declared with newCredential('<name>') per the SDK reference, which leaves the slot empty.",
+    "slotsLeftEmpty": [
+      "Fetch Inbox Since Midnight - gmailOAuth2",
+      "Deliver Briefing Dashboard - gmailOAuth2",
+      "Fetch Calendar For Today - googleCalendarOAuth2Api"
+    ],
+    "autoAssignedByServer": [
+      {
+        "nodeName": "Briefing Model",
+        "credentialType": "openAiApi",
+        "credentialName": "n8n free OpenAI API credits",
+        "note": "create_workflow_from_code attached an existing credential already owned by the user (source: user). The builder did not create, name or supply it."
+      }
+    ],
+    "userInputPlaceholder": "Deliver Briefing Dashboard sendTo is a placeholder('Email address that should receive the daily briefing') - the recipient address was not invented."
+  },
+  "friction": [
+    "The agent session exposed no native n8n MCP tools, so every MCP call went through the sandbox PowerShell helpers.",
+    "get_workflow_best_practices requires a technique enum, but the provided mcp_call.ps1 __list prints tool names only and the validation error does not list the allowed values. Worked around by copying the helper into _tools_schema.ps1 to dump full inputSchemas (2 wasted calls).",
+    "First sed to build that copy failed: the '/' delimiter collided with the [string] cast in the search pattern; retried with '#'.",
+    "Bash heredoc could not write the SDK source (quote and backtick parsing); used the Write tool instead.",
+    "SDK shape trap: config.subnodes must be a sibling of config.parameters. Nesting it inside parameters still validates as valid=true while silently dropping all model and parser connections - only the warnings array revealed it. Caught and fixed before creation.",
+    "The model id gpt-5.4 was chosen from the lmChatOpenAi @builderHint (GPT-5.4 family, flagship for general use). Not verified against the live model list, since that would have required inspecting the instance beyond the created workflow."
+  ],
+  "constraintsObserved": [
+    "All work stayed inside the workspace directory.",
+    "No existing workflows were listed, searched or inspected; the only workflow read was the one created here, by its returned id d3fydL2Zvupzu9OP.",
+    "Workflow left inactive (active=false); publish_workflow was never called.",
+    "No secrets recorded in this log."
+  ]
+}

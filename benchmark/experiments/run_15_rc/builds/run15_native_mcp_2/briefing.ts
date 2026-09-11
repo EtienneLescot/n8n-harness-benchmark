@@ -1,0 +1,561 @@
+import { workflow, node, trigger, sticky, placeholder, newCredential, merge, languageModel, outputParser, expr } from '@n8n/workflow-sdk';
+
+const openAiCredential = newCredential('OpenAI');
+const gmailCredential = newCredential('Gmail');
+const calendarCredential = newCredential('Google Calendar');
+
+const dailyTrigger = trigger({
+  type: 'n8n-nodes-base.scheduleTrigger',
+  version: 1.4,
+  config: {
+    name: 'Every Morning At 7',
+    position: [-460, 220],
+    parameters: {
+      rule: {
+        interval: [
+          { field: 'days', daysInterval: 1, triggerAtHour: 7, triggerAtMinute: 0 }
+        ]
+      }
+    }
+  },
+  output: [{ timestamp: '2026-09-11T07:00:00.000+02:00', 'Readable date': 'September 11, 2026 at 7:00:00 AM' }]
+});
+
+const fetchEmails = node({
+  type: 'n8n-nodes-base.gmail',
+  version: 2.2,
+  config: {
+    name: 'Fetch Last 24h Email',
+    position: [-200, 0],
+    parameters: {
+      resource: 'message',
+      operation: 'getAll',
+      returnAll: true,
+      simple: true,
+      filters: {
+        includeSpamTrash: false,
+        readStatus: 'both',
+        receivedAfter: expr('{{ $now.minus({ days: 1 }).toISO() }}')
+      }
+    },
+    credentials: { gmailOAuth2: gmailCredential }
+  },
+  output: [
+    {
+      id: '19a4c1f2b7d0e3aa',
+      threadId: '19a4c1f2b7d0e3aa',
+      From: 'Priya Raman <priya@northwind.example>',
+      To: 'me@example.com',
+      Subject: 'Q3 budget review - numbers needed before Friday',
+      snippet: 'Can you confirm the revised headcount figures before the Friday board pack goes out?',
+      internalDate: '1757567400000',
+      labels: [{ id: 'INBOX', name: 'INBOX' }, { id: 'UNREAD', name: 'UNREAD' }]
+    }
+  ]
+});
+
+const bundleEmails = node({
+  type: 'n8n-nodes-base.aggregate',
+  version: 1,
+  config: {
+    name: 'Bundle Emails For Triage',
+    position: [40, 0],
+    alwaysOutputData: true,
+    parameters: {
+      aggregate: 'aggregateAllItemData',
+      destinationFieldName: 'emails',
+      include: 'specifiedFields',
+      fieldsToInclude: 'id, threadId, From, To, Subject, snippet, internalDate, labels'
+    }
+  },
+  output: [
+    {
+      emails: [
+        {
+          id: '19a4c1f2b7d0e3aa',
+          threadId: '19a4c1f2b7d0e3aa',
+          From: 'Priya Raman <priya@northwind.example>',
+          To: 'me@example.com',
+          Subject: 'Q3 budget review - numbers needed before Friday',
+          snippet: 'Can you confirm the revised headcount figures before the Friday board pack goes out?',
+          internalDate: '1757567400000',
+          labels: [{ id: 'INBOX', name: 'INBOX' }]
+        }
+      ]
+    }
+  ]
+});
+
+const triageModel = languageModel({
+  type: '@n8n/n8n-nodes-langchain.lmChatOpenAi',
+  version: 1.3,
+  config: {
+    name: 'Triage Model',
+    position: [200, 220],
+    parameters: {
+      model: { __rl: true, mode: 'list', value: 'gpt-5-mini', cachedResultName: 'gpt-5-mini' },
+      options: { temperature: 0.2 }
+    },
+    credentials: { openAiApi: openAiCredential }
+  }
+});
+
+const emailTriageSchema = outputParser({
+  type: '@n8n/n8n-nodes-langchain.outputParserStructured',
+  version: 1.3,
+  config: {
+    name: 'Email Triage Schema',
+    position: [380, 220],
+    parameters: {
+      schemaType: 'fromJson',
+      jsonSchemaExample: '{"headline":"3 threads need you today, the budget one is blocking","needsReply":[{"from":"Priya Raman","subject":"Q3 budget review","why":"Board pack is blocked on your headcount numbers","dueBy":"Friday"}],"important":[{"from":"Legal","subject":"Vendor MSA redlines","why":"Signature window closes next week"}],"fyi":[{"from":"Engineering","subject":"Weekly deploy notes"}],"noiseCount":14,"totalCount":31}'
+    }
+  }
+});
+
+const emailTriageAgent = node({
+  type: '@n8n/n8n-nodes-langchain.agent',
+  version: 3.1,
+  config: {
+    name: 'Email Triage Agent',
+    position: [280, 0],
+    onError: 'continueRegularOutput',
+    parameters: {
+      promptType: 'define',
+      hasOutputParser: true,
+      text: expr(
+        'Today is {{ $now.toFormat("cccc d LLLL yyyy") }}.\n' +
+        'Here are the emails received in the last 24 hours as JSON:\n' +
+        '{{ JSON.stringify($json.emails ?? []) }}\n\n' +
+        'Sort every message into exactly one bucket and return the structured result. ' +
+        'If the list is empty, return empty buckets, zero counts and a headline saying the inbox is clear.'
+      ),
+      options: {
+        systemMessage:
+          'You are the Email Triage Agent in a daily briefing crew. You never send or modify email, you only read and sort.\n\n' +
+          'Sort each message into exactly one bucket:\n' +
+          '- needsReply: the user personally owes an answer, a decision or an approval. Always say why, and give dueBy when a deadline is stated or strongly implied, otherwise use an empty string.\n' +
+          '- important: matters to the user but needs no reply from them today.\n' +
+          '- fyi: worth a glance, no action.\n' +
+          '- noise: newsletters, receipts, notifications, automated alerts. Do not list these individually, just count them in noiseCount.\n\n' +
+          'Rules: order needsReply by urgency, most urgent first. Keep every why under 15 words. ' +
+          'Never invent a message, a sender or a deadline that is not in the input. ' +
+          'totalCount is the number of messages you were given. ' +
+          'headline is one sentence, under 90 characters, stating what the inbox demands today.',
+        maxIterations: 3,
+        enableStreaming: false
+      },
+      needsFallback: false
+    },
+    subnodes: { model: triageModel, outputParser: emailTriageSchema }
+  },
+  output: [
+    {
+      output: {
+        headline: '3 threads need you today, the budget one is blocking',
+        needsReply: [
+          { from: 'Priya Raman', subject: 'Q3 budget review', why: 'Board pack is blocked on your headcount numbers', dueBy: 'Friday' }
+        ],
+        important: [{ from: 'Legal', subject: 'Vendor MSA redlines', why: 'Signature window closes next week' }],
+        fyi: [{ from: 'Engineering', subject: 'Weekly deploy notes' }],
+        noiseCount: 14,
+        totalCount: 31
+      }
+    }
+  ]
+});
+
+const fetchEvents = node({
+  type: 'n8n-nodes-base.googleCalendar',
+  version: 1.3,
+  config: {
+    name: 'Fetch Today Calendar',
+    position: [-200, 460],
+    parameters: {
+      resource: 'event',
+      operation: 'getAll',
+      calendar: { __rl: true, mode: 'id', value: 'primary', cachedResultName: 'primary' },
+      returnAll: true,
+      timeMin: expr('{{ $now.startOf("day").toISO() }}'),
+      timeMax: expr('{{ $now.endOf("day").toISO() }}'),
+      options: { orderBy: 'startTime', recurringEventHandling: 'expand' }
+    },
+    credentials: { googleCalendarOAuth2Api: calendarCredential }
+  },
+  output: [
+    {
+      id: '4k8m2p9qv1r3s5t7',
+      summary: 'Board pack walkthrough',
+      description: 'Bring the revised Q3 headcount slide',
+      status: 'confirmed',
+      htmlLink: 'https://www.google.com/calendar/event?eid=NGs4bTJwOXF2MXIzczV0Nw',
+      start: { dateTime: '2026-09-11T09:30:00+02:00', timeZone: 'Europe/Paris' },
+      end: { dateTime: '2026-09-11T10:30:00+02:00', timeZone: 'Europe/Paris' },
+      organizer: { email: 'priya@northwind.example', self: false }
+    }
+  ]
+});
+
+const bundleEvents = node({
+  type: 'n8n-nodes-base.aggregate',
+  version: 1,
+  config: {
+    name: 'Bundle Events For Review',
+    position: [40, 460],
+    alwaysOutputData: true,
+    parameters: {
+      aggregate: 'aggregateAllItemData',
+      destinationFieldName: 'events',
+      include: 'specifiedFields',
+      fieldsToInclude: 'id, summary, description, status, htmlLink, start, end, organizer, attendees, location'
+    }
+  },
+  output: [
+    {
+      events: [
+        {
+          id: '4k8m2p9qv1r3s5t7',
+          summary: 'Board pack walkthrough',
+          description: 'Bring the revised Q3 headcount slide',
+          status: 'confirmed',
+          htmlLink: 'https://www.google.com/calendar/event?eid=NGs4bTJwOXF2MXIzczV0Nw',
+          start: { dateTime: '2026-09-11T09:30:00+02:00' },
+          end: { dateTime: '2026-09-11T10:30:00+02:00' }
+        }
+      ]
+    }
+  ]
+});
+
+const scheduleModel = languageModel({
+  type: '@n8n/n8n-nodes-langchain.lmChatOpenAi',
+  version: 1.3,
+  config: {
+    name: 'Schedule Model',
+    position: [200, 680],
+    parameters: {
+      model: { __rl: true, mode: 'list', value: 'gpt-5-mini', cachedResultName: 'gpt-5-mini' },
+      options: { temperature: 0.2 }
+    },
+    credentials: { openAiApi: openAiCredential }
+  }
+});
+
+const dayPlanSchema = outputParser({
+  type: '@n8n/n8n-nodes-langchain.outputParserStructured',
+  version: 1.3,
+  config: {
+    name: 'Day Plan Schema',
+    position: [380, 680],
+    parameters: {
+      schemaType: 'fromJson',
+      jsonSchemaExample: '{"headline":"5 meetings, one double booking at 14:00","timeline":[{"time":"09:30","endTime":"10:30","title":"Board pack walkthrough","withWho":"Priya Raman","location":"Google Meet","prep":"Bring the revised headcount slide"}],"conflicts":["14:00 Design review overlaps 1:1 with Sam"],"focusWindows":["11:00 to 12:30","16:00 to 17:30"],"meetingCount":5,"bookedMinutes":210}'
+    }
+  }
+});
+
+const dayPlannerAgent = node({
+  type: '@n8n/n8n-nodes-langchain.agent',
+  version: 3.1,
+  config: {
+    name: 'Day Planner Agent',
+    position: [280, 460],
+    onError: 'continueRegularOutput',
+    parameters: {
+      promptType: 'define',
+      hasOutputParser: true,
+      text: expr(
+        'Today is {{ $now.toFormat("cccc d LLLL yyyy") }} and the current time zone offset is {{ $now.toFormat("ZZ") }}.\n' +
+        'Here are today calendar events as JSON:\n' +
+        '{{ JSON.stringify($json.events ?? []) }}\n\n' +
+        'Build the structured day plan. If the list is empty, return an empty timeline, zero counts and a headline saying the day is clear.'
+      ),
+      options: {
+        systemMessage:
+          'You are the Day Planner Agent in a daily briefing crew. You never create, move or delete events, you only read and organise.\n\n' +
+          'From the raw calendar events produce:\n' +
+          '- timeline: every event in chronological order. Use 24 hour HH:mm local times taken from start.dateTime and end.dateTime. For all day events use "all day" as the time. withWho is the organiser or the key attendees, location is location or the meeting link host, and both are empty strings when unknown.\n' +
+          '- prep: one short line naming what the user must bring or decide, derived only from the event title and description. Empty string when nothing is needed.\n' +
+          '- conflicts: any pair of events whose times overlap, and any back to back block longer than three hours.\n' +
+          '- focusWindows: the gaps of 45 minutes or more between 08:00 and 19:00 that are free.\n' +
+          '- meetingCount is the number of timeline entries and bookedMinutes is their total duration.\n\n' +
+          'Skip events with status cancelled. Never invent an event, an attendee or a location. Keep every string under 90 characters.',
+        maxIterations: 3,
+        enableStreaming: false
+      },
+      needsFallback: false
+    },
+    subnodes: { model: scheduleModel, outputParser: dayPlanSchema }
+  },
+  output: [
+    {
+      output: {
+        headline: '5 meetings, one double booking at 14:00',
+        timeline: [
+          { time: '09:30', endTime: '10:30', title: 'Board pack walkthrough', withWho: 'Priya Raman', location: 'Google Meet', prep: 'Bring the revised headcount slide' }
+        ],
+        conflicts: ['14:00 Design review overlaps 1:1 with Sam'],
+        focusWindows: ['11:00 to 12:30', '16:00 to 17:30'],
+        meetingCount: 5,
+        bookedMinutes: 210
+      }
+    }
+  ]
+});
+
+const combineInsights = merge({
+  version: 3.2,
+  config: {
+    name: 'Combine Inbox And Calendar',
+    position: [600, 220],
+    parameters: {
+      mode: 'combine',
+      combineBy: 'combineAll',
+      options: {
+        clashHandling: { values: { resolveClash: 'addSuffix', mergeMode: 'deepMerge', overrideEmpty: false } }
+      }
+    }
+  },
+  output: [{ output_1: {}, output_2: {} }]
+});
+
+const briefingModel = languageModel({
+  type: '@n8n/n8n-nodes-langchain.lmChatOpenAi',
+  version: 1.3,
+  config: {
+    name: 'Briefing Model',
+    position: [760, 440],
+    parameters: {
+      model: { __rl: true, mode: 'list', value: 'gpt-5', cachedResultName: 'gpt-5' },
+      options: { temperature: 0.3 }
+    },
+    credentials: { openAiApi: openAiCredential }
+  }
+});
+
+const briefingSchema = outputParser({
+  type: '@n8n/n8n-nodes-langchain.outputParserStructured',
+  version: 1.3,
+  config: {
+    name: 'Briefing Schema',
+    position: [940, 440],
+    parameters: {
+      schemaType: 'fromJson',
+      jsonSchemaExample: '{"headline":"Budget numbers block the board pack, clear them before 09:30","summary":"Two of the three meetings today depend on the headcount figures Priya asked for yesterday. The 11:00 gap is the only window wide enough to finish them.","topPriorities":[{"what":"Send Priya the revised headcount figures","when":"Before 09:30","why":"The board pack walkthrough is blocked on it"}],"watchOuts":["14:00 design review overlaps your 1:1 with Sam"],"mood":"busy"}'
+    }
+  }
+});
+
+const chiefOfStaffAgent = node({
+  type: '@n8n/n8n-nodes-langchain.agent',
+  version: 3.1,
+  config: {
+    name: 'Chief Of Staff Agent',
+    position: [820, 220],
+    onError: 'continueRegularOutput',
+    executeOnce: true,
+    parameters: {
+      promptType: 'define',
+      hasOutputParser: true,
+      text: expr(
+        'Date: {{ $now.toFormat("cccc d LLLL yyyy") }}\n\n' +
+        'INBOX TRIAGE from the Email Triage Agent:\n' +
+        '{{ JSON.stringify($("Email Triage Agent").item.json.output ?? {}) }}\n\n' +
+        'DAY PLAN from the Day Planner Agent:\n' +
+        '{{ JSON.stringify($("Day Planner Agent").item.json.output ?? {}) }}\n\n' +
+        'Write the briefing narrative that ties the two together.'
+      ),
+      options: {
+        systemMessage:
+          'You are the Chief Of Staff Agent. Two specialists have already sorted the raw data: the Email Triage Agent sorted the inbox and the Day Planner Agent sorted the calendar. ' +
+          'Your job is only the synthesis, not the sorting. Never repeat their lists, the dashboard already shows them.\n\n' +
+          'Produce:\n' +
+          '- headline: one sentence under 90 characters naming the single thing that decides whether today goes well.\n' +
+          '- summary: two or three sentences on how the inbox and the calendar collide. Name the overlaps: a meeting that depends on an unanswered email, a deadline that lands inside a booked block, a free window that is the only place some work fits.\n' +
+          '- topPriorities: at most four items, each with what, when and why, ordered by what breaks first if skipped. Anchor when to a clock time or a meeting from the day plan.\n' +
+          '- watchOuts: conflicts, tight turnarounds and dependencies on other people. Empty array when there are none.\n' +
+          '- mood: exactly one of clear, steady, busy or overloaded, based on meeting load and the number of items needing a reply.\n\n' +
+          'Use only facts present in the two inputs. Never invent a person, a meeting, an email or a deadline. ' +
+          'If both inputs are empty, say the day is clear and return empty arrays. Plain text only, no markdown and no HTML.',
+        maxIterations: 3,
+        enableStreaming: false
+      },
+      needsFallback: false
+    },
+    subnodes: { model: briefingModel, outputParser: briefingSchema }
+  },
+  output: [
+    {
+      output: {
+        headline: 'Budget numbers block the board pack, clear them before 09:30',
+        summary: 'Two of the three meetings today depend on the headcount figures Priya asked for yesterday. The 11:00 gap is the only window wide enough to finish them.',
+        topPriorities: [
+          { what: 'Send Priya the revised headcount figures', when: 'Before 09:30', why: 'The board pack walkthrough is blocked on it' }
+        ],
+        watchOuts: ['14:00 design review overlaps your 1:1 with Sam'],
+        mood: 'busy'
+      }
+    }
+  ]
+});
+
+const renderDashboard = node({
+  type: 'n8n-nodes-base.html',
+  version: 1.2,
+  config: {
+    name: 'Render Briefing Dashboard',
+    position: [1120, 220],
+    executeOnce: true,
+    parameters: {
+      operation: 'generateHtmlTemplate',
+      html: expr(
+        '<!DOCTYPE html>\n' +
+        '<html lang="en">\n' +
+        '<head>\n' +
+        '<meta charset="utf-8">\n' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+        '<title>Daily briefing</title>\n' +
+        '<style>\n' +
+        ':root { color-scheme: light; }\n' +
+        'body { margin: 0; background: #eef1f6; color: #1b2330; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.55; }\n' +
+        '.wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 56px; }\n' +
+        '.card { background: #ffffff; border: 1px solid #dfe4ec; border-radius: 14px; padding: 22px 24px; margin-bottom: 18px; }\n' +
+        '.hero { background: #12203a; border-color: #12203a; color: #ffffff; }\n' +
+        '.eyebrow { margin: 0 0 6px; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #8fa6c9; }\n' +
+        '.hero h1 { margin: 0 0 10px; font-size: 25px; line-height: 1.3; font-weight: 650; }\n' +
+        '.hero p.sub { margin: 0; color: #c2d0e6; font-size: 14px; }\n' +
+        '.hero p.date { margin: 14px 0 0; color: #8fa6c9; font-size: 13px; }\n' +
+        '.tag { display: inline-block; margin-top: 14px; padding: 4px 11px; border-radius: 999px; background: #1f3559; color: #cfe0ff; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; }\n' +
+        '.stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }\n' +
+        '.stat { flex: 1 1 130px; background: #ffffff; border: 1px solid #dfe4ec; border-radius: 14px; padding: 14px 16px; }\n' +
+        '.stat b { display: block; font-size: 26px; font-weight: 650; color: #12203a; }\n' +
+        '.stat span { font-size: 11px; letter-spacing: 1.1px; text-transform: uppercase; color: #75839a; }\n' +
+        'h2 { margin: 0 0 14px; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: #75839a; font-weight: 650; }\n' +
+        'ol, ul { margin: 0; padding: 0; list-style: none; }\n' +
+        'li { padding: 12px 0; border-top: 1px solid #eceff5; }\n' +
+        'li:first-child { padding-top: 0; border-top: 0; }\n' +
+        'li b { display: block; font-size: 15px; color: #12203a; font-weight: 600; }\n' +
+        'li i { font-style: normal; color: #5c6a80; font-size: 13px; }\n' +
+        'li em { font-style: normal; display: inline-block; margin-bottom: 3px; font-size: 12px; font-weight: 650; letter-spacing: 0.4px; color: #1d4ed8; }\n' +
+        '.reply li em { color: #b42318; }\n' +
+        '.warn { background: #fff8f1; border-color: #f3d7b8; }\n' +
+        '.warn h2 { color: #a15c07; }\n' +
+        '.warn li { border-top-color: #f3e3cf; color: #7c4a07; font-size: 14px; }\n' +
+        '.free li { border-top-color: #dff0e2; color: #216e39; font-size: 14px; }\n' +
+        '.free { background: #f3fbf4; border-color: #cde9d3; }\n' +
+        '.free h2 { color: #216e39; }\n' +
+        '.muted { color: #75839a; font-size: 14px; margin: 0; }\n' +
+        '.summary { font-size: 15px; color: #33415a; margin: 0; }\n' +
+        'footer { text-align: center; color: #8b97ab; font-size: 12px; padding-top: 8px; }\n' +
+        '</style>\n' +
+        '</head>\n' +
+        '<body>\n' +
+        '<div class="wrap">\n' +
+        '\n' +
+        '<div class="card hero">\n' +
+        '<p class="eyebrow">Daily briefing</p>\n' +
+        '<h1>{{ $json.output?.headline || "Your day at a glance" }}</h1>\n' +
+        '<p class="sub">{{ $json.output?.summary || "" }}</p>\n' +
+        '<p class="date">{{ $now.toFormat("cccc d LLLL yyyy") }}</p>\n' +
+        '<span class="tag">{{ $json.output?.mood || "steady" }}</span>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="stats">\n' +
+        '<div class="stat"><b>{{ $("Day Planner Agent").item.json.output?.meetingCount ?? 0 }}</b><span>Meetings</span></div>\n' +
+        '<div class="stat"><b>{{ Math.round(($("Day Planner Agent").item.json.output?.bookedMinutes ?? 0) / 6) / 10 }}h</b><span>Booked</span></div>\n' +
+        '<div class="stat"><b>{{ ($("Email Triage Agent").item.json.output?.needsReply ?? []).length }}</b><span>Need reply</span></div>\n' +
+        '<div class="stat"><b>{{ $("Email Triage Agent").item.json.output?.totalCount ?? 0 }}</b><span>New email</span></div>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="card">\n' +
+        '<h2>Top priorities</h2>\n' +
+        '<ol>{{ ($json.output?.topPriorities ?? []).length ? ($json.output.topPriorities).map(p => "<li><em>" + (p.when || "Today") + "</em><b>" + p.what + "</b><i>" + (p.why || "") + "</i></li>").join("") : "<li><i>Nothing is competing for your attention today.</i></li>" }}</ol>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="card reply">\n' +
+        '<h2>Inbox &middot; needs your reply</h2>\n' +
+        '<ul>{{ (($("Email Triage Agent").item.json.output?.needsReply) ?? []).length ? ($("Email Triage Agent").item.json.output.needsReply).map(e => "<li><em>" + (e.dueBy || "No deadline") + "</em><b>" + e.subject + "</b><i>" + e.from + (e.why ? " &middot; " + e.why : "") + "</i></li>").join("") : "<li><i>Nobody is waiting on you.</i></li>" }}</ul>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="card">\n' +
+        '<h2>Inbox &middot; worth knowing</h2>\n' +
+        '<ul>{{ (($("Email Triage Agent").item.json.output?.important) ?? []).length ? ($("Email Triage Agent").item.json.output.important).map(e => "<li><b>" + e.subject + "</b><i>" + e.from + (e.why ? " &middot; " + e.why : "") + "</i></li>").join("") : "<li><i>Nothing important beyond the replies above.</i></li>" }}</ul>\n' +
+        '<p class="muted">Plus {{ (($("Email Triage Agent").item.json.output?.fyi) ?? []).length }} FYI and {{ $("Email Triage Agent").item.json.output?.noiseCount ?? 0 }} low value messages filtered out.</p>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="card">\n' +
+        '<h2>Today on the calendar</h2>\n' +
+        '<ul>{{ (($("Day Planner Agent").item.json.output?.timeline) ?? []).length ? ($("Day Planner Agent").item.json.output.timeline).map(v => "<li><em>" + v.time + (v.endTime ? " to " + v.endTime : "") + "</em><b>" + v.title + "</b><i>" + [v.withWho, v.location].filter(Boolean).join(" &middot; ") + (v.prep ? "<br>Prep: " + v.prep : "") + "</i></li>").join("") : "<li><i>No meetings today.</i></li>" }}</ul>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="card free">\n' +
+        '<h2>Focus windows</h2>\n' +
+        '<ul>{{ (($("Day Planner Agent").item.json.output?.focusWindows) ?? []).length ? ($("Day Planner Agent").item.json.output.focusWindows).map(w => "<li>" + w + "</li>").join("") : "<li>No protected block longer than 45 minutes today.</li>" }}</ul>\n' +
+        '</div>\n' +
+        '\n' +
+        '<div class="card warn">\n' +
+        '<h2>Watch out</h2>\n' +
+        '<ul>{{ [...($json.output?.watchOuts ?? []), ...($("Day Planner Agent").item.json.output?.conflicts ?? [])].length ? [...($json.output?.watchOuts ?? []), ...($("Day Planner Agent").item.json.output?.conflicts ?? [])].map(w => "<li>" + w + "</li>").join("") : "<li>No conflicts detected.</li>" }}</ul>\n' +
+        '</div>\n' +
+        '\n' +
+        '<footer>Assembled by the Email Triage, Day Planner and Chief Of Staff agents at {{ $now.toFormat("HH:mm") }}.</footer>\n' +
+        '\n' +
+        '</div>\n' +
+        '</body>\n' +
+        '</html>'
+      )
+    }
+  },
+  output: [{ html: '<!DOCTYPE html><html lang="en"><head></head><body><div class="wrap"></div></body></html>' }]
+});
+
+const sendBriefing = node({
+  type: 'n8n-nodes-base.gmail',
+  version: 2.2,
+  config: {
+    name: 'Email The Briefing',
+    position: [1360, 220],
+    executeOnce: true,
+    parameters: {
+      resource: 'message',
+      operation: 'send',
+      sendTo: placeholder('The inbox that should receive the briefing, for example you@gmail.com'),
+      subject: expr('Daily briefing {{ $now.toFormat("d LLL") }} - {{ $("Chief Of Staff Agent").item.json.output?.headline ?? "your day at a glance" }}'),
+      emailType: 'html',
+      message: expr('{{ $json.html }}'),
+      options: { senderName: 'Daily Briefing', appendAttribution: false }
+    },
+    credentials: { gmailOAuth2: gmailCredential }
+  },
+  output: [{ id: '19a4d55e0c1b7f20', threadId: '19a4d55e0c1b7f20', labelIds: ['SENT'] }]
+});
+
+const setupNote = sticky(
+  '## Daily briefing crew\n\n' +
+  'Three agents, one dashboard.\n\n' +
+  '1. **Email Triage Agent** sorts the last 24h of Gmail into needs-reply / important / FYI / noise.\n' +
+  '2. **Day Planner Agent** turns today calendar into a timeline, conflicts and focus windows.\n' +
+  '3. **Chief Of Staff Agent** reads both and writes the narrative and top priorities.\n\n' +
+  'The HTML node renders the dashboard, Gmail delivers it at 07:00.\n\n' +
+  '### Before the first run\n' +
+  'Fill the four empty slots: Gmail OAuth2, Google Calendar OAuth2, OpenAI API, and the recipient address on **Email The Briefing**.',
+  [],
+  { color: 4, width: 460, height: 360 }
+);
+
+export default workflow('bench-c3399e1e', 'bench-c3399e1e')
+  .add(setupNote)
+  .add(dailyTrigger)
+  .to(fetchEmails)
+  .to(bundleEmails)
+  .to(emailTriageAgent)
+  .to(combineInsights.input(0))
+  .add(dailyTrigger)
+  .to(fetchEvents)
+  .to(bundleEvents)
+  .to(dayPlannerAgent)
+  .to(combineInsights.input(1))
+  .add(combineInsights)
+  .to(chiefOfStaffAgent)
+  .to(renderDashboard)
+  .to(sendBriefing);

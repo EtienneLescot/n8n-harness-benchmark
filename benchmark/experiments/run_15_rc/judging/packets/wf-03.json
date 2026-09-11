@@ -1,0 +1,375 @@
+{
+  "workflowId": "wf-03",
+  "workflow": {
+    "description": null,
+    "active": false,
+    "activeVersionId": null,
+    "isArchived": false,
+    "sourceWorkflowId": null,
+    "nodes": [
+      {
+        "name": "Daily Trigger",
+        "notes": "Fires once a day at 07:00 instance time.",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          -260,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "days",
+                "daysInterval": 1,
+                "triggerAtHour": 7,
+                "triggerAtMinute": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Briefing Model",
+        "notes": "Shared by all three agents. Attach an OpenAI credential before running.",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          140,
+          560
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-4.1-mini",
+            "mode": "list",
+            "cachedResultName": "gpt-4.1-mini"
+          },
+          "options": {
+            "temperature": 0.2
+          }
+        }
+      },
+      {
+        "name": "Gmail Inbox Tool",
+        "notes": "Last 24h of primary-inbox mail. Attach a Gmail OAuth2 credential before running.",
+        "type": "n8n-nodes-base.gmailTool",
+        "typeVersion": 2.2,
+        "position": [
+          160,
+          760
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "message",
+          "operation": "getAll",
+          "returnAll": false,
+          "limit": 50,
+          "simple": true,
+          "filters": {
+            "q": "newer_than:1d -in:chats category:primary",
+            "includeSpamTrash": false
+          },
+          "descriptionType": "manual",
+          "toolDescription": "Read the Gmail inbox. Returns up to 50 messages received in the last 24 hours, each with sender, subject, date and snippet. Call it once; it takes no arguments."
+        }
+      },
+      {
+        "name": "Inbox Analyst Agent",
+        "notes": "Specialist #1: triages the last 24h of email.",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          60,
+          300
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Today is {{ $now.toFormat('cccc dd LLLL yyyy') }}.\n\nCall the Gmail tool once to read the last 24 hours of inbox mail, then triage it.\n\nReport, in plain markdown, with no preamble:\n- URGENT: messages that need a reply or decision today. One line each: sender - subject - why it is urgent.\n- WAITING ON ME: messages asking for something with no hard deadline today.\n- FYI: newsletters, notifications and receipts, grouped, counts only.\n- If the inbox is empty or the tool returns nothing, say \"No new mail in the last 24 hours.\" and stop.\n\nNever invent a message. Only report what the tool returned.",
+          "hasOutputParser": false,
+          "needsFallback": false,
+          "options": {
+            "systemMessage": "You are the Inbox Analyst in a daily-briefing crew. You read email and separate signal from noise. You are terse, factual, and you never fabricate senders, subjects or deadlines.",
+            "maxIterations": 8
+          }
+        }
+      },
+      {
+        "name": "Google Calendar Day Tool",
+        "notes": "Today's events on the primary calendar. Attach a Google Calendar OAuth2 credential before running.",
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          600,
+          760
+        ],
+        "parameters": {
+          "resource": "event",
+          "operation": "getAll",
+          "calendar": {
+            "__rl": true,
+            "value": "primary",
+            "mode": "id"
+          },
+          "returnAll": false,
+          "limit": 50,
+          "timeMin": "={{ $now.startOf('day').toISO() }}",
+          "timeMax": "={{ $now.endOf('day').toISO() }}",
+          "options": {
+            "singleEvents": true,
+            "orderBy": "startTime"
+          },
+          "descriptionType": "manual",
+          "toolDescription": "Read today's Google Calendar events on the primary calendar, ordered by start time, with title, start, end, location and attendees. Call it once; it takes no arguments."
+        }
+      },
+      {
+        "name": "Schedule Analyst Agent",
+        "notes": "Specialist #2: reads today's calendar.",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          500,
+          300
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Today is {{ $now.toFormat('cccc dd LLLL yyyy') }}.\n\nCall the Google Calendar tool once to read today's events, then summarise the day.\n\nReport, in plain markdown, with no preamble:\n- TIMELINE: every event as \"HH:mm-HH:mm - title - location or video link - attendee count\".\n- CONFLICTS: any overlapping events, or \"none\".\n- FREE BLOCKS: uninterrupted gaps of 45 minutes or more between 09:00 and 18:00.\n- PREP NEEDED: events whose title or description implies preparation.\n- If there are no events today, say \"No events scheduled today.\" and stop.\n\nNever invent an event. Only report what the tool returned.",
+          "hasOutputParser": false,
+          "needsFallback": false,
+          "options": {
+            "systemMessage": "You are the Schedule Analyst in a daily-briefing crew. You turn a raw calendar feed into a readable day plan. You are terse, factual, and you never fabricate meetings, times or attendees.",
+            "maxIterations": 8
+          }
+        }
+      },
+      {
+        "name": "Briefing Schema",
+        "notes": "Guarantees the Code node receives a renderable object.",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          1050,
+          560
+        ],
+        "parameters": {
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"headline\": {\n      \"type\": \"string\",\n      \"description\": \"One sentence summing up the day.\"\n    },\n    \"focus\": {\n      \"type\": \"string\",\n      \"description\": \"The single most important thing to get done today.\"\n    },\n    \"urgent\": {\n      \"type\": \"array\",\n      \"description\": \"Things needing action today.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\"\n          },\n          \"detail\": {\n            \"type\": \"string\"\n          },\n          \"source\": {\n            \"type\": \"string\",\n            \"description\": \"email or calendar\"\n          }\n        },\n        \"required\": [\n          \"title\",\n          \"detail\",\n          \"source\"\n        ]\n      }\n    },\n    \"schedule\": {\n      \"type\": \"array\",\n      \"description\": \"Today's events in chronological order.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"time\": {\n            \"type\": \"string\",\n            \"description\": \"HH:mm or HH:mm-HH:mm\"\n          },\n          \"title\": {\n            \"type\": \"string\"\n          },\n          \"detail\": {\n            \"type\": \"string\",\n            \"description\": \"Location, attendees or prep note. May be empty.\"\n          }\n        },\n        \"required\": [\n          \"time\",\n          \"title\",\n          \"detail\"\n        ]\n      }\n    },\n    \"waiting\": {\n      \"type\": \"array\",\n      \"description\": \"Replies owed, no hard deadline today.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"title\": {\n            \"type\": \"string\"\n          },\n          \"detail\": {\n            \"type\": \"string\"\n          },\n          \"source\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"title\",\n          \"detail\",\n          \"source\"\n        ]\n      }\n    },\n    \"fyi\": {\n      \"type\": \"array\",\n      \"description\": \"Low-priority noise, one line each.\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"headline\",\n    \"focus\",\n    \"urgent\",\n    \"schedule\",\n    \"waiting\",\n    \"fyi\"\n  ]\n}"
+        }
+      },
+      {
+        "name": "Chief Of Staff Agent",
+        "notes": "Specialist #3: merges both reports into the structured briefing.",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          940,
+          300
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Date: {{ $now.toFormat('cccc dd LLLL yyyy') }}\n\n=== INBOX ANALYST REPORT ===\n{{ $('Inbox Analyst Agent').item.json.output }}\n\n=== SCHEDULE ANALYST REPORT ===\n{{ $json.output }}\n\nMerge both reports into one briefing. Rules:\n- Cross-reference them: an email about a meeting that is on today's calendar belongs in urgent with the meeting time in its detail.\n- Order urgent by what must happen first.\n- Keep every line short enough to scan. No markdown syntax in the field values, they are rendered as HTML.\n- Use empty arrays rather than filler text when a section has nothing in it.\n- Carry over nothing that is not in the two reports above.",
+          "hasOutputParser": true,
+          "needsFallback": false,
+          "options": {
+            "systemMessage": "You are the Chief of Staff in a daily-briefing crew. Two analysts hand you their reports and you produce the one briefing your principal actually reads. You merge, deduplicate and rank. You add no information of your own.",
+            "maxIterations": 4
+          }
+        }
+      },
+      {
+        "name": "Render Briefing Dashboard",
+        "notes": "Deterministic HTML render. The agent supplies data, never markup.",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1380,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "const b = $input.first().json.output ?? $input.first().json;\n\nconst esc = (v) => String(v ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst arr = (v) => (Array.isArray(v) ? v : []);\nconst today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });\n\nconst CARD = 'background:#ffffff;border:1px solid #e4e7ec;border-radius:12px;padding:18px 20px;margin:0 0 16px;';\nconst H2 = 'margin:0 0 12px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#667085;font-weight:700;';\nconst ROW = 'padding:10px 0;border-top:1px solid #f2f4f7;';\nconst TITLE = 'font-size:14px;font-weight:600;color:#101828;';\nconst DETAIL = 'font-size:13px;color:#475467;margin-top:2px;';\nconst TAG = 'display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:8px;';\n\nconst empty = (msg) => '<div style=\"' + ROW + 'font-size:13px;color:#98a2b3;\">' + esc(msg) + '</div>';\n\nconst items = (list, accent, emptyMsg) => {\n  const rows = arr(list);\n  if (!rows.length) return empty(emptyMsg);\n  return rows\n    .map((it) => {\n      const tag = it.source\n        ? '<span style=\"' + TAG + 'background:#f2f4f7;color:#475467;\">' + esc(it.source) + '</span>'\n        : '';\n      const lead = it.time ? '<span style=\"color:' + accent + ';font-weight:700;\">' + esc(it.time) + '</span>&nbsp;&nbsp;' : '';\n      const detail = it.detail ? '<div style=\"' + DETAIL + '\">' + esc(it.detail) + '</div>' : '';\n      return '<div style=\"' + ROW + '\">' +\n        '<div style=\"' + TITLE + '\">' + lead + esc(it.title) + tag + '</div>' +\n        detail +\n        '</div>';\n    })\n    .join('');\n};\n\nconst lines = (list, emptyMsg) => {\n  const rows = arr(list);\n  if (!rows.length) return empty(emptyMsg);\n  return rows.map((t) => '<div style=\"' + ROW + DETAIL + '\">' + esc(t) + '</div>').join('');\n};\n\nconst counts = [\n  ['Urgent', arr(b.urgent).length, '#d92d20'],\n  ['Meetings', arr(b.schedule).length, '#175cd3'],\n  ['Waiting', arr(b.waiting).length, '#b54708'],\n  ['FYI', arr(b.fyi).length, '#667085'],\n]\n  .map(([label, n, colour]) =>\n    '<td width=\"25%\" style=\"' + CARD + 'text-align:center;\">' +\n    '<div style=\"font-size:28px;font-weight:700;color:' + colour + ';line-height:1.1;\">' + n + '</div>' +\n    '<div style=\"' + H2 + 'margin:6px 0 0;\">' + label + '</div>' +\n    '</td>')\n  .join('<td width=\"12\"></td>');\n\nconst card = (heading, body) =>\n  '<div style=\"' + CARD + '\"><h2 style=\"' + H2 + '\">' + esc(heading) + '</h2>' + body + '</div>';\n\nconst html =\n  '<!doctype html><html><head><meta charset=\"utf-8\">' +\n  '<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">' +\n  '<title>Daily Briefing - ' + esc(today) + '</title></head>' +\n  '<body style=\"margin:0;padding:24px 12px;background:#f9fafb;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;\">' +\n  '<div style=\"max-width:680px;margin:0 auto;\">' +\n  '<div style=\"' + CARD + 'background:#101828;border-color:#101828;\">' +\n  '<div style=\"font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#98a2b3;font-weight:700;\">Daily briefing</div>' +\n  '<div style=\"font-size:22px;font-weight:700;color:#ffffff;margin:6px 0 4px;\">' + esc(today) + '</div>' +\n  '<div style=\"font-size:14px;color:#d0d5dd;\">' + esc(b.headline) + '</div>' +\n  '</div>' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\"><tr>' + counts + '</tr></table>' +\n  card('Focus today', '<div style=\"' + ROW + TITLE + 'border-top:none;\">' + esc(b.focus) + '</div>') +\n  card('Urgent', items(b.urgent, '#d92d20', 'Nothing urgent.')) +\n  card('Schedule', items(b.schedule, '#175cd3', 'No events scheduled today.')) +\n  card('Waiting on you', items(b.waiting, '#b54708', 'Nobody is waiting on you.')) +\n  card('FYI', lines(b.fyi, 'Nothing else worth your time.')) +\n  '<div style=\"text-align:center;font-size:11px;color:#98a2b3;padding:8px 0 4px;\">Generated by bench-425ceb62</div>' +\n  '</div></body></html>';\n\nreturn [{ json: { subject: 'Daily briefing - ' + today, html, briefing: b } }];"
+        }
+      },
+      {
+        "name": "Email Daily Briefing",
+        "notes": "Set \"To Email\" and attach a Gmail OAuth2 credential before running.",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.2,
+        "position": [
+          1700,
+          300
+        ],
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "message",
+          "operation": "send",
+          "sendTo": "",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false,
+            "senderName": "Daily Briefing"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Daily Trigger": {
+        "main": [
+          [
+            {
+              "node": "Inbox Analyst Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Inbox Analyst Agent": {
+        "main": [
+          [
+            {
+              "node": "Schedule Analyst Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Schedule Analyst Agent": {
+        "main": [
+          [
+            {
+              "node": "Chief Of Staff Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Chief Of Staff Agent": {
+        "main": [
+          [
+            {
+              "node": "Render Briefing Dashboard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Render Briefing Dashboard": {
+        "main": [
+          [
+            {
+              "node": "Email Daily Briefing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Briefing Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Inbox Analyst Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "Schedule Analyst Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            },
+            {
+              "node": "Chief Of Staff Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail Inbox Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "Inbox Analyst Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Calendar Day Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "Schedule Analyst Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Briefing Schema": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Chief Of Staff Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true
+    },
+    "staticData": null,
+    "activeVersion": null
+  },
+  "structuralFacts": {
+    "executionOrder": "v1",
+    "functionalNodeCount": 10,
+    "triggers": [
+      "Daily Trigger"
+    ],
+    "maxMainDepth": 5,
+    "unreachableFromTrigger": [],
+    "brokenReferences": [],
+    "waitsOn": {
+      "Inbox Analyst Agent": [
+        "Daily Trigger"
+      ],
+      "Schedule Analyst Agent": [
+        "Inbox Analyst Agent",
+        "Daily Trigger"
+      ],
+      "Chief Of Staff Agent": [
+        "Schedule Analyst Agent",
+        "Inbox Analyst Agent",
+        "Daily Trigger"
+      ],
+      "Render Briefing Dashboard": [
+        "Chief Of Staff Agent",
+        "Schedule Analyst Agent",
+        "Inbox Analyst Agent",
+        "Daily Trigger"
+      ],
+      "Email Daily Briefing": [
+        "Render Briefing Dashboard",
+        "Chief Of Staff Agent",
+        "Schedule Analyst Agent",
+        "Inbox Analyst Agent",
+        "Daily Trigger"
+      ]
+    }
+  }
+}

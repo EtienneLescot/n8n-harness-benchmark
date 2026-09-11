@@ -1,0 +1,194 @@
+{
+  "builds": [
+    {
+      "label": "run15_n8nac_1",
+      "template": "run15_n8nac",
+      "token": "bench-e7bbf244",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_1",
+      "preparedAt": "2026-09-11T16:22:26.802Z",
+      "workflowId": "lm1RPKsMQ1WrHKcp",
+      "workflowName": "bench-e7bbf244",
+      "active": false,
+      "nodes": 9,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 125818,
+      "durationMs": 504026,
+      "archivedAt": "2026-09-11T16:31:44.119Z"
+    },
+    {
+      "label": "run15_native_mcp_1",
+      "template": "run15_native_mcp",
+      "token": "bench-b0e4a323",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_native_mcp_1",
+      "preparedAt": "2026-09-11T16:22:26.868Z",
+      "workflowId": "d3fydL2Zvupzu9OP",
+      "workflowName": "bench-b0e4a323",
+      "active": false,
+      "nodes": 15,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 190011,
+      "durationMs": 733723,
+      "archivedAt": "2026-09-11T16:35:40.885Z"
+    },
+    {
+      "label": "run15_n8nac_2",
+      "template": "run15_n8nac",
+      "token": "bench-425ceb62",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_2",
+      "preparedAt": "2026-09-11T16:22:34.932Z",
+      "workflowId": "KIldXeR9YxI4L4X3",
+      "workflowName": "bench-425ceb62",
+      "active": false,
+      "nodes": 10,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 142344,
+      "durationMs": 638256,
+      "archivedAt": "2026-09-11T16:46:39.829Z"
+    },
+    {
+      "label": "run15_native_mcp_2",
+      "template": "run15_native_mcp",
+      "token": "bench-c3399e1e",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_native_mcp_2",
+      "preparedAt": "2026-09-11T16:22:35.000Z",
+      "workflowId": "Fjz6nlo7CXk1u5Ot",
+      "workflowName": "bench-c3399e1e",
+      "active": false,
+      "nodes": 17,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 139007,
+      "durationMs": 619048,
+      "archivedAt": "2026-09-11T16:46:18.140Z"
+    },
+    {
+      "label": "run15_n8nac_3",
+      "template": "run15_n8nac",
+      "token": "bench-9d6979da",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_3",
+      "preparedAt": "2026-09-11T16:22:45.639Z",
+      "workflowId": "Y2JEWHYGKsU9xhQ0",
+      "workflowName": "bench-9d6979da",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 122850,
+      "durationMs": 486970,
+      "archivedAt": "2026-09-11T16:55:09.027Z"
+    },
+    {
+      "label": "run15_native_mcp_3",
+      "template": "run15_native_mcp",
+      "token": "bench-1fbb1429",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_native_mcp_3",
+      "preparedAt": "2026-09-11T16:22:45.709Z",
+      "workflowId": "yTqSScu7DcATe9sz",
+      "workflowName": "bench-1fbb1429",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 147690,
+      "durationMs": 476179,
+      "archivedAt": "2026-09-11T16:54:53.673Z"
+    },
+    {
+      "label": "run15_n8nac_4",
+      "template": "run15_n8nac",
+      "token": "bench-12b7c1db",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_4",
+      "preparedAt": "2026-09-11T16:22:53.525Z",
+      "workflowId": "Ebe8l6xnMxBIky6H",
+      "workflowName": "bench-12b7c1db",
+      "active": false,
+      "nodes": 8,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 113719,
+      "durationMs": 412267,
+      "archivedAt": "2026-09-11T17:02:14.772Z"
+    },
+    {
+      "label": "run15_native_mcp_4",
+      "template": "run15_native_mcp",
+      "token": "bench-3d3b8036",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_native_mcp_4",
+      "preparedAt": "2026-09-11T16:22:53.597Z",
+      "workflowId": "fijRZsXWxZUAU0VU",
+      "workflowName": "bench-3d3b8036",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 158127,
+      "durationMs": 662681,
+      "archivedAt": "2026-09-11T17:06:29.316Z"
+    },
+    {
+      "label": "run15_n8nac_5",
+      "template": "run15_n8nac",
+      "token": "bench-93c4f277",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_5",
+      "preparedAt": "2026-09-11T16:23:03.354Z",
+      "workflowId": "fJldX1rWitaWW2J6",
+      "workflowName": "bench-93c4f277",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 122258,
+      "durationMs": 502688,
+      "archivedAt": "2026-09-11T17:15:26.619Z"
+    },
+    {
+      "label": "run15_native_mcp_5",
+      "template": "run15_native_mcp",
+      "token": "bench-e87df2d3",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_native_mcp_5",
+      "preparedAt": "2026-09-11T16:23:03.428Z",
+      "workflowId": "lS4BJHhW6S55WYzK",
+      "workflowName": "bench-e87df2d3",
+      "active": false,
+      "nodes": 12,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 139723,
+      "durationMs": 471223,
+      "archivedAt": "2026-09-11T17:14:38.140Z"
+    }
+  ]
+}

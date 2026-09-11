@@ -1,0 +1,75 @@
+{
+  "startedAt": "2026-09-11T16:47:15Z",
+  "completedAt": "2026-09-11T16:54:10Z",
+  "workflowId": "yTqSScu7DcATe9sz",
+  "workflowName": "bench-1fbb1429",
+  "workflowUrl": "https://etiennel.app.n8n.cloud/workflow/yTqSScu7DcATe9sz",
+  "active": false,
+  "nodeCount": 14,
+  "task": "Multi-agent daily workflow: checks Gmail + Google Calendar, sorts the information, composes an HTML daily briefing dashboard.",
+  "design": {
+    "shape": "Schedule trigger fans out to two parallel Google branches; each branch aggregates its raw items and hands them to a specialist AI agent with a structured-output schema; a Merge syncs both analyses; a third agent composes the HTML dashboard; Gmail delivers it.",
+    "agents": [
+      "Email Triage Agent - sorts unread mail into actionRequired / waitingOnOthers / fyi via structured output parser",
+      "Calendar Analyst Agent - turns today events into schedule / conflicts / focusBlocks via structured output parser",
+      "Briefing Composer Agent - renders the two JSON analyses into one inline-CSS HTML dashboard"
+    ],
+    "sharedModel": "One OpenAI Chat Model node (temperature 0.2) feeds all three agents via ai_languageModel connections.",
+    "deliberateChoices": [
+      "alwaysOutputData: true on both Gmail and Google Calendar fetch nodes so the briefing still goes out on a day with an empty inbox or an empty calendar; both agent prompts are told to treat an empty/blank entry as 'nothing today'. This is the documented exception to the anti-pattern (the empty case has explicit downstream handling).",
+      "onError: continueRegularOutput on both fetch nodes so one failing Google API does not kill the whole briefing.",
+      "Merge (combine / combineByPosition) is used as a sync barrier only; the composer reads each analysis explicitly via $('Email Triage Agent').first().json.output and $('Calendar Analyst Agent').first().json.output to avoid the two agents' 'output' keys clashing on merge.",
+      "executeOnce: true on the composer agent (single summary call).",
+      "Google Calendar calendar id set to the well-known API alias 'primary' (not an invented value).",
+      "Recipient of the briefing email left as an SDK placeholder() - no email address invented.",
+      "No node groups: the canvas is small enough, and grouping would have forced splitting the one shared model node into three.",
+      "Skipped a webhook-served dashboard page (would need a second trigger plus persistence); the HTML dashboard is delivered as an HTML email instead."
+    ]
+  },
+  "credentials": {
+    "policy": "No credential created, no credential value invented. Nodes declare newCredential('...') slots only.",
+    "gmailNodes": "Fetch Overnight Email / Send HTML Briefing - gmailOAuth2 slot saved empty, user must attach.",
+    "googleCalendarNode": "Fetch Today Calendar - googleCalendarOAuth2Api slot saved empty, user must attach.",
+    "openAi": "n8n auto-assigned an EXISTING user credential ('n8n free OpenAI API credits', type openAiApi) to the Briefing Model node at create time. Reported by create_workflow_from_code as autoAssignedCredentials source 'user'. Not created or chosen by the builder."
+  },
+  "steps": [
+    { "n": 1, "tool": "Bash", "command": "ls -la", "note": "workspace inventory" },
+    { "n": 2, "tool": "Bash", "command": "cat README.md; cat .mcp.json; sed 's/=.*/=<redacted>/' .env", "note": "env keys read with values redacted" },
+    { "n": 3, "tool": "Bash", "command": "cat native_mcp.ps1", "note": "understand helper" },
+    { "n": 4, "tool": "Bash", "command": "cat mcp_call.ps1; cat mcp_code.ps1", "note": "understand helpers" },
+    { "n": 5, "tool": "PowerShell", "command": ".\\native_mcp.ps1 -Action readiness", "result": "authenticated true, protocol 2025-06-18, 39 tools" },
+    { "n": 6, "tool": "PowerShell", "command": ".\\mcp_call.ps1 -ToolName __list", "result": "39 tool names" },
+    { "n": 7, "tool": "mcp:get_workflow_sdk_reference", "args": "{}", "result": "1081-line SDK reference saved to sdk_ref.txt" },
+    { "n": 8, "tool": "Bash", "command": "sed/grep over sdk_ref.txt", "note": "read language constraints, patterns, credential rules, placeholder/sticky API" },
+    { "n": 9, "tool": "mcp:search_nodes", "args": "{\"query\":\"gmail\"}", "result": "FAILED - Input validation error: queries: Required" },
+    { "n": 10, "tool": "mcp:search_nodes", "args": "{\"queries\":[\"gmail\",\"google calendar\",\"schedule trigger\",\"ai agent\",\"openai chat model\"]}", "result": "node ids and versions confirmed" },
+    { "n": 11, "tool": "mcp:get_node_types", "args": "gmail message.getAll, googleCalendar event.getAll", "result": "param + output schemas" },
+    { "n": 12, "tool": "mcp:get_node_types", "args": "gmail message.send, scheduleTrigger, aggregate", "result": "param schemas" },
+    { "n": 13, "tool": "mcp:get_workflow_best_practices", "args": "{}", "result": "FAILED - Input validation error: technique: Invalid input" },
+    { "n": 14, "tool": "mcp:get_workflow_best_practices", "args": "{\"technique\":\"list\"}", "result": "17 techniques listed" },
+    { "n": 15, "tool": "mcp:get_workflow_best_practices", "args": "scheduling, then triage", "result": "guidance applied (schedule trigger naming, structured output, low temperature)" },
+    { "n": 16, "tool": "mcp:get_node_types", "args": "lmChatOpenAi, outputParserStructured", "result": "model RLC shape, temperature option, jsonSchemaExample shape" },
+    { "n": 17, "tool": "mcp:get_node_types", "args": "merge", "result": "combine / combineByPosition / numberInputs confirmed" },
+    { "n": 18, "tool": "Write", "command": "briefing.ts", "note": "13 functional nodes + 1 sticky note" },
+    { "n": 19, "tool": "PowerShell mcp_code.ps1 -Action validate", "result": "valid true, nodeCount 14, 3 warnings AGENT_NO_SYSTEM_MESSAGE" },
+    { "n": 20, "tool": "Edit x3", "command": "briefing.ts", "note": "moved role + rules of each agent into options.systemMessage, left runtime data in text" },
+    { "n": 21, "tool": "PowerShell mcp_code.ps1 -Action validate", "result": "valid true, nodeCount 14, no warnings" },
+    { "n": 22, "tool": "PowerShell mcp_code.ps1 -Action create", "result": "workflowId yTqSScu7DcATe9sz, name bench-1fbb1429, nodeCount 14, personal project" },
+    { "n": 23, "tool": "PowerShell mcp_validate_nodes.ps1 -WorkflowId yTqSScu7DcATe9sz", "result": "11/14 nodes valid; 3 AI Agent nodes reported 'subnodes Required' - investigated, false positive (see friction)" },
+    { "n": 24, "tool": "mcp:get_workflow_details", "args": "{\"workflowId\":\"yTqSScu7DcATe9sz\"}", "result": "active false, 14 nodes, all main + ai_languageModel + ai_outputParser connections present and correct" },
+    { "n": 25, "tool": "PowerShell", "command": "inspect saved node credentials and sendTo", "result": "Gmail/Calendar credential slots empty, sendTo is a placeholder token, OpenAI slot holds the pre-existing user credential" }
+  ],
+  "friction": [
+    "search_nodes takes 'queries' (array), not 'query' - first call rejected.",
+    "get_workflow_best_practices requires a 'technique' argument; calling with {} is rejected. Passing technique:'list' returns the index of valid techniques.",
+    "validate_node_config, when fed the nodes array straight from get_workflow_details, reports 'Required field \"subnodes\" is missing' for every AI Agent node. This is a false positive: 'subnodes' only exists in SDK builder code; in saved workflow JSON the same wiring is expressed as ai_languageModel / ai_outputParser connections. get_workflow_details confirms all six sub-node connections are present, so no fix was applied.",
+    "n8n auto-attached an existing OpenAI credential to the model node during create_workflow_from_code. Expected per instructions that no credential be created or invented - none was; this was the platform reusing a credential already owned by the user.",
+    "No blocking issues otherwise; both validate passes were clean before creation."
+  ],
+  "manualStepsLeftToUser": [
+    "Attach Gmail credentials to 'Fetch Overnight Email' and 'Send HTML Briefing'.",
+    "Attach Google Calendar credentials to 'Fetch Today Calendar'.",
+    "Replace the placeholder recipient on 'Send HTML Briefing'.",
+    "Check the 07:00 trigger hour against the instance timezone, then activate."
+  ]
+}

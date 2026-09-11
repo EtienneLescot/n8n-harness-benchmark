@@ -1,0 +1,111 @@
+{
+  "startedAt": "2026-09-11T16:47:20Z",
+  "completedAt": "2026-09-11T16:54:10Z",
+  "workspace": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_3",
+  "workflowId": "Y2JEWHYGKsU9xhQ0",
+  "workflowName": "bench-9d6979da",
+  "workflowUrl": "https://etiennel.app.n8n.cloud/workflow/Y2JEWHYGKsU9xhQ0",
+  "workflowFile": "workflows/dev/bench-9d6979da.workflow.ts",
+  "nodeCount": 11,
+  "active": false,
+  "toolchain": {
+    "n8nac": "2.7.0-rc.1",
+    "n8nacCommand": "node node_modules/n8nac/dist/index.js",
+    "environment": "Dev (dev-2)",
+    "environmentKind": "external-instance",
+    "nativeMcpLevel": 0,
+    "workflowsPath": "workflows/dev"
+  },
+  "design": {
+    "shape": "Schedule trigger fans out to two Google data branches, each branch aggregates to a single item and is sorted by its own specialist agent, a Merge node in chooseBranch/waitForAll mode synchronises the branches, then a third agent composes the HTML dashboard which is delivered by Gmail.",
+    "agents": [
+      "Email Triage Agent - buckets last-24h mail into ACTION REQUIRED / WAITING ON REPLY / FYI / NOISE and emits a TOP3 line",
+      "Calendar Agent - builds today's timeline, flags OVERLAPS, largest FREE block and PREP items",
+      "Briefing Editor Agent - merges both reports into a self-contained HTML dashboard"
+    ],
+    "sharedSubNode": "One OpenAI chat model sub-node (Briefing Model) serves all three agents via ai_languageModel",
+    "credentialSlotsLeftEmpty": [
+      "Get Last 24h Emails (n8n-nodes-base.gmail)",
+      "Get Today Events (n8n-nodes-base.googleCalendar)",
+      "Briefing Model (@n8n/n8n-nodes-langchain.lmChatOpenAi)",
+      "Email The Briefing (n8n-nodes-base.gmail)"
+    ],
+    "notes": [
+      "No credentials key is emitted on any node, so every credential selector is empty in the n8n editor.",
+      "alwaysOutputData is set on the Gmail read and Google Calendar read nodes so a zero-email or zero-event day still reaches the agents.",
+      "Briefing Editor Agent reads the two upstream agent reports with $(\"Node Name\").first().json.output; the Merge node exists only as a wait-for-all barrier.",
+      "The Gmail send expression strips markdown code fences from the model output before using it as the HTML body.",
+      "sendTo on the delivery node uses the session-provided user address etienne@etiennelescot.fr (the user's own inbox); no credential or secret was invented."
+    ]
+  },
+  "commands": [
+    { "n": 1, "tool": "Bash", "command": "ls -la <workspace>", "result": "ok - .env, AGENTS.md, n8nac-config.json, node_modules, package.json present" },
+    { "n": 2, "tool": "Bash", "command": "cat AGENTS.md n8nac-config.json package.json; sed 's/=.*/=<redacted>/' .env", "result": "ok - env keys N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN present (values never read or printed)" },
+    { "n": 3, "tool": "Bash", "command": "cat .github/agents/n8n-architect.agent.md", "result": "output too large, persisted by harness; read in slices below" },
+    { "n": 4, "tool": "Bash", "command": "sed -n '30,260p' .github/agents/n8n-architect.agent.md", "result": "ok - bootstrap order, sync discipline, schema-first rules" },
+    { "n": 5, "tool": "Bash", "command": "sed -n '260,520p' .github/agents/n8n-architect.agent.md", "result": "ok - authoring rules, AI sub-node rules, verify/present/credential protocol" },
+    { "n": 6, "tool": "Bash", "command": "date -u; node node_modules/n8nac/dist/index.js update-ai", "result": "ok - AI context regenerated" },
+    { "n": 7, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js env status --json", "result": "ok - accessStatus ready, host https://etiennel.app.n8n.cloud, workflowsPath workflows/dev" },
+    { "n": 8, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js skills search \"gmail calendar agent schedule html\" --compact", "result": "ok - low signal, switched to node-info" },
+    { "n": 9, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js skills node-info scheduleTrigger gmail googleCalendar agent --compact", "result": "ok - exact types and typeVersions 1.4 / 2.2 / 1.3 / 3.1" },
+    { "n": 10, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js skills node-schema scheduleTrigger", "result": "ok - rule.interval fixedCollection shape" },
+    { "n": 11, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js skills node-info gmail | grep -A60 getAll", "result": "partial - filters typed as any[]" },
+    { "n": 12, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js skills node-schema gmail | grep -i filter", "result": "no match - bundled schema does not expand the filters collection" },
+    { "n": 13, "tool": "Bash", "command": "ls node_modules/@n8n-as-code/; find node_modules/@n8n-as-code -name '*.json' -size +100k", "result": "ok - located n8n-nodes-technical.json ontology" },
+    { "n": 14, "tool": "Bash", "command": "node -e '<probe ontology as array>'", "result": "FAILED - TypeError nodes.find is not a function" },
+    { "n": 15, "tool": "Bash", "command": "node -e '<probe ontology top-level keys>'", "result": "ok - shape is { generatedAt, n8nVersion, nodes: { <key>: { schema: { properties } } } }" },
+    { "n": 16, "tool": "Bash", "command": "node -e '<dump gmail filters collection>'", "result": "ok - real option names includeSpamTrash, labelIds, q, readStatus, receivedAfter, receivedBefore, sender" },
+    { "n": 17, "tool": "Bash", "command": "node -e '<dump gmail authentication + googleCalendar event params>'", "result": "ok - googleCalendar v1.3 getAll needs calendar resourceLocator + top-level timeMin/timeMax; options include singleEvents and orderBy" },
+    { "n": 18, "tool": "Bash", "command": "node -e '<dump agent + lmChatOpenAi properties>'", "result": "ok - agent v3.1 promptType define/auto, options.systemMessage; lmChatOpenAi v1.3 model is a resourceLocator" },
+    { "n": 19, "tool": "Bash", "command": "grep -rn 'alwaysOutputData|credentials?:|onError|retryOnFail' node_modules/@n8n-as-code/transformer/dist/*.d.ts", "result": "ok - node metadata keys confirmed" },
+    { "n": 20, "tool": "Bash", "command": "grep -n 'CredentialReference' -A10 node_modules/@n8n-as-code/transformer/dist/types.d.ts", "result": "ok - CredentialReference requires id and name, so the key is omitted entirely to leave slots empty" },
+    { "n": 21, "tool": "Bash", "command": "grep -rn \"startsWith('=')|isExpression\" node_modules/@n8n-as-code/transformer/dist/", "result": "no match - transformer does not auto-prefix expressions" },
+    { "n": 22, "tool": "Bash", "command": "grep -rln '{{' node_modules/@n8n-as-code/transformer/dist/", "result": "no match - confirmed the '=' expression prefix must be written explicitly" },
+    { "n": 23, "tool": "Bash", "command": "ls -la workflows/dev", "result": "not found - directory had to be created" },
+    { "n": 24, "tool": "Bash", "command": "mkdir -p workflows/dev && cat > workflows/dev/bench-9d6979da.workflow.ts <<'EOF' ...", "result": "FAILED - bash: unexpected EOF while looking for matching quote; heredoc could not carry the file body" },
+    { "n": 25, "tool": "Write", "command": "write workflows/dev/bench-9d6979da.workflow.ts", "result": "ok - 11 nodes, 10 data connections, 3 ai_languageModel connections" },
+    { "n": 26, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-9d6979da.workflow.ts", "result": "ok - Workflow is valid" },
+    { "n": 27, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js push workflows/dev/bench-9d6979da.workflow.ts --verify", "result": "ok - created workflow Y2JEWHYGKsU9xhQ0, fetched back 11 nodes, no issues found" },
+    { "n": 28, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js workflow present Y2JEWHYGKsU9xhQ0 --json", "result": "ok - https://etiennel.app.n8n.cloud/workflow/Y2JEWHYGKsU9xhQ0" },
+    { "n": 29, "tool": "Bash", "command": "node node_modules/n8nac/dist/index.js workflow credential-required Y2JEWHYGKsU9xhQ0 --json", "result": "returned [] with exit 0" },
+    { "n": 30, "tool": "Bash", "command": "date -u", "result": "ok - completion timestamp" },
+    { "n": 31, "tool": "Write", "command": "write builder_log.json", "result": "ok" }
+  ],
+  "friction": [
+    {
+      "what": "Bash heredoc could not write the workflow file",
+      "detail": "cat > file <<'EOF' with the full .workflow.ts body failed with \"unexpected EOF while looking for matching quote\". Fell back to the Write tool, which succeeded on the first try.",
+      "impact": "one wasted command"
+    },
+    {
+      "what": "Bundled schema is shallow on collection parameters",
+      "detail": "skills node-info gmail types the message:getAll 'filters' parameter as any[] and skills node-schema gmail does not expand it at all. Had to read node_modules/@n8n-as-code/skills/dist/assets/n8n-nodes-technical.json directly to get the real option names (receivedAfter, readStatus, q, sender, labelIds, includeSpamTrash).",
+      "impact": "four extra ontology probes before authoring"
+    },
+    {
+      "what": "Ontology probing needed trial and error",
+      "detail": "n8n-nodes-technical.json is keyed as { nodes: { <shortName>: { schema: { properties: [...] } } } }, not an array; the first probe threw TypeError: nodes.find is not a function.",
+      "impact": "one failed command"
+    },
+    {
+      "what": "Native MCP level 0 degrades validation",
+      "detail": "Toolchain message, verbatim: \"Validated against the bundled schema only (native MCP level 0 - discouraged, the instance may differ). Connect the instance MCP for instance-exact validation: n8nac native-mcp configure --level 1.\" The level was NOT changed, per the agent contract that forbids the builder from running native-mcp configure.",
+      "impact": "workflow is validated against bundled schemas and the post-push fetch only, not against the live instance node definitions"
+    },
+    {
+      "what": "credential-required reported nothing",
+      "detail": "workflow credential-required Y2JEWHYGKsU9xhQ0 --json returned [] and exited 0, although four nodes (two Gmail, one Google Calendar, one OpenAI chat model) deliberately have empty credential slots. It appears to report only declared-but-unresolvable credentials, not omitted ones, so it cannot be used to confirm that the slots are empty.",
+      "impact": "empty-slot state was confirmed by reading the pushed workflow file instead"
+    },
+    {
+      "what": "workflows/dev did not exist",
+      "detail": "The workflowsPath returned by env status --json pointed at a directory that had not been created yet; mkdir -p was required before writing the first workflow.",
+      "impact": "minor"
+    },
+    {
+      "what": "push rewrites the local .workflow.ts",
+      "detail": "The push round-trip regenerated the file with server-assigned node ids, workflow id, settings { executionOrder: 'v1', availableInMCP: true } and a regenerated <workflow-map> header. Expected behaviour, noted so the diff is not mistaken for drift.",
+      "impact": "none"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "startedAt": "2026-09-11T17:08:31Z",
+  "completedAt": "2026-09-11T17:13:30Z",
+  "startedAtNote": "First UTC timestamp captured in-run; orientation reads (steps 1-4) happened in the ~90s before it.",
+  "workflowId": "lS4BJHhW6S55WYzK",
+  "workflowName": "bench-e87df2d3",
+  "workflowUrl": "https://etiennel.app.n8n.cloud/workflow/lS4BJHhW6S55WYzK",
+  "nodeCount": 15,
+  "active": false,
+  "nodeCountBreakdown": {
+    "functional": 12,
+    "stickyNotes": 3
+  },
+  "transport": "native n8n MCP over HTTP via the workspace PowerShell helpers (native_mcp.ps1 / mcp_call.ps1 / mcp_code.ps1)",
+  "calls": [
+    { "n": 1, "kind": "bash", "command": "ls -la (workspace root)", "result": "6 files: .env, .mcp.json, README.md, mcp_call.ps1, mcp_code.ps1, mcp_validate_nodes.ps1, native_mcp.ps1, verify_mcp_config.ps1" },
+    { "n": 2, "kind": "bash", "command": "cat README.md .mcp.json; sed -E 's/=.*/=<redacted>/' .env", "result": "ok; .env values never printed, only key names (N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN)" },
+    { "n": 3, "kind": "bash", "command": "cat native_mcp.ps1", "result": "ok" },
+    { "n": 4, "kind": "bash", "command": "sed -n '1,20p;95,200p' mcp_call.ps1", "result": "ok; params are -ToolName / -ArgumentsJson" },
+    { "n": 5, "kind": "powershell", "command": "native_mcp.ps1", "result": "{\"authenticated\":true,\"initialize\":\"ok\",\"tools_list\":\"ok\",\"protocolVersion\":\"2025-06-18\",\"tool_count\":39}" },
+    { "n": 6, "kind": "bash", "command": "sed -n '1,10p;95,200p' mcp_code.ps1", "result": "ok; params are -Action validate|create and -CodeFile" },
+    { "n": 7, "kind": "mcp", "tool": "tools/list", "via": "mcp_call.ps1 -ToolName __list", "result": "39 tool names returned" },
+    { "n": 8, "kind": "mcp", "tool": "get_workflow_sdk_reference", "args": {}, "result": "ok, ~1280 lines of SDK reference saved to scratchpad" },
+    { "n": 9, "kind": "mcp", "tool": "get_workflow_best_practices", "args": {}, "result": "FAILED: \"Invalid arguments ... technique: Invalid input\" - required arg is undocumented; skipped, SDK reference covered the same ground" },
+    { "n": 10, "kind": "bash", "command": "sed/grep over the saved SDK reference (4 reads)", "result": "ok; captured forbidden constructs, credential rules, merge/agent/sticky patterns" },
+    { "n": 11, "kind": "mcp", "tool": "search_nodes", "args": { "query": "gmail" }, "result": "FAILED: \"queries: Required\" - the parameter is queries (array), not query. Same failure for a parallel 'google calendar' call." },
+    { "n": 12, "kind": "mcp", "tool": "search_nodes", "args": { "queries": ["gmail", "google calendar", "aggregate items", "ai agent", "html template", "schedule trigger", "openai chat model"] }, "result": "ok; confirmed node ids and versions" },
+    { "n": 13, "kind": "mcp", "tool": "get_node_types", "args": { "nodeIds": ["n8n-nodes-base.gmail message/getAll", "n8n-nodes-base.googleCalendar event/getAll", "n8n-nodes-base.aggregate"] }, "result": "ok" },
+    { "n": 14, "kind": "mcp", "tool": "get_node_types", "args": { "nodeIds": ["n8n-nodes-base.html generateHtmlTemplate", "n8n-nodes-base.scheduleTrigger", "n8n-nodes-base.gmail message/send"] }, "result": "ok" },
+    { "n": 15, "kind": "mcp", "tool": "get_node_types", "args": { "nodeIds": ["@n8n/n8n-nodes-langchain.agent", "@n8n/n8n-nodes-langchain.lmChatOpenAi", "n8n-nodes-base.merge"] }, "result": "ok; confirmed options.systemMessage, subnodes.model, merge combineByPosition" },
+    { "n": 16, "kind": "write", "command": "write workflow.ts (SDK builder source)", "result": "ok" },
+    { "n": 17, "kind": "powershell", "command": "mcp_code.ps1 -Action validate -CodeFile <absolute path>", "result": "FAILED: helper joins -CodeFile onto its own script dir, producing a doubled path" },
+    { "n": 18, "kind": "mcp", "tool": "validate_workflow", "via": "mcp_code.ps1 -Action validate -CodeFile workflow.ts", "result": "{\"valid\":true,\"nodeCount\":15}" },
+    { "n": 19, "kind": "mcp", "tool": "create_workflow_from_code", "via": "mcp_code.ps1 -Action create -CodeFile workflow.ts", "result": "created workflowId lS4BJHhW6S55WYzK, name bench-e87df2d3, 15 nodes, personal project" },
+    { "n": 20, "kind": "mcp", "tool": "get_workflow_details", "args": { "workflowId": "lS4BJHhW6S55WYzK" }, "result": "active:false, 15 nodes, all connections as designed (shared model fans out to all 3 agents; merge inputs 0 and 1 correct)" },
+    { "n": 21, "kind": "mcp", "tool": "update_workflow", "args": {}, "result": "schema probe: workflowId + operations required" },
+    { "n": 22, "kind": "mcp", "tool": "update_workflow", "args": { "operations": [{ "type": "bogus" }] }, "result": "schema probe: returned the operation-type enum" },
+    { "n": 23, "kind": "mcp", "tool": "update_workflow", "args": { "operations": [{ "type": "setNodeParameter" }] }, "result": "schema probe: nodeName, path, value required" },
+    { "n": 24, "kind": "mcp", "tool": "update_workflow", "args": { "note": "9 ops: reposition + width/height on the 3 sticky notes" }, "result": "FAILED: \"path 'width' is invalid or contains unsafe segments\"" },
+    { "n": 25, "kind": "mcp", "tool": "update_workflow", "args": { "note": "3 setNodePosition ops moving the sticky notes above their lanes" }, "result": "appliedOperations: 3, validationWarnings: []" }
+  ],
+  "design": {
+    "trigger": "Schedule Trigger, daily 07:00",
+    "collect": "Two parallel lanes off the one trigger: Gmail message:getAll (rolling 24h window) and Google Calendar event:getAll (today, recurring expanded). Each lane passes through an Aggregate node (aggregateAllItemData) so its agent receives one item instead of one per email/event.",
+    "agents": [
+      "Email Triage Agent - buckets messages (needs reply today / waiting / FYI / noise) and extracts action items",
+      "Calendar Agent - builds the day timeline, flags conflicts and back-to-back blocks, finds focus time and prep work",
+      "Briefing Composer Agent - merges both specialist reports into HTML fragment sections (executeOnce)"
+    ],
+    "model": "One shared OpenAI Chat Model subnode wired to all three agents",
+    "join": "Merge node, mode combine / combineByPosition, so the composer runs once on one item; it reads each specialist by explicit $('Node').item.json.output reference rather than $json",
+    "present": "HTML node (generateHtmlTemplate) wraps the composer's fragments in a styled dashboard shell (header with date, card layout, urgent/conflict tags), then Gmail message:send delivers it as an HTML email",
+    "resilience": "onError: continueRegularOutput on both Google fetch nodes so one failing source does not kill the briefing"
+  },
+  "credentials": {
+    "policy": "No credential was created and no credential value was invented. Credential slots were declared with newCredential(name) only.",
+    "gmail": "empty - both Gmail nodes saved with no credential attached",
+    "googleCalendar": "empty - no credential attached",
+    "openAi": "NOT requested by the builder: the n8n server auto-assigned the account's pre-existing credential 'n8n free OpenAI API credits' (id 3tpHjeLbkX5PIuNM) to the chat model node during create_workflow_from_code, and reported it back under autoAssignedCredentials"
+  },
+  "userInputStillNeeded": [
+    "Connect Gmail and Google Calendar credentials",
+    "Set the recipient on the 'Email The Dashboard' node (left as a placeholder)",
+    "Confirm the Google Calendar id (set to 'primary') and the OpenAI model (set to gpt-4.1-mini)"
+  ],
+  "friction": [
+    "get_workflow_best_practices requires an undocumented 'technique' argument and errors on an empty argument object.",
+    "search_nodes takes 'queries' (array) but the obvious singular 'query' is rejected; the error is the only hint.",
+    "mcp_code.ps1 resolves -CodeFile relative to its own directory, so an absolute path silently becomes a doubled path. Bare filenames only.",
+    "update_workflow's setNodeParameter refuses the 'width' and 'height' paths on a stickyNote ('invalid or contains unsafe segments'), so sticky frames could not be resized after creation.",
+    "sticky(content, [nodes]) anchor-based sizing did not survive the save: the three notes came back at default size stacked at x=100, overlapping the left of the canvas. Fixed by repositioning them with setNodePosition.",
+    "The HTML node's generateHtmlTemplate output field is not in the type definitions; the downstream Gmail body assumes $json.html (the documented n8n behaviour) rather than a verified field name."
+  ],
+  "notGraded": "This log records what was built and the friction encountered. It contains no self-assessment of quality."
+}

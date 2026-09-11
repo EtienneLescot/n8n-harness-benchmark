@@ -1,0 +1,59 @@
+{
+  "runId": "run15",
+  "label": "head-to-head on the first release candidate after the npx work",
+  "question": "Does n8n-as-code, with the local-install command form now shipped, hold up against n8n Native MCP when both branches are measured fresh in the same session?",
+  "underTest": "n8nac@2.7.0-rc.1",
+  "buildsPerBranch": 5,
+  "judgesPerBuild": 3,
+  "branches": [
+    "n8nac",
+    "native_mcp"
+  ],
+  "symmetry": "Both branches are re-measured in this session. The previous published run reused the Native MCP builds from an earlier one, which made its table hard to read: only the relative score moved while the raw numbers were stale.",
+  "installerAttempts": [
+    {
+      "branch": "n8nac",
+      "counted": true,
+      "outcome": "configured",
+      "producedReadyMarkers": true,
+      "cliCommandWritten": "node node_modules/n8nac/dist/index.js",
+      "note": "The generated AGENTS.md names the local install directly rather than an npx call. That is the shipped behaviour under test, arriving here through the full chain: release, npm publish, and an installer reading only the documentation."
+    },
+    {
+      "branch": "native_mcp",
+      "counted": true,
+      "outcome": "configured",
+      "producedReadyMarkers": true,
+      "note": "Wrote .mcp.json and verified it live: 39 tools, protocol 2025-06-18. The harness MCP helper was seeded before dispatch, as the protocol requires."
+    }
+  ],
+  "dispatchIncidents": [],
+  "releaseNotes": "Cut from main after the four merged changes: the local-install command form, the cmd.exe quoting fix, the version-drift notice, and the landing page correction.",
+  "publicationLag": {
+    "published": "2026-09-11T15:42:19Z",
+    "installable": "2026-09-11T15:52Z (approx)",
+    "what": "The npm dist-tag `next` moved to 2.7.0-rc.1 several minutes before its dependency @n8n-as-code/skills@2.4.1-rc.1 was resolvable. During that window `npx n8nac@next` pointed at a version that could not install.",
+    "whyItMatters": "Not a benchmark result, but it is the friction this harness keeps hitting at prerelease switchover, now with a measured duration rather than an anecdote."
+  },
+  "incidents": [
+    {
+      "branch": "n8nac",
+      "kind": "workspace escape by npm, not by the agent",
+      "what": "The installer ran `npm install` in a directory holding only .env. With no local package.json, npm walked up and installed into the harness repository root, adding an n8nac dependency to its package.json and package-lock.json, and exiting 0.",
+      "detected": "By the installer itself, when the local node_modules turned out not to exist.",
+      "remediation": "The orchestrator reverted both manifests and removed n8nac, @n8n-as-code and their bin shims from the harness root node_modules. Re-verified afterwards: harness self-checks pass, readiness gate passes, isolation guard reports zero violations.",
+      "countedAgainstBranch": false,
+      "whyNotCounted": "It is an npm resolution behaviour in an empty directory, not a property of either toolchain, and it was repaired before any build ran.",
+      "upstreamValue": "It is a real first-run defect: the documented install command misbehaves in exactly the directory shape a new user starts from."
+    }
+  ],
+  "observations": [
+    "The npm `rc` dist-tag is stale: it points at 2.6.0-rc.1 while rc.2 through rc.7 and 2.7.0-rc.1 are all published, so `npm install n8nac@rc` silently yields an old prerelease.",
+    "PowerShell 5.1 wrote a BOM into .mcp.json. The branch-B installer verification tolerated it while an independent parser rejected it, so it was caught only because two different readers were used.",
+    "Branch B builders reported HTTP 429 from the MCP endpoint because each script invocation opens a fresh MCP session. Two of the first dispatch wave were backing off when the session limit ended them.",
+    "Branch B, builds 1 and 2: the n8n server attached the account existing OpenAI credential to the model nodes by itself, although the submitted code declared empty slots. Both builders invented nothing and both logged it. It is systematic on this branch, not a one-off, and the benchmark forbids builders from assigning credentials, so the asymmetry is the platform behaviour, not a builder choice.",
+    "Branch B, build 2: calling the seeded mcp_call.ps1 as a child process mangles the quoting of the JSON argument, which then arrives empty and produces a misleading validation error. Calling it in-process works. Worth adding to the helper README.",
+    "Branch B, build 3: validate_node_config reports 'Required field subnodes is missing' for Agent nodes when fed saved workflow JSON. subnodes exists only in SDK builder code; saved JSON expresses it as connections, which were present. This is the same RPC the harness validator uses for the correctness axis, so it must be checked before scoring: if it fires, it fires on both branches and on every workflow carrying an Agent node.",
+    "Branch B: the server credential auto-attach is now 3 builds out of 3."
+  ]
+}

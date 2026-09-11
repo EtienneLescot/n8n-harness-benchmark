@@ -1,0 +1,320 @@
+{
+  "id": "lm1RPKsMQ1WrHKcp",
+  "name": "bench-e7bbf244",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T16:30:02.114Z",
+  "updatedAt": "2026-09-11T16:30:02.114Z",
+  "isArchived": false,
+  "versionId": "6c2192a2-0187-44d2-abd4-8c2d2f7927a0",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "cd94a4ba-eed1-46a0-a1fd-55ea17ebd3d1",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -260,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "16644c30-f821-4032-b9a9-7a903336197a",
+      "name": "Briefing Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        340,
+        560
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "05cc7c0e-1527-4661-b52a-b8fafc27dcfd",
+      "name": "Search Inbox",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        60,
+        560
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d -in:chats"
+        },
+        "descriptionType": "manual",
+        "toolDescription": "Read Google Mail messages. Returns sender, subject, snippet and date for the last 24 hours of inbox mail. Call it once to collect the messages to triage."
+      },
+      "webhookId": "1ba88963-99e9-4aaf-b057-db6805e23ab1"
+    },
+    {
+      "id": "f09834fa-14a7-4c4e-ac92-1fe212dfe347",
+      "name": "List Upcoming Events",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        620,
+        560
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "returnAll": false,
+        "limit": 50,
+        "timeMin": "={{ $now.startOf(\"day\").toISO() }}",
+        "timeMax": "={{ $now.plus(2, \"days\").endOf(\"day\").toISO() }}",
+        "options": {},
+        "descriptionType": "manual",
+        "toolDescription": "Read Google Calendar events from the primary calendar for today and the next two days. Returns title, start, end, location and attendees. Call it once to collect the schedule."
+      }
+    },
+    {
+      "id": "44e17058-a758-4148-9612-026104e472e3",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        60,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "Triage the Google Mail inbox for the last 24 hours and produce the email digest for today.",
+        "options": {
+          "systemMessage": "You are the Email Analyst of a daily-briefing crew. Call the Gmail tool once to read the last 24 hours of mail. Sort every message into exactly one bucket: NEEDS REPLY, WAITING ON, FYI, NOISE. For each message that is not NOISE, give sender, subject, a one-line summary, and any explicit deadline or date found in the text. Count the NOISE bucket instead of listing it. Never invent a message, a sender or a deadline: if the tool returns nothing, say the inbox is empty. Answer with compact Markdown only, no preamble and no closing remark."
+        }
+      }
+    },
+    {
+      "id": "9805d81d-9014-4710-b883-146554f7bc23",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        620,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "List and analyse the Google Calendar schedule for today and the next two days.",
+        "options": {
+          "systemMessage": "You are the Calendar Analyst of a daily-briefing crew. Call the Google Calendar tool once to read the events for today and the next two days. Report the schedule of today in chronological order with start time, end time, title, location and attendee count. Then flag scheduling conflicts, back-to-back blocks, and every free focus window of 60 minutes or more between 09:00 and 18:00. List notable events for the next two days in a separate short section. Never invent an event or an attendee: if the tool returns nothing, say the calendar is clear. Answer with compact Markdown only, no preamble and no closing remark."
+        }
+      }
+    },
+    {
+      "id": "5a1ab0e2-c05c-42c5-91b0-59d42fa74872",
+      "name": "Briefing Editor Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=EMAIL DIGEST\n{{ $('Email Triage Agent').item.json.output }}\n\nCALENDAR DIGEST\n{{ $('Calendar Agent').item.json.output }}",
+        "options": {
+          "systemMessage": "You are the Briefing Editor. You receive an email digest and a calendar digest produced by two analyst agents. Merge them into one prioritised daily briefing, cross-referencing mail against the schedule, for example a message about a meeting that is on the calendar today. Output ONLY an HTML fragment: a sequence of <section class=\"card\"> blocks, each opening with an <h2>, using <ul><li>, <p>, <strong> and <span class=\"tag\"> for structure. Emit the cards in this order: Top Priorities (at most five concrete actions, each naming its source), Today Schedule, Needs Reply, Waiting On, FYI. Add class \"tag urgent\" to anything due today. Never add a fact that is absent from the two digests, and write \"Nothing to report\" inside a card that has no content. Do not emit html, head, body or style tags, Markdown, or code fences."
+        }
+      }
+    },
+    {
+      "id": "cff41429-4079-4324-9a66-c4ed08242fe7",
+      "name": "Render Briefing Dashboard",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1180,
+        300
+      ],
+      "parameters": {
+        "operation": "generateHtmlTemplate",
+        "html": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>Daily Briefing</title>\n</head>\n<body>\n  <div class=\"page\">\n    <header class=\"masthead\">\n      <p class=\"eyebrow\">Daily Briefing</p>\n      <h1>{{ $now.toFormat('cccc d LLLL yyyy') }}</h1>\n      <p class=\"sub\">Assembled by the email and calendar agents at {{ $now.toFormat('HH:mm') }}.</p>\n    </header>\n    <main class=\"grid\">\n      {{ $json.output }}\n    </main>\n    <footer class=\"foot\">Generated automatically. Verify anything time-critical in Gmail or Google Calendar.</footer>\n  </div>\n</body>\n</html>\n<style>\n  body {\n    margin: 0;\n    background: #f4f5f7;\n    color: #1f2430;\n    font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;\n    line-height: 1.55;\n  }\n  .page {\n    max-width: 1100px;\n    margin: 0 auto;\n    padding: 32px 20px 48px;\n  }\n  .masthead {\n    border-bottom: 3px solid #ff6d5a;\n    padding-bottom: 16px;\n    margin-bottom: 28px;\n  }\n  .eyebrow {\n    margin: 0;\n    text-transform: uppercase;\n    letter-spacing: 0.14em;\n    font-size: 12px;\n    font-weight: 700;\n    color: #ff6d5a;\n  }\n  .masthead h1 {\n    margin: 6px 0 4px;\n    font-size: 30px;\n    line-height: 1.2;\n  }\n  .sub {\n    margin: 0;\n    color: #6b7280;\n    font-size: 14px;\n  }\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\n    gap: 18px;\n    align-items: start;\n  }\n  .card {\n    background: #ffffff;\n    border: 1px solid #e3e6ec;\n    border-radius: 10px;\n    padding: 18px 20px;\n    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);\n  }\n  .card h2 {\n    margin: 0 0 12px;\n    font-size: 15px;\n    text-transform: uppercase;\n    letter-spacing: 0.08em;\n    color: #3d4453;\n    border-bottom: 1px solid #eceef3;\n    padding-bottom: 8px;\n  }\n  .card ul {\n    margin: 0;\n    padding-left: 18px;\n  }\n  .card li {\n    margin-bottom: 8px;\n  }\n  .card p {\n    margin: 0 0 8px;\n  }\n  .tag {\n    display: inline-block;\n    background: #eef1f6;\n    color: #485061;\n    border-radius: 999px;\n    padding: 1px 9px;\n    font-size: 11px;\n    font-weight: 600;\n    letter-spacing: 0.03em;\n  }\n  .tag.urgent {\n    background: #ffe2dd;\n    color: #b3321c;\n  }\n  .foot {\n    margin-top: 28px;\n    color: #8b92a1;\n    font-size: 12px;\n    text-align: center;\n  }\n</style>"
+      }
+    },
+    {
+      "id": "bdb8834e-10bd-4be9-b952-335fd4155200",
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1420,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "=Daily Briefing - {{ $now.toFormat('cccc d LLLL') }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "webhookId": "9dc2e3a1-b830-46a9-be28-eb6582832681"
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Briefing Editor Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Editor Agent": {
+      "main": [
+        [
+          {
+            "node": "Render Briefing Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Briefing Dashboard": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Briefing Editor Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Inbox": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Upcoming Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "lm1RPKsMQ1WrHKcp",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T16:30:02.116Z",
+      "updatedAt": "2026-09-11T16:30:02.116Z"
+    }
+  ],
+  "activeVersion": null
+}

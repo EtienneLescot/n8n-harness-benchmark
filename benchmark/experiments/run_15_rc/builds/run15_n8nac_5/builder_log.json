@@ -1,0 +1,295 @@
+{
+  "startedAt": "2026-09-11T17:06:47Z",
+  "completedAt": "2026-09-11T17:14:10Z",
+  "workflowId": "fJldX1rWitaWW2J6",
+  "workflowName": "bench-93c4f277",
+  "nodeCount": 11,
+  "workspace": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_5",
+  "workflowFile": "workflows/dev/bench-93c4f277.workflow.ts",
+  "instance": "https://etiennel.app.n8n.cloud",
+  "environment": "Dev (dev-2), project Personal",
+  "active": false,
+  "steps": [
+    {
+      "n": 1,
+      "tool": "Bash",
+      "command": "pwd && ls -la",
+      "purpose": "orient in the workspace",
+      "result": "found .env, AGENTS.md, n8nac-config.json, package.json, node_modules, .agents, .github"
+    },
+    {
+      "n": 2,
+      "tool": "Bash",
+      "command": "date -u +\"%Y-%m-%dT%H:%M:%SZ\" && cat AGENTS.md && cat n8nac-config.json && cat package.json && sed -E 's/=.*/=<redacted>/' .env",
+      "purpose": "capture start time, read toolchain bootstrap context, list .env keys without values",
+      "result": "n8nac 2.7.0-rc.1, native MCP level 0, active environment dev-2 -> https://etiennel.app.n8n.cloud; .env keys present: N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN (values never read or printed)"
+    },
+    {
+      "n": 3,
+      "tool": "Bash",
+      "command": "cat .github/agents/n8n-architect.agent.md",
+      "purpose": "read the mandatory workspace agent instructions",
+      "result": "31.7 KB, persisted to a tool-results file"
+    },
+    {
+      "n": 4,
+      "tool": "Bash",
+      "command": "sed -n '1,200p' .github/agents/n8n-architect.agent.md",
+      "purpose": "read context-root protocol, bootstrap order, sync discipline",
+      "result": "ok"
+    },
+    {
+      "n": 5,
+      "tool": "Bash",
+      "command": "sed -n '200,420p' .github/agents/n8n-architect.agent.md",
+      "purpose": "read schema-first research rules and workflow authoring rules",
+      "result": "ok"
+    },
+    {
+      "n": 6,
+      "tool": "Bash",
+      "command": "sed -n '420,700p' .github/agents/n8n-architect.agent.md",
+      "purpose": "read verify/test/present and credential workflow sections",
+      "result": "ok"
+    },
+    {
+      "n": 7,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js update-ai && node node_modules/n8nac/dist/index.js env status --json",
+      "purpose": "refresh AI context then resolve effective environment from the backend",
+      "result": "accessStatus ready, apiKeyAvailable true, workflowsPath G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\run_15_rc\\builds\\run15_n8nac_5\\workflows\\dev"
+    },
+    {
+      "n": 8,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info scheduleTrigger gmail googleCalendar merge html --compact",
+      "purpose": "batch schema lookup for the candidate nodes",
+      "result": "types and typeVersions confirmed: scheduleTrigger 1.4, gmail 2.2, googleCalendar 1.3, merge 3.2, html 1.2"
+    },
+    {
+      "n": 9,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-schema scheduleTrigger",
+      "purpose": "exact rule.interval fixedCollection shape",
+      "result": "field/daysInterval/triggerAtHour/triggerAtMinute confirmed"
+    },
+    {
+      "n": 10,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-schema gmail > /tmp/gmail_schema.txt; grep -n 'getAll|filters|simple|returnAll|limit' /tmp/gmail_schema.txt",
+      "purpose": "look for gmail message:getAll parameters",
+      "result": "node-schema output too shallow, no getAll detail"
+    },
+    {
+      "n": 11,
+      "tool": "Bash",
+      "command": "cat /tmp/gmail_schema.txt",
+      "purpose": "inspect the shallow gmail snippet",
+      "result": "confirmed it only carries required fields"
+    },
+    {
+      "n": 12,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info gmail > /tmp/gmail_info.txt; grep -n 'returnAll|simple|filters|labelIds|sendTo|emailType|getAll' /tmp/gmail_info.txt",
+      "purpose": "full gmail parameter interface",
+      "result": "returnAll, limit, simple, filters, options exposed; filters typed any[]"
+    },
+    {
+      "n": 13,
+      "tool": "Bash",
+      "command": "sed -n '1,60p' /tmp/gmail_info.txt",
+      "purpose": "read the GmailParameters interface in full",
+      "result": "resource message|label|draft|thread, operation set per resource, draft:create takes subject/emailType/message"
+    },
+    {
+      "n": 14,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info googleCalendar > /tmp/gcal.txt; sed -n '/interface/,/^}/p' /tmp/gcal.txt",
+      "purpose": "google calendar parameter interface",
+      "result": "calendar resourceLocator required, returnAll/limit, options typed any[]"
+    },
+    {
+      "n": 15,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info agent lmChatOpenAi",
+      "purpose": "agent and chat model schemas",
+      "result": "@n8n/n8n-nodes-langchain.agent v3.1 (promptType, text, options), @n8n/n8n-nodes-langchain.lmChatOpenAi v1.3 (model resourceLocator, options)"
+    },
+    {
+      "n": 16,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info merge html; grep -ro 'systemMessage' node_modules/@n8n-as-code/skills/",
+      "purpose": "merge and html shapes, confirm the agent options key name",
+      "result": "html.generateHtmlTemplate uses the 'html' parameter; systemMessage present in the bundled ontology"
+    },
+    {
+      "n": 17,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills node-info aggregate > /tmp/agg.txt; sed -n '/interface/,/^}/p' /tmp/agg.txt",
+      "purpose": "aggregate node parameters",
+      "result": "aggregateAllItemData + destinationFieldName + include/fieldsToExclude confirmed"
+    },
+    {
+      "n": 18,
+      "tool": "Bash",
+      "command": "sed -n '35,60p' /tmp/agg.txt; grep -n 'credential' /tmp/gmail_info.txt /tmp/gcal.txt /tmp/ai.txt",
+      "purpose": "aggregate typeVersion and any credential hints in the ontology",
+      "result": "aggregate v1; ontology carries no credential metadata"
+    },
+    {
+      "n": 19,
+      "tool": "Bash",
+      "command": "grep -rn 'credentials' node_modules/@n8n-as-code/transformer/dist/*.d.ts",
+      "purpose": "find how credentials are declared in .workflow.ts",
+      "result": "NodeMetadata.credentials?: Record<string, CredentialReference>"
+    },
+    {
+      "n": 20,
+      "tool": "Bash",
+      "command": "grep -n 'CredentialReference' -A 8 node_modules/@n8n-as-code/transformer/dist/types.d.ts",
+      "purpose": "CredentialReference shape",
+      "result": "{ id: string; name: string } - requires a real credential id, so the key is omitted entirely to leave the slot empty"
+    },
+    {
+      "n": 21,
+      "tool": "Bash",
+      "command": "cat > workflows/dev/bench-93c4f277.workflow.ts <<'TSEOF' ... TSEOF",
+      "purpose": "first attempt to write the workflow file via heredoc",
+      "result": "FAILED - bash reported an unterminated here-document; partial 7267-byte file written"
+    },
+    {
+      "n": 22,
+      "tool": "Bash",
+      "command": "ls -la workflows/dev/ && rm -f workflows/dev/bench-93c4f277.workflow.ts",
+      "purpose": "confirm and remove the truncated file",
+      "result": "partial file removed"
+    },
+    {
+      "n": 23,
+      "tool": "Write",
+      "command": "Write workflows/dev/bench-93c4f277.workflow.ts",
+      "purpose": "author the full workflow (11 nodes, 3 agents, shared model, HTML dashboard, Gmail draft)",
+      "result": "file created"
+    },
+    {
+      "n": 24,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-93c4f277.workflow.ts",
+      "purpose": "local validation",
+      "result": "FAILED - \"Dynamic expression not supported in node parameters\" for the html template built with [...].join('\\n')"
+    },
+    {
+      "n": 25,
+      "tool": "Bash",
+      "command": "node - <<'JSEOF' (inline rewrite of the html array) ; skills validate",
+      "purpose": "convert the html array to a literal",
+      "result": "FAILED - the script's end marker did not match inside the heredoc; validation still failing"
+    },
+    {
+      "n": 26,
+      "tool": "Bash",
+      "command": "grep -n 'join' workflows/dev/bench-93c4f277.workflow.ts | cat -A",
+      "purpose": "inspect the exact marker bytes and line endings",
+      "result": "line 242 is \"    ].join('\\n'),\" with LF endings"
+    },
+    {
+      "n": 27,
+      "tool": "Bash",
+      "command": "node -e \"...match(/ {4}\\]\\.join\\([^)]*\\),/)...\"",
+      "purpose": "confirm a regex can match the marker",
+      "result": "matched"
+    },
+    {
+      "n": 28,
+      "tool": "Bash",
+      "command": "wrote scratchpad/fixhtml.js, then: node scratchpad/fixhtml.js workflows/dev/bench-93c4f277.workflow.ts && node node_modules/n8nac/dist/index.js skills validate workflows/dev/bench-93c4f277.workflow.ts",
+      "purpose": "replace the joined array with a no-substitution template literal, then validate",
+      "result": "42 lines folded into one template literal; validation passed"
+    },
+    {
+      "n": 29,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js push workflows/dev/bench-93c4f277.workflow.ts --verify",
+      "purpose": "create the workflow on the instance and verify the pushed state",
+      "result": "created workflowId fJldX1rWitaWW2J6, fetched back as \"bench-93c4f277\" (11 nodes), no issues found"
+    },
+    {
+      "n": 30,
+      "tool": "Bash",
+      "command": "node node_modules/n8nac/dist/index.js workflow credential-required fJldX1rWitaWW2J6 --json && node node_modules/n8nac/dist/index.js workflow present fJldX1rWitaWW2J6 --json",
+      "purpose": "confirm credential state and obtain the presentation URL",
+      "result": "credential-required returned [] (exit 0); url https://etiennel.app.n8n.cloud/workflow/fJldX1rWitaWW2J6"
+    },
+    {
+      "n": 31,
+      "tool": "Bash",
+      "command": "date -u +\"%Y-%m-%dT%H:%M:%SZ\"",
+      "purpose": "capture completion time",
+      "result": "2026-09-11T17:13:40Z"
+    },
+    {
+      "n": 32,
+      "tool": "Write",
+      "command": "Write builder_log.json",
+      "purpose": "write this log at the workspace root",
+      "result": "file created"
+    }
+  ],
+  "nodes": [
+    { "name": "Daily Trigger", "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1.4, "credentialSlot": null },
+    { "name": "Fetch Gmail Messages", "type": "n8n-nodes-base.gmail", "typeVersion": 2.2, "credentialSlot": "empty" },
+    { "name": "Aggregate Emails", "type": "n8n-nodes-base.aggregate", "typeVersion": 1, "credentialSlot": null },
+    { "name": "Email Triage Agent", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "credentialSlot": null },
+    { "name": "Fetch Calendar Events", "type": "n8n-nodes-base.googleCalendar", "typeVersion": 1.3, "credentialSlot": "empty" },
+    { "name": "Aggregate Events", "type": "n8n-nodes-base.aggregate", "typeVersion": 1, "credentialSlot": null },
+    { "name": "Calendar Agent", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "credentialSlot": null },
+    { "name": "Daily Briefing Agent", "type": "@n8n/n8n-nodes-langchain.agent", "typeVersion": 3.1, "credentialSlot": null },
+    { "name": "Briefing Model", "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi", "typeVersion": 1.3, "credentialSlot": "empty" },
+    { "name": "Render Dashboard HTML", "type": "n8n-nodes-base.html", "typeVersion": 1.2, "credentialSlot": null },
+    { "name": "Save Briefing Draft", "type": "n8n-nodes-base.gmail", "typeVersion": 2.2, "credentialSlot": "empty" }
+  ],
+  "friction": [
+    {
+      "what": "Bash heredoc could not write the workflow file",
+      "detail": "cat > file <<'TSEOF' aborted with \"here-document at line 175 delimited by end-of-file\" and left a truncated 7267-byte file.",
+      "resolution": "Deleted the partial file and used the Write tool instead."
+    },
+    {
+      "what": "n8nac parses node parameters statically",
+      "detail": "The HTML dashboard template was authored as an array of lines joined with .join('\\n'). skills validate rejected it: \"Dynamic expression not supported in node parameters ... only inline literal values (strings, numbers, booleans, null, arrays, plain objects) are supported.\"",
+      "resolution": "Folded the 42 lines into a single no-substitution template literal, which the parser accepts."
+    },
+    {
+      "what": "A second heredoc-based fix script failed to match its own marker",
+      "detail": "node - <<'JSEOF' with an indexOf marker returned -1 despite the marker being present in the file (verified with grep | cat -A).",
+      "resolution": "Wrote the script to the scratchpad as fixhtml.js and ran it from there; it worked on the first try."
+    },
+    {
+      "what": "Bundled ontology types collection parameters as any[]",
+      "detail": "Gmail 'filters' and Google Calendar 'options' are typed any[], so the sub-field names (filters.q, options.timeMin/timeMax/singleEvents/orderBy) could not be verified against the schema. They were written using the documented n8n shapes and accepted by both local validation and post-push verification.",
+      "resolution": "Accepted; flagged here because native MCP level 0 means no instance-exact check was possible."
+    },
+    {
+      "what": "Native MCP level 0 degrades validation",
+      "detail": "push reported verbatim: \"Validated against the bundled schema only (native MCP level 0 - discouraged, the instance may differ). Connect the instance MCP for instance-exact validation: n8nac native-mcp configure --level 1.\"",
+      "resolution": "Reported, not changed - the level must not be altered by the builder."
+    },
+    {
+      "what": "No recipient address available for a daily send",
+      "detail": "The briefing needs a delivery step, but no recipient address exists in the workspace and inventing one was not acceptable.",
+      "resolution": "Used Gmail draft:create instead of message:send. The dashboard lands as an HTML draft in the user's own mailbox, so no address is invented and nothing is sent automatically."
+    },
+    {
+      "what": "credential-required reported nothing",
+      "detail": "workflow credential-required returned [] with exit 0 even though four nodes have empty credential slots, presumably because no credentials key is declared at all.",
+      "resolution": "Left as is; the empty slots are intentional and each affected node carries a note naming the credential type to pick."
+    }
+  ],
+  "notes": [
+    "The instance was never listed, searched or inspected; only the id returned by push was used.",
+    "Workflow left inactive (active: false in the decorator, never activated).",
+    "No credential was created and no credential value was written anywhere.",
+    "Secrets in .env were never read; only the key names were listed, with values redacted."
+  ],
+  "url": "https://etiennel.app.n8n.cloud/workflow/fJldX1rWitaWW2J6"
+}

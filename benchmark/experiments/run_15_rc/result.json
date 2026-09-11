@@ -1,0 +1,282 @@
+{
+  "runId": "run15",
+  "underTest": "n8nac@2.7.0-rc.1",
+  "weights": {
+    "quality": 0.35,
+    "correctness": 0.3,
+    "tokenEfficiency": 0.2,
+    "buildTime": 0.15
+  },
+  "n8nac": {
+    "perBuild": [
+      {
+        "label": "run15_n8nac_1",
+        "judgeId": "wf-01",
+        "nodes": 9,
+        "tokens": 125818,
+        "durationMs": 504026,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 81,
+        "judgeTotals": [
+          82,
+          81,
+          80
+        ],
+        "spread": 2,
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 15,
+          "answer": 22
+        }
+      },
+      {
+        "label": "run15_n8nac_2",
+        "judgeId": "wf-03",
+        "nodes": 10,
+        "tokens": 142344,
+        "durationMs": 638256,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 85,
+        "judgeTotals": [
+          86,
+          82,
+          85
+        ],
+        "spread": 4,
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 17,
+          "answer": 23
+        }
+      },
+      {
+        "label": "run15_n8nac_3",
+        "judgeId": "wf-05",
+        "nodes": 11,
+        "tokens": 122850,
+        "durationMs": 486970,
+        "delivers": true,
+        "correctness": 96.36,
+        "quality": 91,
+        "judgeTotals": [
+          87,
+          91,
+          91
+        ],
+        "spread": 4,
+        "dimensions": {
+          "idea": 23,
+          "structure": 22,
+          "connections": 24,
+          "answer": 22
+        }
+      },
+      {
+        "label": "run15_n8nac_4",
+        "judgeId": "wf-07",
+        "nodes": 8,
+        "tokens": 113719,
+        "durationMs": 412267,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 89,
+        "judgeTotals": [
+          89,
+          89,
+          88
+        ],
+        "spread": 1,
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 23,
+          "answer": 21
+        }
+      },
+      {
+        "label": "run15_n8nac_5",
+        "judgeId": "wf-09",
+        "nodes": 11,
+        "tokens": 122258,
+        "durationMs": 502688,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 79,
+        "judgeTotals": [
+          81,
+          79,
+          79
+        ],
+        "spread": 2,
+        "dimensions": {
+          "idea": 22,
+          "structure": 21,
+          "connections": 14,
+          "answer": 22
+        }
+      }
+    ],
+    "quality": 85,
+    "qualityPooledMedian": 85,
+    "dimensions": {
+      "idea": 22.4,
+      "structure": 22,
+      "connections": 18.6,
+      "answer": 22
+    },
+    "correctness": 99.27,
+    "tokens": 122850,
+    "durationMs": 502688,
+    "delivered": [
+      5,
+      5
+    ],
+    "scores": {
+      "quality": 85,
+      "correctness": 99.27,
+      "tokenEfficiency": 100,
+      "buildTime": 100,
+      "composite": 94.53
+    }
+  },
+  "nativeMcp": {
+    "perBuild": [
+      {
+        "label": "run15_native_mcp_1",
+        "judgeId": "wf-02",
+        "nodes": 15,
+        "tokens": 190011,
+        "durationMs": 733723,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 90,
+        "judgeTotals": [
+          90,
+          90,
+          92
+        ],
+        "spread": 2,
+        "dimensions": {
+          "idea": 23,
+          "structure": 22,
+          "connections": 24,
+          "answer": 22
+        }
+      },
+      {
+        "label": "run15_native_mcp_2",
+        "judgeId": "wf-04",
+        "nodes": 17,
+        "tokens": 139007,
+        "durationMs": 619048,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 93,
+        "judgeTotals": [
+          93,
+          90,
+          93
+        ],
+        "spread": 3,
+        "dimensions": {
+          "idea": 24,
+          "structure": 22,
+          "connections": 24,
+          "answer": 23
+        }
+      },
+      {
+        "label": "run15_native_mcp_3",
+        "judgeId": "wf-06",
+        "nodes": 13,
+        "tokens": 147690,
+        "durationMs": 476179,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 90,
+        "judgeTotals": [
+          90,
+          91,
+          89
+        ],
+        "spread": 2,
+        "dimensions": {
+          "idea": 23,
+          "structure": 21,
+          "connections": 24,
+          "answer": 22
+        }
+      },
+      {
+        "label": "run15_native_mcp_4",
+        "judgeId": "wf-08",
+        "nodes": 13,
+        "tokens": 158127,
+        "durationMs": 662681,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 92,
+        "judgeTotals": [
+          91,
+          92,
+          93
+        ],
+        "spread": 2,
+        "dimensions": {
+          "idea": 23,
+          "structure": 22,
+          "connections": 24,
+          "answer": 23
+        }
+      },
+      {
+        "label": "run15_native_mcp_5",
+        "judgeId": "wf-10",
+        "nodes": 12,
+        "tokens": 139723,
+        "durationMs": 471223,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 91,
+        "judgeTotals": [
+          92,
+          91,
+          90
+        ],
+        "spread": 2,
+        "dimensions": {
+          "idea": 23,
+          "structure": 22,
+          "connections": 24,
+          "answer": 22
+        }
+      }
+    ],
+    "quality": 91.2,
+    "qualityPooledMedian": 91,
+    "dimensions": {
+      "idea": 23.2,
+      "structure": 21.8,
+      "connections": 24,
+      "answer": 22.4
+    },
+    "correctness": 100,
+    "tokens": 147690,
+    "durationMs": 619048,
+    "delivered": [
+      5,
+      5
+    ],
+    "scores": {
+      "quality": 91.2,
+      "correctness": 100,
+      "tokenEfficiency": 73.84,
+      "buildTime": 70.67,
+      "composite": 87.29
+    }
+  }
+}

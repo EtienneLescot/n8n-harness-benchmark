@@ -1,0 +1,24 @@
+{
+  "version": 4,
+  "activeEnvironmentId": "dev-2",
+  "environmentTargets": [
+    {
+      "id": "dev",
+      "name": "Dev",
+      "kind": "external-instance",
+      "url": "https://etiennel.app.n8n.cloud"
+    }
+  ],
+  "environments": [
+    {
+      "id": "dev-2",
+      "name": "Dev",
+      "syncSlug": "dev",
+      "environmentTargetId": "dev",
+      "projectId": "personal",
+      "projectName": "Personal",
+      "workflowsPath": "workflows/dev",
+      "folderSync": false
+    }
+  ]
+}
