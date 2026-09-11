@@ -1,6 +1,6 @@
 # n8n-harness-benchmark
 
-**How fast, frugal, and compliant is AI-driven workflow creation on n8n?** Code-first GitOps (`n8n-as-code`) vs. remote JSON-RPC (`n8n Native MCP`) — evaluated on the same live n8n instance under identical conditions, with zero subjective LLM judges, server-side RPC validation, and scale-invariant relative cost scoring.
+**How fast, frugal, and compliant is AI-driven workflow creation on n8n?** Code-first GitOps (`n8n-as-code`) vs. remote JSON-RPC (`n8n Native MCP`) — evaluated on the same live n8n instance under identical conditions. Correctness is settled server-side with no LLM anywhere near it. Quality is graded by an isolated three-judge panel per build, under a [published rubric](skills/judging/references/QUALITY_RUBRIC.md) that says what a grade must cite to count. Cost is scored relative to the better branch, scale-invariantly.
 
 **Results:** <https://etiennelescot.github.io/n8n-harness-benchmark/>  
 *Historical run data, reports, and workflow JSON files are archived in [`results/`](results/).*
@@ -19,12 +19,22 @@ Simply paste this prompt into your coding agent:
 Clone https://github.com/EtienneLescot/n8n-harness-benchmark.git, read the benchmark instructions, and run the comparative evaluation between n8n-as-code and n8n Native MCP on my n8n instance.
 ```
 
-**What the Orchestrator will do automatically:**
-1. **Credentials Gate**: Reads `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL`, and `N8N_NATIVE_MCP_TOKEN` (prompting you in chat if anything is missing).
-2. **Lock Parameters**: Records the exact model and temperature used, identically for both branches.
-3. **Partition Sandboxes**: Spawns isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`) with universal confinement and a distinct unguessable workflow token per branch (e.g. `bench-3f9a1c72`). Sandboxes contain no rubric and no requirement list, and neither prompt names the other branch's directory.
-4. **Deploy & Time**: Dispatches subagents to install dependencies and author the multi-agent workflow under external stopwatch timing.
-5. **Deterministic API Audit**: Queries the n8n Cloud server's official `validate_node_config` RPC, computes the relative cost scores, and updates `results/` and `docs/`.
+**What the Orchestrator will do automatically**, following [`skills/benchmark-n8n-workflow-creation/SKILL.md`](skills/benchmark-n8n-workflow-creation/SKILL.md):
+
+1. **Credentials gate**: reads `.env` for `N8N_HOST`, `N8N_API_KEY`, `N8N_NATIVE_MCP_URL` and `N8N_NATIVE_MCP_TOKEN`, prompting you in chat if anything is missing.
+2. **Lock parameters**: records the exact model and temperature used, identically for both branches.
+3. **Partition sandboxes**: isolated workspaces for Branch A (`n8n-as-code`) and Branch B (`n8n Native MCP`), each with an unguessable workflow token. No sandbox holds a rubric or a requirement list, and neither prompt names the other branch's directory. `npm run guard` proves it rather than promising it.
+4. **Readiness gate** (`npm run ready -- <runId>`): each sandbox must carry something that makes its toolchain discoverable — `AGENTS.md` for Branch A, a usable MCP caller for Branch B. A builder that cannot find its toolchain writes the JSON by hand and the cost axes then measure nothing. This has voided three branches.
+5. **Deploy and time**: dispatches one builder per branch under an external stopwatch, with the request sent verbatim and archived before dispatch.
+6. **Usage gate** (`npm run used -- <runId>`): each builder log must show the branch driving its own toolchain. A log showing only REST traffic voids the run.
+7. **Deterministic audit**: the live server's `validate_node_config` RPC plus graph traversal settle correctness. No LLM takes part.
+8. **Quality panel**: three judges per build, one workflow each, blinded, under [`JUDGING_PROTOCOL.md`](skills/benchmark-n8n-workflow-creation/references/JUDGING_PROTOCOL.md) and [`QUALITY_RUBRIC.md`](skills/judging/references/QUALITY_RUBRIC.md). A judge never sees the other workflow, the costs, or the correctness result.
+9. **Compile and publish**: relative cost scores, the composite, and an update to `results/` and `docs/`.
+
+> **Both phases are required for a publishable run.** If your runtime cannot dispatch
+> sub-agents, write `judging.eligible = false` into the results and publish it as
+> correctness-tier. Do not run the panel single-agent: a finder and an attacker sharing one
+> context confirm each other, which is the failure the protocol exists to prevent.
 
 ---
 
@@ -45,8 +55,16 @@ npm run validate <workflowId>
 # 3. Evaluate a local workflow JSON file against the rubric
 npm run evaluate -- results/history/run_3/workflow_n8n_as_code.json
 
-# 4. Compile the report from the two builder logs and the live server audits
+# 4. The three gates a publishable run must pass
+npm run guard                  # no sandbox can read a scoring document
+npm run ready -- <runId>       # every sandbox can discover its toolchain
+npm run used  -- <runId>       # every builder actually drove it
+
+# 5. Compile the report from the two builder logs and the live server audits
 npm run report
+
+# 6. Check the harness itself
+npm test
 ```
 
 ---
@@ -70,15 +88,25 @@ Both toolchains receive **strictly and exclusively** the authentic user prompt w
 Every weight and every check below is defined in exactly one place,
 [`benchmark/harness/scoring.mjs`](benchmark/harness/scoring.mjs). Nothing restates them.
 
-| Dimension | Weight | Measurement Source | Scoring Formula |
-|---|:---:|---|---|
-| **1. Correctness** | **35%** | Live n8n Cloud API + server `validate_node_config` | $0.40 \times \text{RequirementCoverage} + 0.40 \times \text{NodeValidity} + 0.20 \times \text{GraphIntegrity}$ |
-| **2. Token Efficiency** | **35%** | Prompt + completion tokens | Relative to the cheaper branch, exponential decay |
-| **3. Build Time** | **30%** | External harness stopwatch | Relative to the faster branch, exponential decay |
-| *Setup ease* | *telemetry* | Installer log: friction (70%) and command count (30%) | Reported, not scored |
+| Dimension | Measurement source | How it scores |
+|---|---|---|
+| **Quality** | Three isolated LLM judges per build, under [`QUALITY_RUBRIC.md`](skills/judging/references/QUALITY_RUBRIC.md) | **Absolute**, against the prompt. The idea, node structure, connections, answer to the brief. |
+| **Correctness** | Live n8n API + server `validate_node_config` RPC | **Absolute**, deterministic. Requirement coverage, node validity, graph integrity. No LLM. |
+| **Token efficiency** | Prompt + completion tokens | **Relative** to the cheaper branch, exponential decay |
+| **Build time** | External harness stopwatch | **Relative** to the faster branch, exponential decay |
+| *Setup ease* | Installer log: friction and command count | *Reported, not scored* |
 
-**Correctness**, not quality: the axis answers whether the workflow works and whether it does
-what was asked. Whether it is ambitious or elegant is a separate judgement, not implemented.
+**Why quality is the only absolute score.** Tokens and seconds have no yardstick: 143k tokens is
+neither good nor bad on its own, only cheaper or dearer than the other branch, so the only
+meaningful figure is the A/B ratio. Quality has one — the prompt. A workflow can be measured
+against what was asked with no second workflow in the room. Both branches may score 90. Both
+may score 40.
+
+**Correctness answers *does it work*. Quality answers *is this a good answer*.** They are
+separate phases with separate safeguards, and a quality judge never sees a correctness result.
+In `run_12` both branches scored 100/100 correctness while one of them built an HTML briefing
+every morning and left it in the execution data, because its terminal node had no outgoing
+edge. That is a quality question, and it now has somewhere to go.
 
 **Setup is measured but not scored.** Installation is paid once and amortises away, while
 build time and tokens are paid on every workflow. `run_10` measured the cost of keeping it:
@@ -86,14 +114,27 @@ at 10% the setup axis moved 6.07 points on a final gap of 5.54, so a once-paid c
 the ranking. Acquisition seconds are excluded on both branches, each carrying a benchmark
 artefact: unpublished tarballs on one side, a hand-rolled HTTP client on the other.
 
-### 1. Zero Subjective LLM Judges (Ground-Truth Server RPC)
-Instead of asking an LLM judge to guess code quality, the benchmark queries the live n8n Cloud server's official `validate_node_config` RPC tool:
-- **Requirement Coverage (40% of Correctness)**: Checks the deployed graph against the six required capabilities, on node types and wiring only, never on node names.
-- **Node Schema Validity (40% of Correctness)**: Validates parameter types, required fields, and conditional display options against official server schemas.
-- **Graph Topology (20% of Correctness)**: Traverses connection adjacency to verify all functional nodes are fully connected (0 orphaned nodes).
-- **Live Cloud Execution (Informative Only)**: Standardized benchmarks cannot and should not require real third-party OAuth2 credentials (such as personal Google tokens) on automated instances. Execution history is tracked informatively without distorting the score.
+### 1. Correctness has no LLM in it
 
-### 2. Scale-Invariant Relative Cost Scoring
+Instead of asking a judge to guess whether a workflow works, the benchmark queries the live n8n server's official `validate_node_config` RPC:
+- **Requirement coverage (40% of correctness)**: checks the deployed graph against the six required capabilities, on node types and wiring only, never on node names.
+- **Node schema validity (40%)**: parameter types, required fields and conditional display options against official server schemas.
+- **Graph topology (20%)**: connection adjacency, verifying every functional node is connected with zero orphans.
+- **Live execution (informative only)**: a standardised benchmark cannot require real third-party OAuth credentials, so execution history is tracked without touching the score.
+
+### 2. The quality panel, and what constrains it
+
+An absolute grade from a language model is an opinion unless it is constrained. The rubric sets five rules and a grade breaking any of them is void. The load-bearing ones:
+
+- **One workflow per judge, never two in one context.** A judge that sees both stops grading and starts comparing. `run_12`'s first panel broke this and the grades moved with presentation order: 4 points from the judge who saw the eventual winner first, 23 and 10 from the two who saw it second. That panel was voided and re-run isolated.
+- **Every dimension score cites a JSON pointer that resolves.** No citation, no score.
+- **Three judges per build, independent contexts.** Published grade is the median, so one outlier cannot drag it. Across builds the panel is pooled rather than taking a median of medians, which threw away most of the sample and once produced a spurious dead heat.
+- **Disagreement is published, not smoothed.** A spread wider than 15 points prints all three grades.
+- **A blind pairwise check runs alongside, by different agents**, who produce no grade of their own. If it contradicts the ranking the isolated grades produced, the report says so.
+
+Each judge sees one workflow, blinded, the brief verbatim, the harness rules, and the structural facts computed from that workflow. No judge sees the other workflow, the correctness scores, the token counts, the build times, or the branch names.
+
+### 3. Scale-invariant relative cost scoring
 
 Cost axes are scored against the better branch, never against an absolute threshold:
 
@@ -119,7 +160,7 @@ flattening to nothing.
 | +50 % | 66.7 | 47.2 |
 | +100 % | 50.0 | 22.3 |
 | +334 % | 23.0 | 0.7 |
-### 3. Anti-Contamination & Sandboxing
+### 4. Anti-contamination and sandboxing
 - **Hermetic Workspaces**: Builders run concurrently in separate directories with isolated `.env` files.
 - **Universal Confinement**: Builders operate under a strict rule:
   > *"STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation."*
@@ -184,7 +225,10 @@ Pull Requests containing inferred or missing model/harness specifications will n
 │   ├── reporters/        # markdown, json, html generators
 │   ├── config/           # benchmark.config.json + the native MCP helper reference
 │   └── sandboxes/        # partitioned worker sandboxes (gitignored)
-└── skills/               # the orchestration skill: protocol, rubric, isolation rules
+└── skills/
+    ├── benchmark-n8n-workflow-creation/  # the orchestration protocol, isolation rules, gates
+    └── judging/                          # the judge kit: quality rubric, defect catalogue,
+                                          # n8n execution semantics
 ```
 
 ---
