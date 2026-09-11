@@ -90,6 +90,15 @@ and a grade that breaks any of them is void:
    discarded and the dimension is regraded by another judge.
 3. **Three judges per workflow, independent contexts, no shared state.** The published grade is
    the median, never the mean, so one outlier cannot drag it.
+
+   **Across builds, pool the grades; do not take a median of medians.** A tool is graded over
+   several builds, and collapsing each build to a median before collapsing again throws away
+   most of the sample and lands on whichever build sits in the middle. In `exp_01` that
+   produced a spurious dead heat: median-of-medians gave 88 to both tools, while the pooled
+   median over all fifteen grades gave 88 and 89, and both means gave a two-point edge to the
+   other tool. The ranking survived every choice; the tie did not. Take the median of every
+   grade the panel produced for that tool, and publish the per-build medians beside it so the
+   shape of the distribution stays visible.
 4. **Disagreement is published, not smoothed.** If the three judges spread more than 15 points
    on the total, the report says so and prints all three. A wide spread is information about
    the rubric, not noise to average away.

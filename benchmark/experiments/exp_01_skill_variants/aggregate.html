@@ -142,11 +142,11 @@
       </div>
       <div class="gap">
         <span class="label">écart</span>
-        <span class="delta">1,75</span>
+        <span class="delta">1,40</span>
       </div>
       <div class="side b">
         <span class="who">n8n Native MCP</span>
-        <span class="composite">89,35</span>
+        <span class="composite">89,70</span>
         <span class="caption">composite sur 100</span>
       </div>
     </div>
@@ -161,10 +161,10 @@
     <div class="axes">
       <div class="axis">
         <div class="axis-head"><span class="axis-name">Qualité fonctionnelle</span><span class="axis-weight">poids 35 · absolue</span></div>
-        <p class="axis-note">Médiane des médianes: trois juges par build, cinq builds par outil. Égalité parfaite.</p>
+        <p class="axis-note">Médiane des quinze notes de chaque outil, trois juges par build sur cinq builds. Un point d'écart, dans le bruit.</p>
         <div class="bars">
           <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:88%"></span></span><span class="val">88</span></div>
-          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:88%"></span></span><span class="val">88</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:89%"></span></span><span class="val">89</span></div>
         </div>
       </div>
 
@@ -270,6 +270,27 @@
   </section>
 
   <section>
+    <div class="intro">
+      <h2>Le classement résiste, l'écart de qualité non</h2>
+      <p>Un premier calcul donnait 88 contre 88. C'était un artefact de la médiane des médianes, qui écrase chaque build avant de les écraser à nouveau. Quatre agrégations défendables donnent quatre réponses.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Agrégation des notes</th><th class="n">n8n-as-code</th><th class="n">Native MCP</th><th class="n">Composite</th></tr></thead>
+        <tbody>
+          <tr><td>Médiane des médianes</td><td class="n a">88</td><td class="n b">88</td><td class="n">91,10 · 89,35</td></tr>
+          <tr><td>Médiane des 15 notes</td><td class="n a">88</td><td class="n b">89</td><td class="n">91,10 · 89,70</td></tr>
+          <tr><td>Moyenne des médianes</td><td class="n a">83,2</td><td class="n b">85,2</td><td class="n">—</td></tr>
+          <tr><td>Moyenne des 15 notes</td><td class="n a">83,33</td><td class="n b">85,33</td><td class="n">89,47 · 88,42</td></tr>
+          <tr class="total"><td>Gagnant au composite</td><td class="n a" colspan="3">n8n-as-code, dans les trois cas</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px">Les deux distributions n'ont pas la même forme. n8n-as-code est bimodal, 72 et 74 d'un côté, 88, 88 et 94 de l'autre. Native MCP est un accident isolé à 68 puis un groupe serré de 87 à 92. La médiane des médianes tombait sur 88 des deux côtés par coïncidence.</p>
+    <p>Et si l'on ne garde que les builds qui livrent, n8n-as-code repasse devant, 90 contre 89,5. Le classement en qualité dépend donc entièrement du traitement réservé aux trois échecs de livraison, ce qui est une autre façon de dire qu'il n'y a pas d'écart.</p>
+  </section>
+
+  <section>
     <div class="intro"><h2>Ce que l'agrégat permet de dire, et ce qu'il ne permet pas</h2></div>
     <div class="split">
       <div class="note">
@@ -281,8 +302,8 @@
         <p>Les étendues se recouvrent sur près de cent secondes. La médiane favorise Native MCP mais cinq builds ne suffisent pas à l'établir.</p>
       </div>
       <div class="note">
-        <h3>Nul: la qualité</h3>
-        <p>88 des deux côtés. Les distributions de notes se superposent presque entièrement. Aucun des deux outils ne produit de meilleurs workflows que l'autre sur cette demande.</p>
+        <h3>Dans le bruit: la qualité</h3>
+        <p>88 contre 89. Les distributions se superposent presque entièrement, et l'écart change de signe selon l'agrégation choisie. Aucun des deux outils ne produit de meilleurs workflows que l'autre sur cette demande.</p>
       </div>
       <div class="note">
         <h3>Inutilisable: la correctness</h3>
@@ -292,7 +313,7 @@
   </section>
 
   <footer>
-    <p>Composite pondéré: qualité 35, correctness 30, tokens 20, temps 15. L'écart final de 1,75 point provient entièrement des deux axes de coût, puisque qualité et correctness sont à égalité. Les juges ne voyaient qu'un workflow chacun, aveuglé, sans le nom de la branche, sans les scores de correctness et sans les coûts.</p>
+    <p>Composite pondéré: qualité 35, correctness 30, tokens 20, temps 15. L'écart final de 1,40 point vient des deux axes de coût: la correctness est à égalité et la qualité rend un point à Native MCP, ce qui ne renverse pas le résultat. La qualité est agrégée par médiane des quinze notes de chaque outil, jamais par médiane des médianes. Les juges ne voyaient qu'un workflow chacun, aveuglé, sans le nom de la branche, sans les scores de correctness et sans les coûts.</p>
   </footer>
 
 </div>
