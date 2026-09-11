@@ -1,0 +1,85 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 12,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 10,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Emails": [
+      "Schedule Trigger"
+    ],
+    "Get Events": [
+      "Schedule Trigger"
+    ],
+    "Merge Inputs": [
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Prepare Agent Inputs": [
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Email Sorter Agent": [
+      "Prepare Agent Inputs",
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Calendar Sorter Agent": [
+      "Prepare Agent Inputs",
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Merge Agent Outputs": [
+      "Email Sorter Agent",
+      "Calendar Sorter Agent",
+      "Prepare Agent Inputs",
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Prepare Dashboard Input": [
+      "Merge Agent Outputs",
+      "Email Sorter Agent",
+      "Calendar Sorter Agent",
+      "Prepare Agent Inputs",
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Dashboard Composer Agent": [
+      "Prepare Dashboard Input",
+      "Merge Agent Outputs",
+      "Email Sorter Agent",
+      "Calendar Sorter Agent",
+      "Prepare Agent Inputs",
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ],
+    "Daily Briefing Dashboard": [
+      "Dashboard Composer Agent",
+      "Prepare Dashboard Input",
+      "Merge Agent Outputs",
+      "Email Sorter Agent",
+      "Calendar Sorter Agent",
+      "Prepare Agent Inputs",
+      "Merge Inputs",
+      "Get Emails",
+      "Get Events",
+      "Schedule Trigger"
+    ]
+  }
+}

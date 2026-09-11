@@ -1,0 +1,324 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Every Day 7am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        208
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Fetch Todays Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        112
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "readStatus": "both",
+          "receivedAfter": "={{ $today.toISO() }}"
+        }
+      }
+    },
+    {
+      "name": "Format Email Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        112
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst lines = items.map(function (item) {\n  const j = item.json || {};\n  const from = j.From || \"Unknown sender\";\n  const subject = j.Subject || \"(no subject)\";\n  const snippet = j.snippet || \"\";\n  return \"- From: \" + from + \" | Subject: \" + subject + \" | \" + snippet;\n});\nconst emailsText = lines.length > 0 ? lines.join(\"\\n\") : \"No new emails today.\";\nreturn [{ json: { emailsText: emailsText, emailCount: items.length } }];"
+      }
+    },
+    {
+      "name": "Combine Emails and Calendar",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        208
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition"
+      }
+    },
+    {
+      "name": "Fetch Todays Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        304
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today.toISO() }}",
+        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "name": "Format Calendar Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        304
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst lines = items.map(function (item) {\n  const j = item.json || {};\n  const summary = j.summary || \"(untitled event)\";\n  const start = (j.start && (j.start.dateTime || j.start.date)) || \"unknown time\";\n  const end = (j.end && (j.end.dateTime || j.end.date)) || \"\";\n  return \"- \" + start + (end ? (\" to \" + end) : \"\") + \": \" + summary;\n});\nconst eventsText = lines.length > 0 ? lines.join(\"\\n\") : \"No events scheduled today.\";\nreturn [{ json: { eventsText: eventsText, eventCount: items.length } }];"
+      }
+    },
+    {
+      "name": "Daily Briefing Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        208
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Todays email summary data:\n{{ $json.emailsText }}\n\nTodays calendar summary data:\n{{ $json.eventsText }}\n\nUse your tools to analyze this data, then compose the final dashboard.",
+        "options": {
+          "systemMessage": "You produce a daily briefing dashboard. You have two tools: \"Email Triage Agent\" and \"Calendar Agent\". Call Email Triage Agent exactly once, passing it the email summary data. Call Calendar Agent exactly once, passing it the calendar summary data. Then combine both results into one complete, self-contained HTML page: a clean, styled daily briefing dashboard with an inline <style> block, a header showing todays date, an Emails section, and a Schedule section. Respond with ONLY the raw HTML document, starting with <!DOCTYPE html>. No markdown code fences, no commentary before or after the HTML."
+        }
+      }
+    },
+    {
+      "name": "Briefing Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        976,
+        640
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        976,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Analyzes and triages a batch of Gmail messages into prioritized categories. Call exactly once with the raw email summary text for the day.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('emailData', 'The raw plain-text summary of todays emails to triage') }}",
+        "options": {
+          "systemMessage": "You triage a list of Gmail messages for one day. Group them into Urgent, Needs Reply, and FYI categories based on sender and subject. Return a short, well-structured plain-text or simple-HTML-fragment summary suitable for embedding into a dashboard section. Be concise."
+        }
+      }
+    },
+    {
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Analyzes and summarizes a batch of Google Calendar events for the day. Call exactly once with the raw calendar summary text for the day.",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('calendarData', 'The raw plain-text summary of todays calendar events to summarize') }}",
+        "options": {
+          "systemMessage": "You summarize a list of Google Calendar events for one day, in chronological order. Flag any back-to-back meetings and note free gaps longer than one hour. Return a short, well-structured plain-text or simple-HTML-fragment summary suitable for embedding into a dashboard section. Be concise."
+        }
+      }
+    },
+    {
+      "name": "Send Daily Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1312,
+        208
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "<__PLACEHOLDER_VALUE__Your email address to receive the daily briefing__>",
+        "subject": "=Daily Briefing - {{ $now.toFormat(\"MMMM d, yyyy\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}"
+      }
+    }
+  ],
+  "connections": {
+    "Every Day 7am": {
+      "main": [
+        [
+          {
+            "node": "Fetch Todays Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Todays Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Todays Emails": {
+      "main": [
+        [
+          {
+            "node": "Format Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Emails and Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Emails and Calendar": {
+      "main": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Todays Events": {
+      "main": [
+        [
+          {
+            "node": "Format Calendar Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Calendar Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Emails and Calendar",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Daily Briefing Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

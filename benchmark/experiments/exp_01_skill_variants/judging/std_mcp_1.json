@@ -1,0 +1,420 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Every Morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Fetch Emails (Last 24h)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        540,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d",
+          "readStatus": "both",
+          "includeSpamTrash": false
+        }
+      }
+    },
+    {
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        840,
+        160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email triage assistant. Review the emails below from the last 24 hours and produce a short categorized brief with sections Urgent, Action Needed, FYI, and Newsletters or Promotions. Under each section list sender, subject and a one-line takeaway. If a section has no emails, omit it.\n\nEmails JSON:\n{{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "systemMessage": "You are a precise, concise email triage assistant for a daily briefing. Never invent emails that are not in the provided data."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "name": "Email Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        700,
+        40
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Label Email Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        160
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "email-brief",
+              "name": "emailBrief",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Combine Summaries",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1240,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 2
+      }
+    },
+    {
+      "name": "Fetch Events (Today)",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        540,
+        440
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today }}",
+        "timeMax": "={{ $today.plus({ days: 1 }) }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "name": "Calendar Digest Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        840,
+        440
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a calendar assistant. Review the events below for today and produce a clear chronological timeline: time, title, and any attendees or location. Flag back-to-back or overlapping meetings as a Conflicts note at the end. If there are no events, state that briefly.\n\nEvents JSON:\n{{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "systemMessage": "You are a precise, concise calendar assistant for a daily briefing. Never invent events that are not in the provided data."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "name": "Calendar Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        700,
+        520
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Label Calendar Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        440
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "calendar-brief",
+              "name": "calendarBrief",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1440,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a UI designer generating a daily briefing dashboard. Using the two summaries below, produce ONE self-contained HTML document: a full html document with an inline style block, no external resources or scripts. Include a header titled Daily Briefing with a date, a Calendar section, and an Email section with color-coded priority tags for Urgent, Action Needed, FYI, and Newsletters. Use clean readable typography and a simple responsive layout. Output ONLY the raw HTML, no markdown code fences and no commentary before or after it.\n\nEMAIL SUMMARY:\n{{ $json.emailBrief }}\n\nCALENDAR SUMMARY:\n{{ $json.calendarBrief }}",
+        "options": {
+          "systemMessage": "You are a precise front-end assistant that outputs only valid, self-contained HTML for a daily briefing dashboard. Never include markdown fences or explanations."
+        }
+      }
+    },
+    {
+      "name": "Composer Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1400,
+        180
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Build Briefing Email Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1640,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "briefing-subject",
+              "name": "subject",
+              "value": "=Daily Briefing - {{ $now.toFormat(\"MMMM d, yyyy\") }}",
+              "type": "string"
+            },
+            {
+              "id": "briefing-html",
+              "name": "htmlBody",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "<__PLACEHOLDER_VALUE__Recipient email address for the daily briefing (e.g. your own inbox)__>",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.htmlBody }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every Morning": {
+      "main": [
+        [
+          {
+            "node": "Fetch Emails (Last 24h)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Events (Today)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Emails (Last 24h)": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Label Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Summaries": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Events (Today)": {
+      "main": [
+        [
+          {
+            "node": "Calendar Digest Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Digest Agent": {
+      "main": [
+        [
+          {
+            "node": "Label Calendar Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Digest Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Calendar Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Summaries",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Build Briefing Email Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Composer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Briefing Email Fields": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

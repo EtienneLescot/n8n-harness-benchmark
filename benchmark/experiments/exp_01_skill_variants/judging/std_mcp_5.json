@@ -1,0 +1,350 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Daily 7am Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        208
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Fetch Todays Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        112
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      }
+    },
+    {
+      "name": "Sort And Tag Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        112
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst emails = items.map((item) => ({\n  id: item.json.id,\n  subject: item.json.Subject,\n  from: item.json.From,\n  snippet: item.json.snippet,\n  receivedAt: item.json.internalDate,\n  unread: (item.json.labels || []).some((l) => l.name === \"UNREAD\")\n}));\nreturn [{ json: { emailCount: emails.length, emails: emails } }];"
+      }
+    },
+    {
+      "name": "Combine Emails And Events",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        672,
+        208
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition"
+      }
+    },
+    {
+      "name": "Fetch Todays Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        304
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today.toISO() }}",
+        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "name": "Sort And Tag Calendar Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        304
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst events = items.map((item) => ({\n  id: item.json.id,\n  title: item.json.summary,\n  start: item.json.start && item.json.start.dateTime,\n  end: item.json.end && item.json.end.dateTime,\n  status: item.json.status\n}));\nevents.sort((a, b) => String(a.start || \"\").localeCompare(String(b.start || \"\")));\nreturn [{ json: { eventCount: events.length, events: events } }];"
+      }
+    },
+    {
+      "name": "Daily Briefing Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        960,
+        208
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today is {{ $now.toFormat(\"cccc, LLLL d yyyy\") }}. There are {{ $json.emailCount }} new emails and {{ $json.eventCount }} calendar events today. Call the \"Email Triage Agent\" tool and the \"Calendar Digest Agent\" tool, then combine both results into one complete HTML daily briefing dashboard page.",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the orchestrator for a daily briefing dashboard. You have two tools: \"Email Triage Agent\" (returns prioritized, categorized emails as HTML list items) and \"Calendar Digest Agent\" (returns a chronological agenda as HTML list items). Always call BOTH tools first, then respond with ONLY a single complete, self-contained HTML document (starting with <!DOCTYPE html>) that renders as a polished daily briefing dashboard: a header with today date, an Agenda section using the Calendar Digest Agent output, and an Inbox section using the Email Triage Agent output. Use an inline <style> block only, no external resources, no markdown, no commentary outside the HTML."
+        }
+      }
+    },
+    {
+      "name": "Claude - Orchestrator Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        896,
+        432
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        1024,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Analyzes and prioritizes todays emails. Call this once to get a sorted, categorized summary of the inbox as HTML list items.",
+        "text": "=You are an email triage specialist for a daily briefing. Read the emails JSON below, then respond with ONLY a prioritized (Urgent, Normal, Low) and categorized (Finance, Work, Personal, Newsletter, Other) summary as HTML <li> elements grouped under <h4> headings. No outer html/body tags, no commentary.\n\nEmails JSON:\n{{ JSON.stringify($(\"Combine Emails And Events\").item.json.emails) }}"
+      }
+    },
+    {
+      "name": "Claude - Email Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        1024,
+        640
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Calendar Digest Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 3,
+      "position": [
+        1152,
+        432
+      ],
+      "parameters": {
+        "toolDescription": "Summarizes todays calendar events in chronological order. Call this once to get the agenda as HTML list items.",
+        "text": "=You are a calendar analyst for a daily briefing. Read the events JSON below, then respond with ONLY a chronological HTML agenda as <li> elements, each showing the time range and title. No outer html/body tags, no commentary.\n\nEvents JSON:\n{{ JSON.stringify($(\"Combine Emails And Events\").item.json.events) }}"
+      }
+    },
+    {
+      "name": "Claude - Calendar Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        1152,
+        640
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Send Daily Briefing Dashboard",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        208
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "<__PLACEHOLDER_VALUE__Recipient email address for the daily briefing__>",
+        "subject": "=Daily Briefing Dashboard - {{ $now.toFormat(\"cccc, LLLL d yyyy\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}"
+      }
+    }
+  ],
+  "connections": {
+    "Daily 7am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Todays Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Todays Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Todays Emails": {
+      "main": [
+        [
+          {
+            "node": "Sort And Tag Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort And Tag Emails": {
+      "main": [
+        [
+          {
+            "node": "Combine Emails And Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Emails And Events": {
+      "main": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Todays Events": {
+      "main": [
+        [
+          {
+            "node": "Sort And Tag Calendar Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort And Tag Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Combine Emails And Events",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Daily Briefing Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Orchestrator Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Email Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Digest Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Daily Briefing Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude - Calendar Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Digest Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

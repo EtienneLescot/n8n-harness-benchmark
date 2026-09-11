@@ -1,0 +1,66 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 11,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 9,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Gmail": [
+      "Schedule Trigger"
+    ],
+    "Google Calendar": [
+      "Schedule Trigger"
+    ],
+    "Prepare Email Data": [
+      "Gmail",
+      "Schedule Trigger"
+    ],
+    "Prepare Calendar Data": [
+      "Google Calendar",
+      "Schedule Trigger"
+    ],
+    "Email Triage Agent": [
+      "Prepare Email Data",
+      "Gmail",
+      "Schedule Trigger"
+    ],
+    "Calendar Agent": [
+      "Prepare Calendar Data",
+      "Google Calendar",
+      "Schedule Trigger"
+    ],
+    "Merge": [
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Prepare Calendar Data",
+      "Google Calendar",
+      "Schedule Trigger",
+      "Prepare Email Data",
+      "Gmail"
+    ],
+    "Dashboard Composer Agent": [
+      "Merge",
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Prepare Calendar Data",
+      "Google Calendar",
+      "Schedule Trigger",
+      "Prepare Email Data",
+      "Gmail"
+    ],
+    "Send Briefing Email": [
+      "Dashboard Composer Agent",
+      "Merge",
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Prepare Calendar Data",
+      "Google Calendar",
+      "Schedule Trigger",
+      "Prepare Email Data",
+      "Gmail"
+    ]
+  }
+}

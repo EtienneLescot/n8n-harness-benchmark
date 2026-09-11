@@ -1,0 +1,66 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 13,
+  "triggers": [
+    "Daily 7am Trigger"
+  ],
+  "maxMainDepth": 9,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Today's Emails": [
+      "Daily 7am Trigger"
+    ],
+    "Aggregate Emails": [
+      "Fetch Today's Emails",
+      "Daily 7am Trigger"
+    ],
+    "Email Sorting Agent": [
+      "Aggregate Emails",
+      "Fetch Today's Emails",
+      "Daily 7am Trigger"
+    ],
+    "Combine Agent Outputs": [
+      "Email Sorting Agent",
+      "Calendar Summarizer Agent",
+      "Aggregate Events",
+      "Fetch Today's Events",
+      "Daily 7am Trigger",
+      "Aggregate Emails",
+      "Fetch Today's Emails"
+    ],
+    "Fetch Today's Events": [
+      "Daily 7am Trigger"
+    ],
+    "Aggregate Events": [
+      "Fetch Today's Events",
+      "Daily 7am Trigger"
+    ],
+    "Calendar Summarizer Agent": [
+      "Aggregate Events",
+      "Fetch Today's Events",
+      "Daily 7am Trigger"
+    ],
+    "Briefing Composer Agent": [
+      "Combine Agent Outputs",
+      "Email Sorting Agent",
+      "Calendar Summarizer Agent",
+      "Aggregate Events",
+      "Fetch Today's Events",
+      "Daily 7am Trigger",
+      "Aggregate Emails",
+      "Fetch Today's Emails"
+    ],
+    "Send Daily Briefing Email": [
+      "Briefing Composer Agent",
+      "Combine Agent Outputs",
+      "Email Sorting Agent",
+      "Calendar Summarizer Agent",
+      "Aggregate Events",
+      "Fetch Today's Events",
+      "Daily 7am Trigger",
+      "Aggregate Emails",
+      "Fetch Today's Emails"
+    ]
+  }
+}

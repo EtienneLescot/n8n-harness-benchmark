@@ -1,0 +1,72 @@
+{
+  "std_nac_1": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_nac_2": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_nac_3": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_nac_4": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_nac_5": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_mcp_1": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_mcp_2": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_mcp_3": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_mcp_4": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  },
+  "std_mcp_5": {
+    "correctness": 100,
+    "coverage": 100,
+    "validity": 100,
+    "graph": 100,
+    "invalid": 0
+  }
+}

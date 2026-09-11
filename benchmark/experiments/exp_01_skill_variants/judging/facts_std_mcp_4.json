@@ -1,0 +1,50 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 11,
+  "triggers": [
+    "Daily 7am Trigger"
+  ],
+  "maxMainDepth": 7,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Today Emails": [
+      "Daily 7am Trigger"
+    ],
+    "Email Sorting Agent": [
+      "Fetch Today Emails",
+      "Daily 7am Trigger"
+    ],
+    "Combine Agent Outputs": [
+      "Email Sorting Agent",
+      "Calendar Agent",
+      "Fetch Today Events",
+      "Daily 7am Trigger",
+      "Fetch Today Emails"
+    ],
+    "Fetch Today Events": [
+      "Daily 7am Trigger"
+    ],
+    "Calendar Agent": [
+      "Fetch Today Events",
+      "Daily 7am Trigger"
+    ],
+    "Dashboard Composer Agent": [
+      "Combine Agent Outputs",
+      "Email Sorting Agent",
+      "Calendar Agent",
+      "Fetch Today Events",
+      "Daily 7am Trigger",
+      "Fetch Today Emails"
+    ],
+    "Daily Briefing Dashboard": [
+      "Dashboard Composer Agent",
+      "Combine Agent Outputs",
+      "Email Sorting Agent",
+      "Calendar Agent",
+      "Fetch Today Events",
+      "Daily 7am Trigger",
+      "Fetch Today Emails"
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "experiment": "exp_01_skill_variants",
+  "createdAt": "2026-09-10T20:49:28.183Z",
+  "hypothesis": "The n8n-architect skill steers the builder in ways that cost quality. Arm B removes the examples-first steer. Arm C adds an explicit end-to-end answer check and stops the final step from absorbing the request verb.",
+  "baseline": "run_12 branch A scored 74 on quality, its terminal Code node delivering nothing.",
+  "underTest": "n8nac@2.6.0-rc.6, installed locally, no registry fetch.",
+  "heldConstant": "Same prompt verbatim, same model, same local install, identical AGENTS.md across arms, every documented command rewritten to the local binary on all three arms. Arm A is a fresh control rather than run_12, so that rewrite is held constant too.",
+  "userRequest": "Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.",
+  "arms": {
+    "arm_a": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\arm_a",
+      "workflowToken": "bench-864097ee"
+    },
+    "arm_b": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\arm_b",
+      "workflowToken": "bench-d96f6833"
+    },
+    "arm_c": {
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\arm_c",
+      "workflowToken": "bench-a1d21679"
+    }
+  }
+}

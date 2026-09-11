@@ -1,0 +1,50 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 11,
+  "triggers": [
+    "Every Day 7am"
+  ],
+  "maxMainDepth": 7,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Todays Emails": [
+      "Every Day 7am"
+    ],
+    "Format Email Summary": [
+      "Fetch Todays Emails",
+      "Every Day 7am"
+    ],
+    "Combine Emails and Calendar": [
+      "Format Email Summary",
+      "Format Calendar Summary",
+      "Fetch Todays Events",
+      "Every Day 7am",
+      "Fetch Todays Emails"
+    ],
+    "Fetch Todays Events": [
+      "Every Day 7am"
+    ],
+    "Format Calendar Summary": [
+      "Fetch Todays Events",
+      "Every Day 7am"
+    ],
+    "Daily Briefing Orchestrator": [
+      "Combine Emails and Calendar",
+      "Format Email Summary",
+      "Format Calendar Summary",
+      "Fetch Todays Events",
+      "Every Day 7am",
+      "Fetch Todays Emails"
+    ],
+    "Send Daily Briefing Email": [
+      "Daily Briefing Orchestrator",
+      "Combine Emails and Calendar",
+      "Format Email Summary",
+      "Format Calendar Summary",
+      "Fetch Todays Events",
+      "Every Day 7am",
+      "Fetch Todays Emails"
+    ]
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "generatedAt": "2026-09-11T09:10:06.762Z",
+  "underTest": "n8nac@2.6.0-rc.6 against n8n Native MCP, same instance, same prompt, same model",
+  "method": "5 builds per tool, 3 isolated judges per build, median of grades then median of build medians. No judge saw more than one workflow.",
+  "weights": {
+    "quality": 0.35,
+    "correctness": 0.3,
+    "tokenEfficiency": 0.2,
+    "buildTime": 0.15
+  },
+  "tools": {
+    "n8nac": {
+      "label": "n8n-as-code",
+      "labels": [
+        "std_nac_1",
+        "std_nac_2",
+        "std_nac_3",
+        "std_nac_4",
+        "std_nac_5"
+      ],
+      "builds": [
+        {
+          "label": "std_nac_1",
+          "grades": [
+            92,
+            86,
+            88
+          ],
+          "quality": 88,
+          "spread": 6,
+          "delivers": true,
+          "nodes": 10,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 150231,
+          "durationMs": 528192
+        },
+        {
+          "label": "std_nac_2",
+          "grades": [
+            88,
+            88,
+            92
+          ],
+          "quality": 88,
+          "spread": 4,
+          "delivers": true,
+          "nodes": 11,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 122589,
+          "durationMs": 378026
+        },
+        {
+          "label": "std_nac_3",
+          "grades": [
+            74,
+            72,
+            72
+          ],
+          "quality": 72,
+          "spread": 2,
+          "delivers": false,
+          "nodes": 10,
+          "agents": 3,
+          "terminal": "agent",
+          "tokens": 141352,
+          "durationMs": 487221
+        },
+        {
+          "label": "std_nac_4",
+          "grades": [
+            65,
+            74,
+            77
+          ],
+          "quality": 74,
+          "spread": 12,
+          "delivers": false,
+          "nodes": 12,
+          "agents": 3,
+          "terminal": "set",
+          "tokens": 133001,
+          "durationMs": 361051
+        },
+        {
+          "label": "std_nac_5",
+          "grades": [
+            93,
+            94,
+            95
+          ],
+          "quality": 94,
+          "spread": 2,
+          "delivers": true,
+          "nodes": 13,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 133331,
+          "durationMs": 392974
+        }
+      ],
+      "quality": 88,
+      "qualityRange": [
+        72,
+        94
+      ],
+      "allGrades": [
+        92,
+        86,
+        88,
+        88,
+        88,
+        92,
+        74,
+        72,
+        72,
+        65,
+        74,
+        77,
+        93,
+        94,
+        95
+      ],
+      "tokens": 133331,
+      "tokensRange": [
+        122589,
+        150231
+      ],
+      "duration": 392974,
+      "durationRange": [
+        361051,
+        528192
+      ],
+      "delivered": 3,
+      "correctness": 100,
+      "tokenEfficiency": 100,
+      "buildTime": 68.69,
+      "composite": 91.1
+    },
+    "native_mcp": {
+      "label": "n8n Native MCP",
+      "labels": [
+        "std_mcp_1",
+        "std_mcp_2",
+        "std_mcp_3",
+        "std_mcp_4",
+        "std_mcp_5"
+      ],
+      "builds": [
+        {
+          "label": "std_mcp_1",
+          "grades": [
+            87,
+            89,
+            85
+          ],
+          "quality": 87,
+          "spread": 4,
+          "delivers": true,
+          "nodes": 14,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 162080,
+          "durationMs": 294794
+        },
+        {
+          "label": "std_mcp_2",
+          "grades": [
+            89,
+            92,
+            93
+          ],
+          "quality": 92,
+          "spread": 4,
+          "delivers": true,
+          "nodes": 13,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 167929,
+          "durationMs": 442737
+        },
+        {
+          "label": "std_mcp_3",
+          "grades": [
+            91,
+            90,
+            92
+          ],
+          "quality": 91,
+          "spread": 2,
+          "delivers": true,
+          "nodes": 11,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 161248,
+          "durationMs": 314293
+        },
+        {
+          "label": "std_mcp_4",
+          "grades": [
+            68,
+            65,
+            73
+          ],
+          "quality": 68,
+          "spread": 8,
+          "delivers": false,
+          "nodes": 11,
+          "agents": 3,
+          "terminal": "set",
+          "tokens": 174341,
+          "durationMs": 309681
+        },
+        {
+          "label": "std_mcp_5",
+          "grades": [
+            88,
+            91,
+            87
+          ],
+          "quality": 88,
+          "spread": 4,
+          "delivers": true,
+          "nodes": 13,
+          "agents": 3,
+          "terminal": "gmail",
+          "tokens": 196917,
+          "durationMs": 458895
+        }
+      ],
+      "quality": 88,
+      "qualityRange": [
+        68,
+        92
+      ],
+      "allGrades": [
+        87,
+        89,
+        85,
+        89,
+        92,
+        93,
+        91,
+        90,
+        92,
+        68,
+        65,
+        73,
+        88,
+        91,
+        87
+      ],
+      "tokens": 167929,
+      "tokensRange": [
+        161248,
+        196917
+      ],
+      "duration": 314293,
+      "durationRange": [
+        294794,
+        458895
+      ],
+      "delivered": 4,
+      "correctness": 100,
+      "tokenEfficiency": 67.76,
+      "buildTime": 100,
+      "composite": 89.35
+    }
+  },
+  "note": "Correctness returned 100/100 on all ten artefacts, so it contributes the same 30 points to both composites and discriminates nothing at this level of maturity."
+}

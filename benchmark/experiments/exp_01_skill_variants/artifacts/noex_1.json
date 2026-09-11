@@ -1,0 +1,319 @@
+{
+  "id": "4d9R1EhNBx5bWsG0",
+  "name": "bench-c8697774",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T05:54:31.467Z",
+  "updatedAt": "2026-09-11T05:54:31.467Z",
+  "isArchived": false,
+  "versionId": "69934363-9d90-475d-b4ee-7d5d74a2987e",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "c43a98e1-5a73-4aa7-9331-1b227d0fbcfd",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e267f410-7424-4a80-8dcb-f3c7fe5709fe",
+      "name": "Gmail Tool",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        100
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 20,
+        "descriptionType": "manual",
+        "toolDescription": "Retrieve recent messages from the user's Gmail inbox to analyze and triage."
+      },
+      "webhookId": "3f4530b7-253f-4087-bc63-2b02e17b44dd"
+    },
+    {
+      "id": "9be8e39c-36ac-44fd-90f8-f127e158e5a5",
+      "name": "Email Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        520,
+        200
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "You are an email triage assistant. Use the Gmail tool to retrieve the user's recent inbox messages. Read the sender, subject, snippet and date of each message.\n\nSort the emails into three categories:\n1. Urgent - needs a reply today\n2. Important but not urgent\n3. Low priority / informational\n\nFor each category, list the emails with sender, subject, and a one-line summary of what it's about. If a category has no emails, say so briefly.\n\nOutput plain text only, organized under the three category headings above. Do not use HTML.",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "options": {}
+      }
+    },
+    {
+      "id": "d87477d2-bda0-4334-8baa-7cb17e6af7f9",
+      "name": "Google Calendar Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        260,
+        420
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "descriptionType": "manual",
+        "toolDescription": "Retrieve the user's calendar events for a given time range to review today's schedule."
+      }
+    },
+    {
+      "id": "9048a0ca-4c07-4fa6-a144-3c78971e1f4b",
+      "name": "Calendar Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        520,
+        420
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "You are a calendar assistant. Use the Google Calendar tool to retrieve today's events, from {{ $now.startOf('day').toISO() }} to {{ $now.endOf('day').toISO() }}.\n\nFor each event list: start time, title, and attendees if available. Note any back-to-back meetings or scheduling conflicts.\n\nOutput a plain-text list of today's events in chronological order, followed by one line noting how busy the day looks. Do not use HTML.",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "options": {}
+      }
+    },
+    {
+      "id": "e4fa14c3-6730-4d68-9b74-bf47a155d4d6",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        520,
+        620
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "208cb6db-e62a-449f-9af0-2106171b95e8",
+      "name": "Merge Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        780,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 2,
+        "options": {}
+      }
+    },
+    {
+      "id": "3ea8862d-859b-444b-8891-bfd3552d11c9",
+      "name": "Briefing Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1040,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "You are a personal assistant producing a daily briefing dashboard as a single self-contained HTML document.\n\nEMAIL SUMMARY:\n{{ $('Email Analyst Agent').item.json.output }}\n\nCALENDAR SUMMARY:\n{{ $('Calendar Analyst Agent').item.json.output }}\n\nProduce ONE complete HTML document (starting with <!DOCTYPE html>) with an inline <style> block and no external resources. Structure it as a dashboard with:\n- A header with today's date and a short greeting\n- A \"Calendar\" card summarizing today's events\n- An \"Inbox\" card with the three email priority categories\n- A clean, readable layout using cards/sections, a neutral color palette, and clear headings\n\nOutput ONLY the raw HTML document, nothing else - no markdown code fences, no commentary.",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "options": {}
+      }
+    },
+    {
+      "id": "01059788-94d3-4079-b60f-129aefbdafdd",
+      "name": "Send Daily Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "=Daily Briefing - {{ $now.format('cccc, LLLL d') }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "webhookId": "c2f7d555-e4f0-4aff-bb66-28e48644d87c"
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Briefing Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Analyst Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "4d9R1EhNBx5bWsG0",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T05:54:31.470Z",
+      "updatedAt": "2026-09-11T05:54:31.470Z"
+    }
+  ],
+  "activeVersion": null
+}

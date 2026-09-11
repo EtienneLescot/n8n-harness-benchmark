@@ -1,0 +1,289 @@
+{
+  "builds": [
+    {
+      "label": "noex_1",
+      "template": "n8nac_no_examples",
+      "token": "bench-c8697774",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\noex_1",
+      "preparedAt": "2026-09-11T05:48:32.333Z",
+      "workflowId": "4d9R1EhNBx5bWsG0",
+      "workflowName": "bench-c8697774",
+      "active": false,
+      "nodes": 9,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 125835,
+      "durationMs": 414378,
+      "archivedAt": "2026-09-11T05:56:17.014Z"
+    },
+    {
+      "label": "noex_2",
+      "template": "n8nac_no_examples",
+      "token": "bench-c378d8ed",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\noex_2",
+      "preparedAt": "2026-09-11T05:56:32.554Z",
+      "workflowId": "pjb0UrZVKusaL2fa",
+      "workflowName": "bench-c378d8ed",
+      "active": false,
+      "nodes": 12,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 139557,
+      "durationMs": 388760,
+      "archivedAt": "2026-09-11T06:03:22.148Z"
+    },
+    {
+      "label": "abl_1",
+      "template": "n8nac_examples_ablated",
+      "token": "bench-c0f2b7ba",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\abl_1",
+      "preparedAt": "2026-09-11T06:05:28.237Z",
+      "workflowId": "vD2QmE3zkmzQ9FaQ",
+      "workflowName": "bench-c0f2b7ba",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 134182,
+      "durationMs": 425602,
+      "archivedAt": "2026-09-11T06:12:59.938Z"
+    },
+    {
+      "label": "abl_2",
+      "template": "n8nac_examples_ablated",
+      "token": "bench-d42aefc6",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\abl_2",
+      "preparedAt": "2026-09-11T06:13:14.427Z",
+      "workflowId": "wJVS7BKpnN9f3dd4",
+      "workflowName": "bench-d42aefc6",
+      "active": false,
+      "nodes": 10,
+      "agents": 2,
+      "terminalTypes": [
+        "code"
+      ],
+      "delivers": false,
+      "tokens": 131627,
+      "durationMs": 307411,
+      "archivedAt": "2026-09-11T06:18:38.833Z"
+    },
+    {
+      "label": "abl_3",
+      "template": "n8nac_examples_ablated",
+      "token": "bench-fce8e0a1",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\abl_3",
+      "preparedAt": "2026-09-11T06:18:48.835Z",
+      "workflowId": "fwtTS9O0RjWch9AW",
+      "workflowName": "bench-fce8e0a1",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 148203,
+      "durationMs": 441459,
+      "archivedAt": "2026-09-11T06:26:32.262Z"
+    },
+    {
+      "label": "std_nac_1",
+      "template": "n8nac_control",
+      "token": "bench-3775ec12",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_nac_1",
+      "preparedAt": "2026-09-11T06:45:07.854Z",
+      "workflowId": "8YaqufTBi0r2AhwR",
+      "workflowName": "bench-3775ec12",
+      "active": false,
+      "nodes": 10,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 150231,
+      "durationMs": 528192,
+      "archivedAt": "2026-09-11T06:54:11.853Z"
+    },
+    {
+      "label": "std_nac_2",
+      "template": "n8nac_control",
+      "token": "bench-28e59959",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_nac_2",
+      "preparedAt": "2026-09-11T06:54:36.342Z",
+      "workflowId": "kzS43aqCN1XVIdDW",
+      "workflowName": "bench-28e59959",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 122589,
+      "durationMs": 378026,
+      "archivedAt": "2026-09-11T07:01:10.419Z"
+    },
+    {
+      "label": "std_nac_3",
+      "template": "n8nac_control",
+      "token": "bench-3e404f9f",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_nac_3",
+      "preparedAt": "2026-09-11T07:01:18.087Z",
+      "workflowId": "5nqBDc7jNJKYhZtw",
+      "workflowName": "bench-3e404f9f",
+      "active": false,
+      "nodes": 10,
+      "agents": 3,
+      "terminalTypes": [
+        "agent"
+      ],
+      "delivers": false,
+      "tokens": 141352,
+      "durationMs": 487221,
+      "archivedAt": "2026-09-11T07:09:42.099Z"
+    },
+    {
+      "label": "std_nac_4",
+      "template": "n8nac_control",
+      "token": "bench-3b6923d3",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_nac_4",
+      "preparedAt": "2026-09-11T07:09:53.225Z",
+      "workflowId": "4MUQZ0uExxw7O4IF",
+      "workflowName": "bench-3b6923d3",
+      "active": false,
+      "nodes": 12,
+      "agents": 3,
+      "terminalTypes": [
+        "set"
+      ],
+      "delivers": false,
+      "tokens": 133001,
+      "durationMs": 361051,
+      "archivedAt": "2026-09-11T07:16:11.208Z"
+    },
+    {
+      "label": "std_nac_5",
+      "template": "n8nac_control",
+      "token": "bench-b848b7b0",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_nac_5",
+      "preparedAt": "2026-09-11T07:16:19.074Z",
+      "workflowId": "v6i3Iz2LSgym3rLa",
+      "workflowName": "bench-b848b7b0",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 133331,
+      "durationMs": 392974,
+      "archivedAt": "2026-09-11T07:23:12.130Z"
+    },
+    {
+      "label": "std_mcp_1",
+      "template": "native_mcp",
+      "token": "bench-284b58da",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_mcp_1",
+      "preparedAt": "2026-09-11T07:23:12.497Z",
+      "workflowId": "uqsvq28IAN1NsXNz",
+      "workflowName": "bench-284b58da",
+      "active": false,
+      "nodes": 14,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 162080,
+      "durationMs": 294794,
+      "archivedAt": "2026-09-11T07:28:23.902Z"
+    },
+    {
+      "label": "std_mcp_2",
+      "template": "native_mcp",
+      "token": "bench-64d06449",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_mcp_2",
+      "preparedAt": "2026-09-11T07:28:24.185Z",
+      "workflowId": "JdkqkRsD8GEdpoB1",
+      "workflowName": "bench-64d06449",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 167929,
+      "durationMs": 442737,
+      "archivedAt": "2026-09-11T07:36:03.329Z"
+    },
+    {
+      "label": "std_mcp_3",
+      "template": "native_mcp",
+      "token": "bench-86955a61",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_mcp_3",
+      "preparedAt": "2026-09-11T07:36:03.598Z",
+      "workflowId": "T50Wr8BkWftiLSzD",
+      "workflowName": "bench-86955a61",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 161248,
+      "durationMs": 314293,
+      "archivedAt": "2026-09-11T07:41:33.805Z"
+    },
+    {
+      "label": "std_mcp_4",
+      "template": "native_mcp",
+      "token": "bench-a76add95",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_mcp_4",
+      "preparedAt": "2026-09-11T07:41:34.092Z",
+      "workflowId": "XznZCbwoctIqExdT",
+      "workflowName": "bench-a76add95",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "set"
+      ],
+      "delivers": false,
+      "tokens": 174341,
+      "durationMs": 309681,
+      "archivedAt": "2026-09-11T07:46:59.793Z"
+    },
+    {
+      "label": "std_mcp_5",
+      "template": "native_mcp",
+      "token": "bench-c721482a",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_01_skill_variants\\builds\\std_mcp_5",
+      "preparedAt": "2026-09-11T07:47:00.070Z",
+      "workflowId": "B0RPwTh0Mfjsnw7g",
+      "workflowName": "bench-c721482a",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 196917,
+      "durationMs": 458895,
+      "archivedAt": "2026-09-11T07:55:04.194Z"
+    }
+  ]
+}

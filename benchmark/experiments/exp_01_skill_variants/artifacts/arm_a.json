@@ -1,0 +1,365 @@
+{
+  "id": "ISi5wm7ttYJyYnWg",
+  "name": "bench-864097ee",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-10T20:57:33.369Z",
+  "updatedAt": "2026-09-10T20:57:33.369Z",
+  "isArchived": false,
+  "versionId": "7593ba35-fd5e-433b-84a9-7a18db667b94",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "3dd2f77f-f5f8-48ad-8223-232c88308f62",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1180,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "84445643-0b5f-4053-bb94-4d24126cdaea",
+      "name": "Get Todays Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        -180
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      },
+      "webhookId": "5ff5bc6f-b9eb-43fb-a7a6-f45a6c4c995d"
+    },
+    {
+      "id": "97968c6f-3250-445d-bd9e-c936bb31806c",
+      "name": "Format Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -740,
+        -180
+      ],
+      "parameters": {
+        "jsCode": "const lines = items.map((item, i) => {\n  const j = item.json;\n  const subject = j.subject || j.Subject || j.headers?.subject || '(no subject)';\n  const from = j.from || j.From || j.headers?.from || 'unknown sender';\n  const snippet = j.snippet || '';\n  return `${i + 1}. From: ${from} | Subject: ${subject}\\n   ${snippet}`;\n}).join('\\n');\n\nreturn [\n  {\n    json: {\n      emailSummary: lines || 'No new emails today.',\n    },\n  },\n];"
+      }
+    },
+    {
+      "id": "b59d51b9-4163-4a4d-8ecb-0b9d3e3e8c04",
+      "name": "Get Todays Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -960,
+        180
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "timeMin": "={{ $today.toISO() }}",
+        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "17e05c38-86ba-4e04-abf3-3103e2a709c4",
+      "name": "Format Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -740,
+        180
+      ],
+      "parameters": {
+        "jsCode": "const lines = items.map((item, i) => {\n  const j = item.json;\n  const start = j.start?.dateTime || j.start?.date || 'unknown time';\n  const summary = j.summary || '(no title)';\n  return `${i + 1}. ${summary} — ${start}`;\n}).join('\\n');\n\nreturn [\n  {\n    json: {\n      eventSummary: lines || 'No events scheduled today.',\n    },\n  },\n];"
+      }
+    },
+    {
+      "id": "b50787f2-7fcc-4b4d-82c3-60909e8c9c7c",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -520,
+        20
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b4319ff7-fa27-4720-802b-7103af4ac4d9",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -520,
+        -180
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here are today's emails:\n\n{{ $json.emailSummary }}\n\nSort them into three categories: Urgent / Needs Reply, FYI, and Newsletters / Low Priority. For each item list the sender and subject briefly. Keep the whole answer concise, plain text.",
+        "options": {
+          "systemMessage": "You are an email triage assistant. Categorize emails accurately and concisely. Do not invent emails that are not in the input."
+        }
+      }
+    },
+    {
+      "id": "1963ed13-3118-4198-bf97-1ce3789106e4",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -520,
+        180
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is today's calendar:\n\n{{ $json.eventSummary }}\n\nSummarize the day's schedule, flag any back-to-back meetings or scheduling conflicts, and note anything that needs prep. Keep the whole answer concise, plain text.",
+        "options": {
+          "systemMessage": "You are a calendar assistant. Summarize the schedule accurately and concisely. Do not invent events that are not in the input."
+        }
+      }
+    },
+    {
+      "id": "75a545f2-226a-4509-81ac-9b43f2b94667",
+      "name": "Merge Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -300,
+        0
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "ed17c244-9326-4c4c-b15e-0e8da7241876",
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -80,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Build a single, self-contained HTML daily briefing dashboard. Inline all CSS, no external resources or scripts. Use clear sections (cards or headers) for Emails and Calendar, and make it easy to scan.\n\nEmail summary:\n{{ $('Email Triage Agent').item.json.output }}\n\nCalendar summary:\n{{ $('Calendar Agent').item.json.output }}\n\nReturn ONLY the raw HTML document (starting with <!DOCTYPE html>), no markdown code fences and no commentary.",
+        "options": {
+          "systemMessage": "You are a dashboard designer. Output only valid, self-contained HTML with inline CSS. Never wrap the output in markdown code fences."
+        }
+      }
+    },
+    {
+      "id": "84f656e0-a7d6-41bf-b2ef-8e9a12360d15",
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        140,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "REPLACE_WITH_YOUR_EMAIL@example.com",
+        "subject": "=Daily Briefing — {{ $today.toFormat(\"DDDD\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "webhookId": "653df46e-5e52-4f40-892b-349495b2dd25"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Todays Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Todays Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Todays Emails": {
+      "main": [
+        [
+          {
+            "node": "Format Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Todays Events": {
+      "main": [
+        [
+          {
+            "node": "Format Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "ISi5wm7ttYJyYnWg",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-10T20:57:33.372Z",
+      "updatedAt": "2026-09-10T20:57:33.372Z"
+    }
+  ],
+  "activeVersion": null
+}

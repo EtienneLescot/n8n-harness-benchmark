@@ -1,0 +1,50 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 13,
+  "triggers": [
+    "Daily 7am Trigger"
+  ],
+  "maxMainDepth": 7,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Todays Emails": [
+      "Daily 7am Trigger"
+    ],
+    "Sort And Tag Emails": [
+      "Fetch Todays Emails",
+      "Daily 7am Trigger"
+    ],
+    "Combine Emails And Events": [
+      "Sort And Tag Emails",
+      "Sort And Tag Calendar Events",
+      "Fetch Todays Events",
+      "Daily 7am Trigger",
+      "Fetch Todays Emails"
+    ],
+    "Fetch Todays Events": [
+      "Daily 7am Trigger"
+    ],
+    "Sort And Tag Calendar Events": [
+      "Fetch Todays Events",
+      "Daily 7am Trigger"
+    ],
+    "Daily Briefing Orchestrator": [
+      "Combine Emails And Events",
+      "Sort And Tag Emails",
+      "Sort And Tag Calendar Events",
+      "Fetch Todays Events",
+      "Daily 7am Trigger",
+      "Fetch Todays Emails"
+    ],
+    "Send Daily Briefing Dashboard": [
+      "Daily Briefing Orchestrator",
+      "Combine Emails And Events",
+      "Sort And Tag Emails",
+      "Sort And Tag Calendar Events",
+      "Fetch Todays Events",
+      "Daily 7am Trigger",
+      "Fetch Todays Emails"
+    ]
+  }
+}

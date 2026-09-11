@@ -1,0 +1,320 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Daily 7am Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        304
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Fetch Today Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        112
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "receivedAfter": "={{ $today.toISO() }}",
+          "readStatus": "both"
+        }
+      }
+    },
+    {
+      "name": "Email Sorting Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are triaging the inbox for today. Here are the raw email items as JSON: {{ JSON.stringify($input.all().map(i => i.json)) }}. Sort them into three categories: Urgent, Action Needed, and FYI. For each item list the sender, subject and a one-line summary. If there are no emails, state that the inbox is clear.",
+        "options": {
+          "systemMessage": "You are an email triage assistant. Output a concise, categorized plain-text summary only."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "name": "Email Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        224
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Combine Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        304
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "name": "Fetch Today Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        512
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today.toISO() }}",
+        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        512
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are summarizing the calendar for today. Here are the raw event items as JSON: {{ JSON.stringify($input.all().map(i => i.json)) }}. Produce a clear chronological agenda: for each event list the time range, title, and any notable attendees or location. If there are no events, state that the day is free.",
+        "options": {
+          "systemMessage": "You are a calendar summarization assistant. Output a concise chronological agenda only."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "name": "Calendar Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        736
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1024,
+        304
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Combine the two summaries below into one complete, self-contained HTML daily briefing dashboard, using inline CSS only, no external assets or scripts. Include a header with the current date, a Schedule section for today, and an Inbox Highlights section. Return only the raw HTML document, starting with <!DOCTYPE html> and nothing else.\n\nEmail summary: {{ $(\"Email Sorting Agent\").item.json.output }}\n\nCalendar summary: {{ $(\"Calendar Agent\").item.json.output }}",
+        "options": {
+          "systemMessage": "You are a dashboard-generation assistant. You output only a complete, valid HTML document with inline CSS summarizing a daily briefing. No commentary, no markdown fences, just the raw HTML."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "name": "Dashboard Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1104,
+        528
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Daily Briefing Dashboard",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1376,
+        304
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dashboard-html",
+              "name": "dashboardHtml",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "generated-at",
+              "name": "generatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 7am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Today Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sorting Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Calendar Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Daily Briefing Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

@@ -1,0 +1,423 @@
+{
+  "id": "JdkqkRsD8GEdpoB1",
+  "name": "bench-64d06449",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T07:34:04.027Z",
+  "updatedAt": "2026-09-11T07:34:04.027Z",
+  "isArchived": false,
+  "versionId": "4574a57a-8aad-450f-b256-a3cdb6205042",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "456d15f7-7e5a-4181-ad9d-2e88f13c058c",
+      "name": "Daily 7am Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        200,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "7ca9ea88-c0d5-4c20-9628-89ba056309be",
+      "name": "Fetch Today's Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d",
+          "readStatus": "both"
+        }
+      },
+      "webhookId": "cc8ada39-3b19-4610-9472-51929360dc1d"
+    },
+    {
+      "id": "7a1f0421-808d-4ee9-9209-8251fcc53bdd",
+      "name": "Aggregate Emails",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        680,
+        220
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails"
+      }
+    },
+    {
+      "id": "14e7cc14-96ca-4874-a13a-63892d33e7c7",
+      "name": "Email Sorting Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        900,
+        220
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today's Gmail inbox as JSON:\n{{ JSON.stringify($json.emails) }}\n\nSort and group these emails into priority buckets.",
+        "options": {
+          "systemMessage": "You are the Email Sorting Agent in a daily briefing pipeline. You receive JSON describing the JSON.stringify emails from Gmail. Group them into four buckets in this order: Urgent, Action Needed, FYI, Low Priority. For every email give the sender, subject and a one-line gist. Return a concise plain-text summary organized by bucket, most urgent bucket first. Never invent emails that are not present in the input. If the input list is empty, say the inbox is clear."
+        }
+      }
+    },
+    {
+      "id": "48be389a-5fcb-4159-b7c1-66f8e3ee2c07",
+      "name": "Anthropic Model (Email Agent)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {},
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "id": "b424278f-0cb5-4979-a8ad-a294e5a6b27c",
+      "name": "Combine Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1160,
+        400
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition"
+      }
+    },
+    {
+      "id": "16236f5b-6d7e-4a4e-a218-4d0e3495b40f",
+      "name": "Fetch Today's Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        460,
+        580
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today }}",
+        "timeMax": "={{ $today.plus({ days: 1 }) }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "id": "963fcb34-895c-496b-bf2e-27f71d79fbda",
+      "name": "Aggregate Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        680,
+        580
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events"
+      }
+    },
+    {
+      "id": "7abf1fa9-baaf-44eb-9f5f-3e41a29f83f1",
+      "name": "Calendar Summarizer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        900,
+        580
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today's Google Calendar events as JSON:\n{{ JSON.stringify($json.events) }}\n\nBuild today's agenda.",
+        "options": {
+          "systemMessage": "You are the Calendar Summarizer Agent in a daily briefing pipeline. You receive JSON describing today's Google Calendar events. Produce a concise chronological plain-text agenda: time range, title, and location or attendees when present. Flag any back-to-back meetings with no gap between them. If the event list is empty, say the day is clear."
+        }
+      }
+    },
+    {
+      "id": "1f6df58e-eeb4-40b4-ba93-02280abf1419",
+      "name": "Anthropic Model (Calendar Agent)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        880,
+        460
+      ],
+      "parameters": {},
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "id": "b93e62fb-7a97-4975-8b44-cde72f549c06",
+      "name": "Briefing Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1400,
+        400
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Prioritized email summary:\n{{ $('Email Sorting Agent').item.json.output }}\n\nToday's calendar agenda:\n{{ $('Calendar Summarizer Agent').item.json.output }}\n\nCompose the complete HTML daily briefing dashboard now.",
+        "options": {
+          "systemMessage": "You are the Briefing Composer Agent, the final step of a daily briefing pipeline. You receive a prioritized email summary and a calendar agenda, each already produced by an upstream specialist agent. Combine them into one complete, self-contained HTML document: a styled daily briefing dashboard with a header showing today's date, a Schedule section built from the agenda, and an Inbox section broken down by priority bucket. Use inline CSS only, no external stylesheets and no script tags, so it renders correctly in email clients. Output ONLY the raw HTML document, starting with <!DOCTYPE html>, nothing else before or after it."
+        }
+      }
+    },
+    {
+      "id": "b9f13abd-b672-494d-9dd5-5efdd09b1f3d",
+      "name": "Anthropic Model (Briefing Agent)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        1160,
+        260
+      ],
+      "parameters": {},
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "id": "0c7378f8-d9b4-4aeb-86e9-5d22bca55654",
+      "name": "Send Daily Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1640,
+        400
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "=Daily Briefing - {{ $now.toFormat(\"cccc, LLLL d\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}"
+      },
+      "webhookId": "39d89221-65d3-4578-9cb4-a945e3fdb7ef"
+    }
+  ],
+  "connections": {
+    "Daily 7am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Today's Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today's Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today's Emails": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sorting Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Model (Email Agent)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today's Events": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Summarizer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Summarizer Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Anthropic Model (Calendar Agent)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Summarizer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Model (Briefing Agent)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "JdkqkRsD8GEdpoB1",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T07:34:04.029Z",
+      "updatedAt": "2026-09-11T07:34:04.029Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,78 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 14,
+  "triggers": [
+    "Every Morning"
+  ],
+  "maxMainDepth": 10,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Emails (Last 24h)": [
+      "Every Morning"
+    ],
+    "Email Triage Agent": [
+      "Fetch Emails (Last 24h)",
+      "Every Morning"
+    ],
+    "Label Email Summary": [
+      "Email Triage Agent",
+      "Fetch Emails (Last 24h)",
+      "Every Morning"
+    ],
+    "Combine Summaries": [
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Digest Agent",
+      "Fetch Events (Today)",
+      "Every Morning",
+      "Email Triage Agent",
+      "Fetch Emails (Last 24h)"
+    ],
+    "Fetch Events (Today)": [
+      "Every Morning"
+    ],
+    "Calendar Digest Agent": [
+      "Fetch Events (Today)",
+      "Every Morning"
+    ],
+    "Label Calendar Summary": [
+      "Calendar Digest Agent",
+      "Fetch Events (Today)",
+      "Every Morning"
+    ],
+    "Dashboard Composer Agent": [
+      "Combine Summaries",
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Digest Agent",
+      "Fetch Events (Today)",
+      "Every Morning",
+      "Email Triage Agent",
+      "Fetch Emails (Last 24h)"
+    ],
+    "Build Briefing Email Fields": [
+      "Dashboard Composer Agent",
+      "Combine Summaries",
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Digest Agent",
+      "Fetch Events (Today)",
+      "Every Morning",
+      "Email Triage Agent",
+      "Fetch Emails (Last 24h)"
+    ],
+    "Send Daily Briefing": [
+      "Build Briefing Email Fields",
+      "Dashboard Composer Agent",
+      "Combine Summaries",
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Digest Agent",
+      "Fetch Events (Today)",
+      "Every Morning",
+      "Email Triage Agent",
+      "Fetch Emails (Last 24h)"
+    ]
+  }
+}

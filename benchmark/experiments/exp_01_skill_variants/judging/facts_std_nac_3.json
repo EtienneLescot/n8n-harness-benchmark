@@ -1,0 +1,55 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 10,
+  "triggers": [
+    "Daily Trigger"
+  ],
+  "maxMainDepth": 8,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Today's Emails": [
+      "Daily Trigger"
+    ],
+    "Collect Emails": [
+      "Get Today's Emails",
+      "Daily Trigger"
+    ],
+    "Email Triage Agent": [
+      "Collect Emails",
+      "Get Today's Emails",
+      "Daily Trigger"
+    ],
+    "Get Today's Events": [
+      "Daily Trigger"
+    ],
+    "Collect Events": [
+      "Get Today's Events",
+      "Daily Trigger"
+    ],
+    "Calendar Analyst Agent": [
+      "Collect Events",
+      "Get Today's Events",
+      "Daily Trigger"
+    ],
+    "Wait For Both Agents": [
+      "Email Triage Agent",
+      "Calendar Analyst Agent",
+      "Collect Events",
+      "Get Today's Events",
+      "Daily Trigger",
+      "Collect Emails",
+      "Get Today's Emails"
+    ],
+    "Dashboard Composer Agent": [
+      "Wait For Both Agents",
+      "Email Triage Agent",
+      "Calendar Analyst Agent",
+      "Collect Events",
+      "Get Today's Events",
+      "Daily Trigger",
+      "Collect Emails",
+      "Get Today's Emails"
+    ]
+  }
+}

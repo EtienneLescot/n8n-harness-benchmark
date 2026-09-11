@@ -1,0 +1,438 @@
+{
+  "id": "fwtTS9O0RjWch9AW",
+  "name": "bench-fce8e0a1",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T06:25:15.503Z",
+  "updatedAt": "2026-09-11T06:25:15.503Z",
+  "isArchived": false,
+  "versionId": "70677902-1c45-431e-896c-b6acea2b1947",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "c25d1792-e344-4d5d-84d9-a6319cbe85ab",
+      "name": "Daily Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        200,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "24dfb704-7ed9-412d-bae7-39bb5b1e2321",
+      "name": "Fetch Recent Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        220
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "simple": true,
+        "filters": {
+          "receivedAfter": "={{ $now.minus({ hours: 24 }).toISO() }}"
+        }
+      },
+      "webhookId": "4b8530b4-4c7d-45b9-9426-fa3665fd9459"
+    },
+    {
+      "id": "59a24e9a-af5c-4935-b579-116551cc2bb3",
+      "name": "Fetch Today's Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        460,
+        580
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "timeMin": "={{ $now.startOf('day').toISO() }}",
+        "timeMax": "={{ $now.endOf('day').toISO() }}",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "a00c8b61-ddc9-4b46-bdb6-4b635f01bfa2",
+      "name": "Aggregate Emails",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        720,
+        220
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails"
+      }
+    },
+    {
+      "id": "a294beff-14a8-4109-bfa2-35ee0a18791e",
+      "name": "Aggregate Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        720,
+        580
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events"
+      }
+    },
+    {
+      "id": "7360a3f3-9e2d-430b-a21c-f00043fe8057",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        980,
+        900
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "id": "69819903-0d45-41f4-a200-475804711c67",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        980,
+        220
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.emails ? JSON.stringify($json.emails) : \"[]\" }}",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "options": {
+          "systemMessage": "You are an email triage assistant. You receive a JSON array of Gmail messages (subject, from, snippet, date). Group them into Urgent, Action Needed, and FYI. For each email write one short line: sender, subject, and why it matters. If the array is empty, say \"No new emails in the last 24 hours.\" Keep the whole response under 400 words, plain text, no markdown headers."
+        }
+      }
+    },
+    {
+      "id": "ee02af23-ea13-4b67-bc3e-4556340f1aea",
+      "name": "Calendar Digest Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        980,
+        580
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.events ? JSON.stringify($json.events) : \"[]\" }}",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "options": {
+          "systemMessage": "You are a calendar assistant. You receive a JSON array of today's Google Calendar events (summary, start, end, location, attendees). Produce a short chronological agenda, one line per event with time range, title, and location if present. Flag any back-to-back meetings with no gap. If the array is empty, say \"No events scheduled today.\" Plain text, no markdown headers."
+        }
+      }
+    },
+    {
+      "id": "b621e813-ba60-4928-b680-e033bf48a8e8",
+      "name": "Rename Email Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1240,
+        220
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "name": "emailSummary",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cecd3360-81db-4f2c-a0a5-8dbce6c19cf0",
+      "name": "Rename Calendar Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1240,
+        580
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "name": "calendarSummary",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5df7ccd1-6751-4f88-a3eb-d1e45df8f495",
+      "name": "Combine Summaries",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1500,
+        400
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition"
+      }
+    },
+    {
+      "id": "20f727a0-ed19-43ee-9c3a-934bf933b4fd",
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1760,
+        400
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'EMAIL SUMMARY:\\n' + $json.emailSummary + '\\n\\nCALENDAR SUMMARY:\\n' + $json.calendarSummary }}",
+        "hasOutputParser": false,
+        "needsFallback": false,
+        "options": {
+          "systemMessage": "You are a dashboard designer. You receive a plain-text email summary and a plain-text calendar summary. Output ONLY a complete, self-contained HTML document (starting with <!DOCTYPE html>) implementing a clean daily briefing dashboard with two sections: \"Today's Schedule\" and \"Inbox Summary\". Use inline CSS only, a readable sans-serif font, and simple cards or lists for each item. Do not include any commentary, explanations, or markdown code fences - output raw HTML only."
+        }
+      }
+    },
+    {
+      "id": "e841124e-41a6-44dd-ab39-0e77162a26c1",
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2020,
+        400
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "={{ 'Daily Briefing — ' + $now.toFormat('yyyy-LL-dd') }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}"
+      },
+      "webhookId": "186f8334-6445-496b-a613-0e68bc330add"
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today's Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Emails": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today's Events": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Digest Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Rename Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Digest Agent": {
+      "main": [
+        [
+          {
+            "node": "Rename Calendar Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Calendar Summary": {
+      "main": [
+        [
+          {
+            "node": "Combine Summaries",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine Summaries": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Digest Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "fwtTS9O0RjWch9AW",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T06:25:15.504Z",
+      "updatedAt": "2026-09-11T06:25:15.504Z"
+    }
+  ],
+  "activeVersion": null
+}

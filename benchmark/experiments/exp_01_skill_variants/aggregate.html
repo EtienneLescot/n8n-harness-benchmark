@@ -1,0 +1,298 @@
+<title>Agrégat du benchmark n8n</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root {
+    --ground: #F4F6F8; --panel: #FFFFFF; --ink: #141A21; --ink-soft: #48545F;
+    --ink-faint: #7C8792; --rule: #DCE2E8; --rule-soft: #EAEEF2;
+    --a: #0F6157; --a-wash: #DDECE9; --b: #7B3F86; --b-wash: #EDE1EF; --warn: #A8551A;
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1317; --panel: #161C22; --ink: #E8EDF1; --ink-soft: #A3AFB9;
+      --ink-faint: #6E7B86; --rule: #2A333B; --rule-soft: #212930;
+      --a: #4FBFAC; --a-wash: #16302D; --b: #C68BD1; --b-wash: #2C1F30; --warn: #D98B4E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0E1317; --panel: #161C22; --ink: #E8EDF1; --ink-soft: #A3AFB9;
+    --ink-faint: #6E7B86; --rule: #2A333B; --rule-soft: #212930;
+    --a: #4FBFAC; --a-wash: #16302D; --b: #C68BD1; --b-wash: #2C1F30; --warn: #D98B4E;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: var(--body);
+    font-size: 15px; line-height: 1.6; margin: 0; padding: 40px 24px 96px; }
+  .sheet { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink-faint); margin: 0 0 10px; }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 42px);
+    line-height: 1.08; letter-spacing: -.02em; margin: 0 0 14px; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 20px; letter-spacing: -.01em;
+    margin: 0 0 4px; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 600; font-size: 15px; margin: 0; }
+  p { margin: 0 0 12px; max-width: 66ch; color: var(--ink-soft); }
+  p.lede { color: var(--ink); font-size: 16.5px; }
+  p:last-child { margin-bottom: 0; }
+  section > .intro { margin-bottom: 22px; }
+  strong { color: var(--ink); font-weight: 600; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: var(--mono);
+    font-size: 12px; color: var(--ink-faint); }
+  .meta b { color: var(--ink-soft); font-weight: 500; }
+
+  .versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; }
+  .side { background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--tone);
+    padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 4px; }
+  .side.a { --tone: var(--a); } .side.b { --tone: var(--b); }
+  .side .who { font-family: var(--display); font-weight: 600; font-size: 15px; color: var(--tone); }
+  .side .composite { font-family: var(--mono); font-weight: 600; font-size: 40px;
+    letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .side .caption { font-size: 12.5px; color: var(--ink-faint); }
+  .gap { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; padding: 0 4px; }
+  .gap .delta { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink-soft); }
+  .gap .label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink-faint); }
+
+  .axes { display: flex; flex-direction: column; }
+  .axis { padding: 16px 0; border-top: 1px solid var(--rule-soft); display: flex;
+    flex-direction: column; gap: 8px; }
+  .axis:first-child { border-top: none; }
+  .axis-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .axis-name { font-family: var(--display); font-weight: 600; font-size: 15px; }
+  .axis-weight { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); }
+  .axis-note { font-size: 13px; color: var(--ink-faint); margin: 0; max-width: 64ch; }
+  .bars { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+  .barrow { display: grid; grid-template-columns: 108px 1fr 52px; gap: 12px; align-items: center; }
+  .barrow .tag { font-size: 12.5px; color: var(--ink-soft); }
+  .track { height: 10px; background: var(--rule-soft); position: relative; }
+  .fill { height: 100%; } .fill.a { background: var(--a); } .fill.b { background: var(--b); }
+  .barrow .val { font-family: var(--mono); font-size: 13px; text-align: right;
+    font-variant-numeric: tabular-nums; }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule-soft); }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 500; border-bottom: 1px solid var(--rule); }
+  td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums;
+    padding-right: 0; }
+  tr.total td { border-bottom: none; border-top: 1px solid var(--rule); font-weight: 600; color: var(--ink); }
+  td.a { color: var(--a); } td.b { color: var(--b); }
+  .no { color: var(--warn); font-weight: 600; }
+
+  .motifs { display: flex; flex-direction: column; gap: 0; }
+  .motif { display: grid; grid-template-columns: 74px 1fr; gap: 16px; padding: 14px 0;
+    border-top: 1px solid var(--rule-soft); align-items: start; }
+  .motif:first-child { border-top: none; }
+  .count { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink);
+    font-variant-numeric: tabular-nums; padding-top: 1px; }
+  .count span { display: block; font-size: 10px; font-weight: 400; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-faint); }
+  .motif p { margin: 0; font-size: 14px; max-width: 62ch; }
+  .motif q { display: block; margin-top: 6px; font-size: 13px; font-style: italic;
+    color: var(--ink-faint); quotes: "«\00a0" "\00a0»"; }
+
+  .callout { background: var(--panel); border: 1px solid var(--rule);
+    border-left: 3px solid var(--warn); padding: 18px 20px; }
+  .callout h3 { margin-bottom: 8px; }
+  .callout p { max-width: none; }
+
+  .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .note { background: var(--panel); border: 1px solid var(--rule); padding: 16px 18px; }
+  .note h3 { margin-bottom: 6px; }
+  .note p { font-size: 13.5px; max-width: none; margin-bottom: 0; }
+
+  code { font-family: var(--mono); font-size: .89em; background: var(--rule-soft); padding: 1px 5px; }
+  footer { border-top: 1px solid var(--rule); padding-top: 18px; font-size: 12.5px; color: var(--ink-faint); }
+  footer p { color: inherit; font-size: inherit; max-width: none; }
+
+  @media (max-width: 600px) {
+    .versus { grid-template-columns: 1fr; }
+    .gap { flex-direction: row; gap: 8px; padding: 4px 0; }
+    .barrow { grid-template-columns: 88px 1fr 46px; }
+    .motif { grid-template-columns: 62px 1fr; gap: 12px; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header>
+    <p class="eyebrow">Benchmark n8n · agrégat sur dix builds</p>
+    <h1>n8n-as-code contre n8n Native MCP</h1>
+    <p class="lede">Cinq constructions par outil, trente juges isolés, même demande et même modèle à chaque fois. Assez de tirages pour distinguer une propriété d'un accident.</p>
+    <div class="meta">
+      <span><b>Sous test</b> n8nac@2.6.0-rc.6</span>
+      <span><b>Builds</b> 5 + 5</span>
+      <span><b>Juges</b> 3 par build, isolés</span>
+      <span><b>Instance</b> n8n Cloud, nettoyée après chaque build</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="versus">
+      <div class="side a">
+        <span class="who">n8n-as-code</span>
+        <span class="composite">91,10</span>
+        <span class="caption">composite sur 100</span>
+      </div>
+      <div class="gap">
+        <span class="label">écart</span>
+        <span class="delta">1,75</span>
+      </div>
+      <div class="side b">
+        <span class="who">n8n Native MCP</span>
+        <span class="composite">89,35</span>
+        <span class="caption">composite sur 100</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Les quatre axes</h2>
+      <p>Qualité et correctness sont absolues, elles ont le prompt et le schéma serveur pour étalon. Les deux axes de coût sont relatifs: le moins cher prend 100, l'autre décroît selon l'écart.</p>
+    </div>
+
+    <div class="axes">
+      <div class="axis">
+        <div class="axis-head"><span class="axis-name">Qualité fonctionnelle</span><span class="axis-weight">poids 35 · absolue</span></div>
+        <p class="axis-note">Médiane des médianes: trois juges par build, cinq builds par outil. Égalité parfaite.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:88%"></span></span><span class="val">88</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:88%"></span></span><span class="val">88</span></div>
+        </div>
+      </div>
+
+      <div class="axis">
+        <div class="axis-head"><span class="axis-name">Correctness</span><span class="axis-weight">poids 30 · absolue</span></div>
+        <p class="axis-note">Audit déterministe sur les dix artefacts. Saturée: 100 partout, zéro nœud invalide, zéro orphelin, couverture complète des capacités demandées. Elle ne discrimine plus rien à ce niveau de maturité.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:100%"></span></span><span class="val">100</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:100%"></span></span><span class="val">100</span></div>
+        </div>
+      </div>
+
+      <div class="axis">
+        <div class="axis-head"><span class="axis-name">Tokens</span><span class="axis-weight">poids 20 · relative</span></div>
+        <p class="axis-note">Médianes 133 331 contre 167 929. Les deux distributions ne se chevauchent pas: n8n-as-code plafonne à 150 231, Native MCP démarre à 161 248.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:100%"></span></span><span class="val">100</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:67.76%"></span></span><span class="val">67,8</span></div>
+        </div>
+      </div>
+
+      <div class="axis">
+        <div class="axis-head"><span class="axis-name">Temps de construction</span><span class="axis-weight">poids 15 · relative</span></div>
+        <p class="axis-note">Médianes 393 s contre 314 s. Les étendues se chevauchent largement, 361 à 528 contre 295 à 459, donc l'écart est moins solide que celui des tokens.</p>
+        <div class="bars">
+          <div class="barrow"><span class="tag">n8n-as-code</span><span class="track"><span class="fill a" style="width:68.69%"></span></span><span class="val">68,7</span></div>
+          <div class="barrow"><span class="tag">Native MCP</span><span class="track"><span class="fill b" style="width:100%"></span></span><span class="val">100</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Synthèse des appréciations</h2>
+      <p>Les notes se moyennent, pas les phrases. J'ai donc regroupé les trente appréciations par motif et compté combien de juges citent chacun comme facteur décisif.</p>
+    </div>
+
+    <div class="motifs">
+      <div class="motif">
+        <span class="count">30/30<span>juges</span></span>
+        <p><strong>La livraison décide la note, des deux côtés.</strong> Chaque juge, sans exception et sans voir les autres, a nommé le nœud terminal comme facteur décisif: le dashboard atteint-il quelqu'un, ou meurt-il dans les données d'exécution. Aucun autre critère n'a jamais été décisif.
+        <q>the grade turns on the terminal edge</q></p>
+      </div>
+      <div class="motif">
+        <span class="count">11/30<span>juges</span></span>
+        <p><strong>Le dashboard livré par email reste une lecture étroite.</strong> Onze juges plafonnent volontairement leur note sous 90 pour cette raison, sur les deux outils. Aucun build des dix n'a produit une surface consultable et persistante.
+        <q>an emailed HTML body rather than a viewable surface</q></p>
+      </div>
+      <div class="motif">
+        <span class="count">10/30<span>juges</span></span>
+        <p><strong>Un nœud terminal incapable de livrer, par nature.</strong> Sur les trois builds qui ne livrent pas, les juges pointent que le dernier nœud est un <code>code</code> ou un <code>set</code>, c'est-à-dire un type qui n'a aucune capacité d'envoi, pas un envoi mal configuré.
+        <q>no node type capable of presenting anything exists anywhere in the graph</q></p>
+      </div>
+      <div class="motif">
+        <span class="count">4/30<span>juges</span></span>
+        <p><strong>Un nœud de fusion décoratif.</strong> Quatre juges relèvent un merge correctement câblé dont la sortie n'est jamais consommée: le compositeur va rechercher ses entrées par référence de nœud. Le câblage annonce une jointure qui n'a pas lieu. Observé sur les deux outils.</p>
+      </div>
+      <div class="motif">
+        <span class="count">3/30<span>juges</span></span>
+        <p><strong>Un nœud qui ne fait pas ce que son nom dit.</strong> Trois juges signalent un nœud nommé pour trier qui ne fait que remettre en forme, le tri réel étant délégué au modèle en aval.</p>
+      </div>
+      <div class="motif">
+        <span class="count">0/30<span>juges</span></span>
+        <p><strong>Aucun juge n'a reproché la décomposition multi-agent.</strong> Les dix builds obtiennent au moins 19 sur 25 sur l'idée et sur les liaisons. Trois agents pour les trois verbes de la demande, éventail depuis le déclencheur puis fusion: la forme est acquise chez les deux outils.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="callout">
+      <h3>Le seul vrai défaut est aléatoire, et il touche les deux outils</h3>
+      <p>Trois builds sur dix construisent le briefing HTML et ne le livrent nulle part. Deux viennent de n8n-as-code, un de Native MCP. Les sept autres finissent sur un envoi Gmail. Même outillage, même prompt, même modèle: c'est la variance entre tirages, pas une propriété.</p>
+      <p>C'est aussi pourquoi un run unique ne peut pas noter la qualité. Le run précédent, un build de chaque côté, avait donné 74 contre 87 sur exactement cet accident. Cinq builds par outil donnent 88 partout.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro">
+      <h2>Les dix builds</h2>
+      <p>Médiane des trois juges, et l'étendue de leurs notes.</p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Build</th><th>Outil</th><th class="n">Qualité</th><th>Notes des juges</th><th>Nœud terminal</th><th>Livre</th><th class="n">Tokens</th><th class="n">Durée</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td class="a">n8n-as-code</td><td class="n">88</td><td class="n">92 · 86 · 88</td><td>gmail</td><td>oui</td><td class="n">150 231</td><td class="n">528 s</td></tr>
+          <tr><td>2</td><td class="a">n8n-as-code</td><td class="n">88</td><td class="n">88 · 88 · 92</td><td>gmail</td><td>oui</td><td class="n">122 589</td><td class="n">378 s</td></tr>
+          <tr><td>3</td><td class="a">n8n-as-code</td><td class="n">72</td><td class="n">74 · 72 · 72</td><td>agent</td><td class="no">non</td><td class="n">141 352</td><td class="n">487 s</td></tr>
+          <tr><td>4</td><td class="a">n8n-as-code</td><td class="n">74</td><td class="n">65 · 74 · 77</td><td>set</td><td class="no">non</td><td class="n">133 001</td><td class="n">361 s</td></tr>
+          <tr><td>5</td><td class="a">n8n-as-code</td><td class="n">94</td><td class="n">93 · 94 · 95</td><td>gmail</td><td>oui</td><td class="n">133 331</td><td class="n">393 s</td></tr>
+          <tr><td>1</td><td class="b">Native MCP</td><td class="n">87</td><td class="n">87 · 89 · 85</td><td>gmail</td><td>oui</td><td class="n">162 080</td><td class="n">295 s</td></tr>
+          <tr><td>2</td><td class="b">Native MCP</td><td class="n">92</td><td class="n">89 · 92 · 93</td><td>gmail</td><td>oui</td><td class="n">167 929</td><td class="n">443 s</td></tr>
+          <tr><td>3</td><td class="b">Native MCP</td><td class="n">91</td><td class="n">91 · 90 · 92</td><td>gmail</td><td>oui</td><td class="n">161 248</td><td class="n">314 s</td></tr>
+          <tr><td>4</td><td class="b">Native MCP</td><td class="n">68</td><td class="n">68 · 65 · 73</td><td>set</td><td class="no">non</td><td class="n">174 341</td><td class="n">310 s</td></tr>
+          <tr><td>5</td><td class="b">Native MCP</td><td class="n">88</td><td class="n">88 · 91 · 87</td><td>gmail</td><td>oui</td><td class="n">196 917</td><td class="n">459 s</td></tr>
+          <tr class="total"><td colspan="2">Médiane par outil</td><td class="n">88 / 88</td><td class="n">—</td><td>—</td><td>3/5 · 4/5</td><td class="n">133 331 / 167 929</td><td class="n">393 / 314 s</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="intro"><h2>Ce que l'agrégat permet de dire, et ce qu'il ne permet pas</h2></div>
+    <div class="split">
+      <div class="note">
+        <h3>Solide: l'écart de tokens</h3>
+        <p>Les deux distributions sont disjointes sur cinq builds chacune. n8n-as-code consomme moins, et ce n'est pas un tirage heureux. C'est le seul axe où l'écart tient sans réserve.</p>
+      </div>
+      <div class="note">
+        <h3>Fragile: l'écart de durée</h3>
+        <p>Les étendues se recouvrent sur près de cent secondes. La médiane favorise Native MCP mais cinq builds ne suffisent pas à l'établir.</p>
+      </div>
+      <div class="note">
+        <h3>Nul: la qualité</h3>
+        <p>88 des deux côtés. Les distributions de notes se superposent presque entièrement. Aucun des deux outils ne produit de meilleurs workflows que l'autre sur cette demande.</p>
+      </div>
+      <div class="note">
+        <h3>Inutilisable: la correctness</h3>
+        <p>100 sur les dix artefacts. Elle contribue les mêmes 30 points aux deux composites. Elle vérifie que rien n'est cassé, ce qui n'arrive plus.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Composite pondéré: qualité 35, correctness 30, tokens 20, temps 15. L'écart final de 1,75 point provient entièrement des deux axes de coût, puisque qualité et correctness sont à égalité. Les juges ne voyaient qu'un workflow chacun, aveuglé, sans le nom de la branche, sans les scores de correctness et sans les coûts.</p>
+  </footer>
+
+</div>

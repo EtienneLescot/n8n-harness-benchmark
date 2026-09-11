@@ -1,0 +1,91 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 13,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 11,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Todays Emails": [
+      "Schedule Trigger"
+    ],
+    "Get Todays Events": [
+      "Schedule Trigger"
+    ],
+    "Format Emails": [
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Format Events": [
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Email Sorter Agent": [
+      "Format Emails",
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Calendar Agent": [
+      "Format Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Merge": [
+      "Email Sorter Agent",
+      "Calendar Agent",
+      "Format Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Format Emails",
+      "Get Todays Emails"
+    ],
+    "Build Dashboard Prompt": [
+      "Merge",
+      "Email Sorter Agent",
+      "Calendar Agent",
+      "Format Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Format Emails",
+      "Get Todays Emails"
+    ],
+    "Dashboard Composer Agent": [
+      "Build Dashboard Prompt",
+      "Merge",
+      "Email Sorter Agent",
+      "Calendar Agent",
+      "Format Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Format Emails",
+      "Get Todays Emails"
+    ],
+    "Extract Html": [
+      "Dashboard Composer Agent",
+      "Build Dashboard Prompt",
+      "Merge",
+      "Email Sorter Agent",
+      "Calendar Agent",
+      "Format Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Format Emails",
+      "Get Todays Emails"
+    ],
+    "Send Daily Briefing": [
+      "Extract Html",
+      "Dashboard Composer Agent",
+      "Build Dashboard Prompt",
+      "Merge",
+      "Email Sorter Agent",
+      "Calendar Agent",
+      "Format Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Format Emails",
+      "Get Todays Emails"
+    ]
+  }
+}

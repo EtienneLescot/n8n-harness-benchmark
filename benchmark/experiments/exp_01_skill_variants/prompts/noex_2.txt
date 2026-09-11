@@ -1,0 +1,15 @@
+Benchmark task, requested by the owner of this machine.
+
+Your workspace for this task is G:\repos\n8n-harness-benchmark\benchmark\experiments\exp_01_skill_variants\builds\noex_2. It exists; change into it first and stay there. Its toolchain is already installed and its .env holds the credentials you need.
+
+Operating rules:
+- Work only inside that directory. Do not read or run commands in parent or sibling directories.
+- Do not list, search for, or inspect existing workflows on the n8n instance.
+- Build your own workflow and use only the identifier returned when it is created.
+- Name the workflow exactly: bench-c378d8ed
+- Leave it inactive.
+- Never invent a credential value or create a credential. Nodes that need credentials are expected; add them with the credential slot left empty.
+- Write builder_log.json at the workspace root: startedAt and completedAt in UTC ISO, workflowId, workflowName, nodeCount, every command and tool call in order, and any friction you hit. No secrets. Do not grade your own work.
+
+Task:
+Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.

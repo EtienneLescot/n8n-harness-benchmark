@@ -1,0 +1,370 @@
+{
+  "id": "kzS43aqCN1XVIdDW",
+  "name": "bench-28e59959",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T07:00:14.209Z",
+  "updatedAt": "2026-09-11T07:00:14.209Z",
+  "isArchived": false,
+  "versionId": "e1cde3da-a9be-41dd-9109-d64bb7ab6979",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "ae9a346e-86a2-4242-8ead-9eecd361aa55",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "406dfc29-8bb5-4fbf-9ceb-421f3eca19be",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        140
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "q": "newer_than:1d"
+        }
+      },
+      "webhookId": "b481e4bb-224c-4e05-a528-818e96afc5b4"
+    },
+    {
+      "id": "dcd4b49b-21bb-49b8-a115-9c0ba86b9ca2",
+      "name": "Google Calendar",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        260,
+        460
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "timeMin": "={{ $today.toISO() }}",
+        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "528b17c9-0dfc-4e36-8783-481628c7c14d",
+      "name": "Prepare Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const emails = $input.all().map(i => i.json);\nreturn [{ json: { emailsJson: JSON.stringify(emails), count: emails.length } }];"
+      }
+    },
+    {
+      "id": "aec18f9b-07eb-4f40-8509-776c25ab1454",
+      "name": "Prepare Calendar Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const events = $input.all().map(i => i.json);\nreturn [{ json: { eventsJson: JSON.stringify(events), count: events.length } }];"
+      }
+    },
+    {
+      "id": "cd82abf0-8bf0-4646-8e99-d250c2413895",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        780,
+        760
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "id": "91f41bf6-5d27-4c44-b099-86b172c57e1c",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        780,
+        140
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.emailsJson }}",
+        "options": {
+          "systemMessage": "You are an email triage assistant. You receive a JSON array of raw Gmail message objects covering the last 24 hours. Categorize each message into one of: Urgent, Action Needed, FYI, Newsletter/Promotions. Output a clean HTML fragment only (no markdown, no code fences): one <h3> heading per non-empty category, followed by a <ul> with one <li> per email showing the sender, subject, and a one-line summary. If there are no emails, output '<p>No new emails.</p>'."
+        }
+      }
+    },
+    {
+      "id": "54284293-9c0d-4e15-a0ae-a9b7e9a78747",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        780,
+        460
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.eventsJson }}",
+        "options": {
+          "systemMessage": "You are a calendar assistant. You receive a JSON array of raw Google Calendar event objects for today. Summarize the day: list each event with its time range and title, and flag any overlapping or back-to-back meetings as conflicts. Output a clean HTML fragment only (no markdown, no code fences): a <ul> of events (<li> with time range and title), followed by a <p> noting conflicts or 'No conflicts.' if there are none. If there are no events, output '<p>No events scheduled today.</p>'."
+        }
+      }
+    },
+    {
+      "id": "26c125aa-3d9a-4518-96a3-d6106fc8d7a7",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1040,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "dcf33dc4-dd3f-4ec9-a035-6d6edaa45b4c",
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'EMAIL SUMMARY:\\n' + $('Email Triage Agent').first().json.output + '\\n\\nCALENDAR SUMMARY:\\n' + $('Calendar Agent').first().json.output }}",
+        "options": {
+          "systemMessage": "You are a daily briefing dashboard builder. You receive an HTML email summary and an HTML calendar summary. Combine them into one complete, self-contained HTML document: start with <!DOCTYPE html>, include an inline <style> block for a clean modern dashboard look (cards, readable fonts, light background), a header showing today's date, an 'Inbox' section containing the email summary, and a 'Today's Schedule' section containing the calendar summary. Return only the final HTML document, no markdown fences, no commentary."
+        }
+      }
+    },
+    {
+      "id": "bff84520-6f96-4571-866e-9a70fa827f05",
+      "name": "Send Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1560,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "={{ 'Daily Briefing - ' + $today.toFormat('yyyy-LL-dd') }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}"
+      },
+      "webhookId": "635ab9b4-6c9b-4f08-8ea0-efc8a647c451"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Prepare Calendar Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Calendar Data": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "kzS43aqCN1XVIdDW",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T07:00:14.211Z",
+      "updatedAt": "2026-09-11T07:00:14.211Z"
+    }
+  ],
+  "activeVersion": null
+}

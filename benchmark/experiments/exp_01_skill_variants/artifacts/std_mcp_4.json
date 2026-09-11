@@ -1,0 +1,383 @@
+{
+  "id": "XznZCbwoctIqExdT",
+  "name": "bench-a76add95",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T07:45:34.612Z",
+  "updatedAt": "2026-09-11T07:45:34.612Z",
+  "isArchived": false,
+  "versionId": "332ad99d-24a1-41a6-906f-3a7172071ff0",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "9d3033b4-01e2-47ae-9809-3b70aee0d790",
+      "name": "Daily 7am Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        304
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6a734309-4982-46a8-80ea-7cb3da47ad8a",
+      "name": "Fetch Today Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        112
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "simple": true,
+        "filters": {
+          "receivedAfter": "={{ $today.toISO() }}",
+          "readStatus": "both"
+        }
+      },
+      "webhookId": "963326a0-1597-4cfb-989a-2274280c9017"
+    },
+    {
+      "id": "ea4d0544-dc32-4905-9bc1-bd98cb310388",
+      "name": "Email Sorting Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are triaging the inbox for today. Here are the raw email items as JSON: {{ JSON.stringify($input.all().map(i => i.json)) }}. Sort them into three categories: Urgent, Action Needed, and FYI. For each item list the sender, subject and a one-line summary. If there are no emails, state that the inbox is clear.",
+        "options": {
+          "systemMessage": "You are an email triage assistant. Output a concise, categorized plain-text summary only."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "b6273109-c425-42ca-9ec2-9900fc2dd2e1",
+      "name": "Email Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        224
+      ],
+      "parameters": {},
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "a271b755-2f85-4ab3-a447-57e6d15be478",
+      "name": "Combine Agent Outputs",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        304
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "d7fa6a1e-49cb-4a03-a3b9-de1f4ac903d9",
+      "name": "Fetch Today Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        512
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today.toISO() }}",
+        "timeMax": "={{ $today.plus({ days: 1 }).toISO() }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "id": "aed99825-dbbc-44b7-8d8c-7649c62ba258",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        512
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are summarizing the calendar for today. Here are the raw event items as JSON: {{ JSON.stringify($input.all().map(i => i.json)) }}. Produce a clear chronological agenda: for each event list the time range, title, and any notable attendees or location. If there are no events, state that the day is free.",
+        "options": {
+          "systemMessage": "You are a calendar summarization assistant. Output a concise chronological agenda only."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "ee4da0c6-b593-42af-b37b-60ee87f728c2",
+      "name": "Calendar Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        736
+      ],
+      "parameters": {},
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "fad9aa59-ade0-4639-8f50-f08048f8bb1a",
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1024,
+        304
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Combine the two summaries below into one complete, self-contained HTML daily briefing dashboard, using inline CSS only, no external assets or scripts. Include a header with the current date, a Schedule section for today, and an Inbox Highlights section. Return only the raw HTML document, starting with <!DOCTYPE html> and nothing else.\n\nEmail summary: {{ $(\"Email Sorting Agent\").item.json.output }}\n\nCalendar summary: {{ $(\"Calendar Agent\").item.json.output }}",
+        "options": {
+          "systemMessage": "You are a dashboard-generation assistant. You output only a complete, valid HTML document with inline CSS summarizing a daily briefing. No commentary, no markdown fences, just the raw HTML."
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "d3a77ea0-9a93-4f7f-9448-586b071a3063",
+      "name": "Dashboard Agent Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1104,
+        528
+      ],
+      "parameters": {},
+      "credentials": {
+        "openAiApi": {
+          "id": "3tpHjeLbkX5PIuNM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "id": "a06e9fb8-d89d-42a4-b2e8-af08d0fc041b",
+      "name": "Daily Briefing Dashboard",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1376,
+        304
+      ],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dashboard-html",
+              "name": "dashboardHtml",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "generated-at",
+              "name": "generatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 7am Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Today Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Today Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sorting Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Calendar Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Daily Briefing Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Agent Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "XznZCbwoctIqExdT",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T07:45:34.614Z",
+      "updatedAt": "2026-09-11T07:45:34.614Z"
+    }
+  ],
+  "activeVersion": null
+}

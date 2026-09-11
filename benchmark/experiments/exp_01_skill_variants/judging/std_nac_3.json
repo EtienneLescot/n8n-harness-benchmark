@@ -1,0 +1,297 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -460,
+        260
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Today's Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        80
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "readStatus": "both",
+          "receivedAfter": "={{ $now.startOf('day') }}"
+        }
+      }
+    },
+    {
+      "name": "Collect Emails",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        20,
+        80
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails"
+      }
+    },
+    {
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        260,
+        80
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are an email triage assistant. You receive today's Gmail messages as a JSON array under 'emails' (subject, from, snippet, date for each). Sort every email into one of: Urgent, Action Needed, FYI, Newsletter/Promotional. For each category, list sender and subject on one line. If the array is empty, say there are no new emails today. Respond in plain text only, no HTML, no markdown code fences."
+        }
+      }
+    },
+    {
+      "name": "Get Today's Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -220,
+        400
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "id"
+        },
+        "timeMin": "={{ $now.startOf('day') }}",
+        "timeMax": "={{ $now.endOf('day') }}",
+        "returnAll": true,
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "name": "Collect Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        20,
+        400
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events"
+      }
+    },
+    {
+      "name": "Calendar Analyst Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        260,
+        400
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are a calendar analyst. You receive today's Google Calendar events as a JSON array under 'events' (summary, start, end, location, attendees for each). Summarize the day's schedule in chronological order, flag any back-to-back or overlapping meetings, and note free gaps longer than one hour. If the array is empty, say the day is free. Respond in plain text only, no HTML, no markdown code fences."
+        }
+      }
+    },
+    {
+      "name": "Wait For Both Agents",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        500,
+        240
+      ],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "name": "Dashboard Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        740,
+        240
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'Email summary:\\n' + $('Email Triage Agent').first().json.output + '\\n\\nCalendar summary:\\n' + $('Calendar Analyst Agent').first().json.output + '\\n\\nToday: ' + $now.format('cccc, LLLL d, yyyy') }}",
+        "options": {
+          "systemMessage": "You are an HTML report generator. You receive an email summary and a calendar summary for today. Produce exactly one complete, self-contained HTML document (starting with <!DOCTYPE html>, including <html>, a <head> with an inline <style> block, and a <body>) styled as a clean daily briefing dashboard with two clearly labeled sections, 'Inbox' and 'Schedule'. Use only inline CSS, no external resources or scripts. Return ONLY the raw HTML with no markdown code fences and no commentary before or after it."
+        }
+      }
+    },
+    {
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        500,
+        620
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "id"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Today's Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Today's Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today's Emails": {
+      "main": [
+        [
+          {
+            "node": "Collect Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today's Events": {
+      "main": [
+        [
+          {
+            "node": "Collect Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Wait For Both Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Analyst Agent": {
+      "main": [
+        [
+          {
+            "node": "Wait For Both Agents",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait For Both Agents": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Analyst Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}
