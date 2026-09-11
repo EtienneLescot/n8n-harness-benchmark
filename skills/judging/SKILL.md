@@ -184,11 +184,15 @@ results/history/<runId>/judging/
 
 ## What this skill does not do
 
-It detects what does not hold. It does not certify what is good. There is no predicate for
-ambition, and a judge asked to score it scores resemblance to its own idea of a good
-workflow — the model preference this benchmark spent its history removing from the rubric.
-Ambition is reported at weight 0 with no promotion path until someone demonstrates a
-predicate for it.
+It detects what does not hold. It does not certify what is good, and it never will: every
+family in the catalogue is a predicate that can return true about a defect, and there is no
+predicate for whether a workflow is a good answer.
+
+That question has since been given its own instrument rather than left unanswered. The
+quality panel in `references/QUALITY_RUBRIC.md` grades it absolutely against the prompt, at
+weight 35, and it is deliberately built on the opposite footing: no predicates, an explicit
+rubric, one workflow per judge, a citation per dimension, and a pairwise check that has to
+reproduce the ranking. The two judges answer different questions and must not be merged.
 
 ## References
 

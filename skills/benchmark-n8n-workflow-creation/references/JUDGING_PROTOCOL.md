@@ -291,9 +291,14 @@ It detects what **does not hold**. It does not certify what is **good**.
 
 The reward side — *is this workflow ambitious, intelligent, complete* — produces a reasoned
 report and carries **weight 0 with no promotion path defined**. Every family in section 5 is
-a predicate that can return true about a defect. There is no predicate for ambition, and a
-judge asked to score it will score resemblance to its own idea of a good workflow, which is
-exactly the model preference this benchmark spent its history removing from the rubric.
+a predicate that can return true about a defect. There is no predicate for ambition.
+
+That is still true, and it is why the question moved to a different instrument instead of
+being forced into this one. `../../judging/references/QUALITY_RUBRIC.md` grades quality
+absolutely against the prompt at weight 35, with no predicates and no pretence of being
+deterministic: an explicit rubric, one workflow per judge, a resolving citation per
+dimension, the median of three isolated judges, and a blind pairwise check that has to
+reproduce the ranking or the run says it did not.
 
 That is not a permanent verdict. It becomes scorable the day someone demonstrates a
 predicate for it, on the same terms as every other family: written down, run by the harness,

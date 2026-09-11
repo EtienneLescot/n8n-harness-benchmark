@@ -1,8 +1,12 @@
 # Standardized Benchmark Rubric (Ground-Truth API + Scale-Invariant Relative Cost)
 
-This rubric establishes a 100% deterministic, reproducible evaluation model. It eliminates
-subjective LLM grading in favour of **ground-truth n8n API validation** and **scale-invariant
-relative scoring** on every quantitative metric.
+Three of the four scored axes are deterministic and reproducible: **ground-truth n8n API
+validation** for correctness, and **scale-invariant relative scoring** on the two cost axes.
+
+The fourth is not. Quality is an absolute grade against the prompt, produced by a panel of
+language models under `../../judging/references/QUALITY_RUBRIC.md`. It carries the largest
+weight, so this document does not get to claim the benchmark is free of LLM judgement. What
+it claims instead is that the judgement is isolated, cited, and kept out of every other axis.
 
 > Every weight and every formula below is defined once, in `benchmark/harness/scoring.mjs`.
 > This document describes that module; it does not redefine it.
@@ -17,7 +21,7 @@ relative scoring** on every quantitative metric.
 | **2. Token Efficiency** | **35 %** | Prompt + completion tokens | $100 \times e^{-1.5(K_X/\min(K_A,K_B) - 1)}$ |
 | **3. Build Time** | **30 %** | External harness stopwatch | $100 \times e^{-1.5(T_X/\min(T_A,T_B) - 1)}$ |
 | *Setup ease* | *telemetry* | Installer log: friction (70 %) and commands (30 %) | Reported, not scored |
-| **Composite** | **100 %** | Weighted sum of the three scored dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
+| **Composite** | **100 %** | Weighted sum of the four scored dimensions | $\sum (\text{Weight}_i \times \text{Score}_i)$ |
 
 ---
 

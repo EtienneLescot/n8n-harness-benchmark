@@ -143,8 +143,8 @@ const AXES = [
     { lines: ['Workflow', 'build speed'], pick: (b) => b.scores?.buildTime },
 ];
 
-const R = 130;              // outer radius
-const CX = 250, CY = 216;   // centre of a 500x420 viewBox, low enough that a stacked
+const R = 126;              // outer radius
+const CX = 265, CY = 216;   // centre of a 500x420 viewBox, low enough that a stacked
 const NEWLINE = String.fromCharCode(10);
 
 /** Axis i sits at -90deg + i*60deg, so the first axis points straight up. */
@@ -218,7 +218,7 @@ function radarSvg(runs) {
         .join(joiner);
 
     const svg = [
-        `<svg viewBox="0 0 500 420" role="img" aria-label="Comparison across the three scored axes; further from the centre is better on every axis">`,
+        `<svg viewBox="0 0 580 420" role="img" aria-label="Comparison across the four scored axes; further from the centre is better on every axis">`,
         rings, spokes, shapes, dots, labels,
         `</svg>`,
     ].join(joiner);
@@ -231,14 +231,14 @@ function radarSvg(runs) {
  * on the first: these are the inside of one axis, not peers of correctness and cost.
  */
 const QUALITY_DIMS = [
-    { key: 'idea', label: 'The idea' },
-    { key: 'structure', label: 'Node structure' },
-    { key: 'connections', label: 'Connections' },
-    { key: 'answer', label: 'Answer to the prompt' },
+    { key: 'idea', label: 'The idea', lines: ['The idea'] },
+    { key: 'structure', label: 'Node structure', lines: ['Node structure'] },
+    { key: 'connections', label: 'Connections', lines: ['Connections'] },
+    { key: 'answer', label: 'Answer to the prompt', lines: ['Answer to', 'the prompt'] },
 ];
 
 function qualityRadarSvg(run) {
-    const CX2 = 250, CY2 = 200, R2 = 120, N = QUALITY_DIMS.length;
+    const CX2 = 280, CY2 = 200, R2 = 118, N = QUALITY_DIMS.length;
     const pt = (i, v, radius = R2) => {
         const a = (-90 + i * (360 / N)) * (Math.PI / 180);
         const r = (Math.max(0, Math.min(25, v)) / 25) * radius;
@@ -257,10 +257,14 @@ function qualityRadarSvg(run) {
         return `<line class="spoke" x1="${CX2}" y1="${CY2}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
     }).join(j);
     const labels = QUALITY_DIMS.map((d, i) => {
-        const [lx, ly] = out(i, R2 + 26);
+        const [lx, ly] = out(i, R2 + 22);
         const anchor = lx > CX2 + 8 ? "start" : lx < CX2 - 8 ? "end" : "middle";
-        const dy = ly < CY2 - 40 ? -6 : ly > CY2 + 40 ? 14 : 4;
-        return `<text class="axis-label" text-anchor="${anchor}" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}">${esc(d.label)}</text>`;
+        const lines = d.lines || [d.label];
+        // A label above the chart grows downward, so lift a stacked one clear of its vertex.
+        const dy = ly < CY2 - 40 ? -6 - (lines.length - 1) * 12 : ly > CY2 + 40 ? 14 : 4;
+        const tspans = lines.map((line, k) =>
+            `<tspan x="${lx.toFixed(1)}" dy="${k === 0 ? 0 : 12}">${esc(line)}</tspan>`).join("");
+        return `<text class="axis-label" text-anchor="${anchor}" x="${lx.toFixed(1)}" y="${(ly + dy).toFixed(1)}">${tspans}</text>`;
     }).join(j);
     const series = BRANCHES.map(({ key, label, cls }) => ({
         label, cls, values: QUALITY_DIMS.map((d) => run[key]?.qualityDimensions?.[d.key] ?? 0),
@@ -270,7 +274,7 @@ function qualityRadarSvg(run) {
         const [x, y] = pt(i, v);
         return `<circle class="dot ${s.cls}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"/>`;
     }).join("")).join(j);
-    return [`<svg viewBox="0 0 500 400" role="img" aria-label="The four quality dimensions, 25 points each">`,
+    return [`<svg viewBox="0 0 560 400" role="img" aria-label="The four quality dimensions, 25 points each">`,
         rings, spokes, shapes, dots, labels, `</svg>`].join(j);
 }
 
@@ -284,7 +288,7 @@ function qualityRadarSvg(run) {
  * individual builds.
  */
 function parallelSvg(run) {
-    const W = 620, H = 300, L = 54, Rm = 22, T = 34, B = 48;
+    const W = 620, H = 306, L = 60, Rm = 58, T = 34, B = 54;
     const n = QUALITY_DIMS.length;
     const x = (i) => L + (i * (W - L - Rm)) / (n - 1);
     const y = (v) => T + (1 - Math.max(0, Math.min(25, v)) / 25) * (H - T - B);
@@ -292,8 +296,11 @@ function parallelSvg(run) {
     const axes = QUALITY_DIMS.map((d, i) => {
         const xi = x(i).toFixed(1);
         const anchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+        const lines = d.lines || [d.label];
+        const tspans = lines.map((line, k) =>
+            `<tspan x="${xi}" dy="${k === 0 ? 0 : 12}">${esc(line)}</tspan>`).join("");
         return `<line class="spoke" x1="${xi}" y1="${T}" x2="${xi}" y2="${H - B}"/>`
-            + `<text class="axis-label" text-anchor="${anchor}" x="${xi}" y="${H - B + 18}">${esc(d.label)}</text>`;
+            + `<text class="axis-label" text-anchor="${anchor}" x="${xi}" y="${H - B + 18}">${tspans}</text>`;
     }).join(j);
     const grid = [0, 6.25, 12.5, 18.75, 25].map((v) => {
         const yy = y(v).toFixed(1);
@@ -371,7 +378,7 @@ function render(runs) {
         const m = r.metadata || {};
         const cells = BRANCHES.map(({ key }) =>
             `<td class="num ${key === 'n8nac' ? 'a-col' : 'b-col'}">${round(r[key]?.scores?.composite ?? 0, 1)}</td>`).join('');
-        return `        <tr><td><code>${esc(m.run || '?')}</code></td><td>${esc(m.harness || '?')}</td><td>${esc(m.model || '?')}</td>${cells}</tr>`;
+        return `        <tr><td>${esc(m.label || m.run || '?')}</td><td>${esc(m.harness || '?')}</td><td>${esc(m.model || '?')}</td>${cells}</tr>`;
     }).join('\n');
 
     const radar = radarSvg(scored);
@@ -480,7 +487,7 @@ function render(runs) {
 
 <header>
   <div class="wrap">
-    <div class="eyebrow">Deterministic benchmark · zero LLM judges</div>
+    <div class="eyebrow">Deterministic on three axes · judged on the fourth</div>
     <h1>n8n-as-code <span class="vs">vs</span> n8n Native MCP</h1>
     <p class="lede">
       Two AI agents get the same one-sentence brief, the same model, and the same n8n Cloud
@@ -495,9 +502,9 @@ function render(runs) {
 <section>
   <div class="wrap">
     <h2>Where each one gains and loses</h2>
-    <p class="sub">The three scored axes, each normalised 0-100. Further from the centre is better on
+    <p class="sub">The four scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
-      From <code>${esc(head?.metadata?.run || "?")}</code>, ${head?.metadata?.buildsPerBranch || 1} build(s) per tool and ${head?.metadata?.judgesPerBuild || 0} isolated judges per build.${older ? ` ${older} earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.` : ""}</p>
+      From the deepest run on the current weights: ${esc(head?.metadata?.label || "?")}, and ${head?.metadata?.judgesPerBuild || 0} isolated judges per build.${older ? ` ${older} earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.` : ""}</p>
     <div class="legend">${legend}</div>
     <div class="radar">
       ${radar.svg}
@@ -583,7 +590,7 @@ ${runRows}
         ? '<strong>One run.</strong> Every figure on this page comes from a single pair of builds, so none of the gaps are separated from run-to-run variance.'
         : `<strong>${n} runs.</strong> Gaps smaller than the spread between runs are not resolved.`}</li>
       <li>Correctness is a tie whenever both branches deploy a valid workflow that covers the brief, in which case the ranking is decided by the cost axes alone.</li>
-      <li><strong>Ambition is not measured.</strong> Correctness asks whether a workflow works and covers the brief. Whether it is elegant or inventive is a separate judgement, not implemented.</li>
+      <li><strong>Quality is judged, not computed.</strong> Correctness, tokens and build time are deterministic. Quality is an absolute grade against the prompt from three language models per build, isolated from each other and from the branch identity, each citing a JSON pointer. It carries the largest weight and it is the one axis a reader has to take on the strength of its method rather than its arithmetic.</li>
       <li>Runs from different harnesses and models are not numerically comparable to each other; only the two branches within a run are.</li>
     </ul>
   </div>
@@ -591,7 +598,7 @@ ${runRows}
 
 <footer>
   <div class="wrap">
-    Latest run: <code>${esc(latest?.metadata?.run || '?')}</code> ·
+    Latest: ${esc(latest?.metadata?.label || latest?.metadata?.run || '?')} ·
     <a href="https://github.com/EtienneLescot/n8n-harness-benchmark/tree/main/results/history">full reports, server audits and deployed workflows</a> ·
     <a href="https://github.com/EtienneLescot/n8n-harness-benchmark">repository</a> ·
     <a href="https://github.com/EtienneLescot/n8n-as-code">n8n-as-code</a>

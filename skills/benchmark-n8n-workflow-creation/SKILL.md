@@ -11,9 +11,9 @@ Use this skill when asked to benchmark, compare, or scientifically evaluate **n8
 
 ## 🎯 Hermetic Symmetrical Architecture: 2-Tier Execution + Deterministic Validation
 
-To achieve absolute scientific neutrality and eliminate subjective LLM evaluation:
+Correctness, tokens and build time are settled without inference. Quality is graded by an isolated LLM panel under `../judging/references/QUALITY_RUBRIC.md`, which is a separate phase with its own safeguards. The rules below are what keeps the two apart:
 1. **Zero Self-Evaluation**: No worker (Installer or Builder) grades or evaluates its own work. They produce only factual, raw execution traces.
-2. **Zero Subjective LLM Judges**: Replaced entirely by server-side ground truth via n8n's official `validate_node_config` RPC tool, graph topology inspection, and live cloud execution audits.
+2. **No LLM in correctness**: requirement coverage, node validity and graph integrity come from server-side ground truth via n8n's official `validate_node_config` RPC tool and graph topology inspection. No judge touches that axis, and a quality judge never sees its result.
 3. **Universal Confinement**: A strictly generic system prompt prevents agents from querying or listing existing workflows on the target instance:
    > *“STRICT PROHIBITION: You must NEVER list, search for, or inspect existing workflows on the n8n instance. You must only design your own workflow and interact solely with the identifier returned upon its creation.”*
 4. **Relative Cost Scoring**: latencies and token counts are scored against the better branch via $\text{Score} = 100 \times e^{-1.5(X/\min(A,B) - 1)}$ — scale-invariant, so only the A/B gap counts.
@@ -189,7 +189,7 @@ Spawn two independent builder subagents in their respective configured sandboxes
 ---
 
 ### Step 5: Phase 3 — Ground-Truth API Validation & Quality Audit (`validator.mjs`)
-Rather than relying on subjective LLM evaluator judges, quality is audited deterministically with **zero LLM inference** directly on the live n8n instance:
+Correctness is audited with **zero LLM inference** directly on the live n8n instance. This is the axis that asks whether the workflow works, not whether it is a good answer; that second question is the quality panel, in its own phase:
 
 ```bash
 # Validate any workflow directly against n8n Cloud server schemas:
