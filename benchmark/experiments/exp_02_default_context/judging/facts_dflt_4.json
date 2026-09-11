@@ -1,0 +1,66 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 11,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 9,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Fetch Todays Emails": [
+      "Schedule Trigger"
+    ],
+    "Fetch Todays Events": [
+      "Schedule Trigger"
+    ],
+    "Combine Emails": [
+      "Fetch Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Combine Events": [
+      "Fetch Todays Events",
+      "Schedule Trigger"
+    ],
+    "Email Triage Agent": [
+      "Combine Emails",
+      "Fetch Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Calendar Agent": [
+      "Combine Events",
+      "Fetch Todays Events",
+      "Schedule Trigger"
+    ],
+    "Combine Agent Outputs": [
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Combine Events",
+      "Fetch Todays Events",
+      "Schedule Trigger",
+      "Combine Emails",
+      "Fetch Todays Emails"
+    ],
+    "Briefing Composer Agent": [
+      "Combine Agent Outputs",
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Combine Events",
+      "Fetch Todays Events",
+      "Schedule Trigger",
+      "Combine Emails",
+      "Fetch Todays Emails"
+    ],
+    "Send Briefing Email": [
+      "Briefing Composer Agent",
+      "Combine Agent Outputs",
+      "Email Triage Agent",
+      "Calendar Agent",
+      "Combine Events",
+      "Fetch Todays Events",
+      "Schedule Trigger",
+      "Combine Emails",
+      "Fetch Todays Emails"
+    ]
+  }
+}

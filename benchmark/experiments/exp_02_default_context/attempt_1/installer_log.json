@@ -1,0 +1,51 @@
+{
+  "startedAt": "2026-09-11T11:25:41Z",
+  "completedAt": "2026-09-11T11:34:41Z",
+  "workspace": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_02_default_context\\install",
+  "target": {
+    "project": "n8n-as-code",
+    "repo": "https://github.com/EtienneLescot/n8n-as-code",
+    "requestedChannel": "latest prerelease"
+  },
+  "commands": [
+    { "order": 1, "command": "pwd && ls -la", "exitCode": 0, "note": "confirmed workspace dir exists, contains only .env" },
+    { "order": 2, "command": "cat .env | sed -E 's/=.*/=<redacted>/'", "exitCode": 0, "note": "keys present: N8N_HOST, N8N_API_KEY, N8N_NATIVE_MCP_URL, N8N_NATIVE_MCP_TOKEN; values not printed or logged" },
+    { "order": 3, "command": "node -v && npm -v && git --version && npx --version", "exitCode": 0, "note": "node v24.14.0, npm 11.1.0, git 2.48.1" },
+    { "order": 4, "command": "npm view n8n-as-code versions --json", "exitCode": 1, "note": "E404 - no npm package named n8n-as-code" },
+    { "order": 5, "command": "gh --version", "exitCode": 0 },
+    { "order": 6, "command": "gh release list --repo EtienneLescot/n8n-as-code -L 20", "exitCode": 0, "note": "latest prerelease tag identified: v2.6.0-rc.6 (2026-09-10), latest stable is v2.5.0" },
+    { "order": 7, "command": "gh release view v2.6.0-rc.6 --repo EtienneLescot/n8n-as-code", "exitCode": 0 },
+    { "order": 8, "command": "gh release view v2.6.0-rc.6 --repo EtienneLescot/n8n-as-code --json assets --jq '.assets[].name'", "exitCode": 0, "note": "no binary assets attached to the release; source-only tag" },
+    { "order": 9, "command": "gh api repos/EtienneLescot/n8n-as-code/contents/README.md -H 'Accept: application/vnd.github.raw' -F ref=v2.6.0-rc.6", "exitCode": 1, "note": "404 Not Found - -F with GET did not work as expected against the contents endpoint" },
+    { "order": 10, "command": "curl -sL https://raw.githubusercontent.com/EtienneLescot/n8n-as-code/v2.6.0-rc.6/README.md -o README_fetch.md", "exitCode": 0, "note": "README at that tag documents the actual npm CLI package name (n8nac) and the prerelease install instructions (n8nac@next)" },
+    { "order": 11, "command": "npm view n8nac dist-tags --json", "exitCode": 0, "note": "dist-tags: latest=2.5.0, rc=2.6.0-rc.1, next=2.6.0-rc.6 - confirms next tag == latest GitHub prerelease v2.6.0-rc.6" },
+    { "order": 12, "command": "rm -f README_fetch.md && npm init -y", "exitCode": 0, "note": "scratch readme removed; minimal package.json created so the install stays local to the workspace instead of touching the global npm prefix" },
+    { "order": 13, "command": "npm install n8nac@next", "exitCode": 0, "note": "299 packages added locally under node_modules; 7 moderate npm audit advisories reported by npm, not investigated further (out of scope)" },
+    { "order": 14, "command": "npx n8nac --version", "exitCode": 0, "note": "reports 2.6.0-rc.6, matching the GitHub prerelease tag and npm @next dist-tag" },
+    { "order": 15, "command": "npx n8nac env add --help", "exitCode": 0 },
+    { "order": 16, "command": "npx n8nac --help", "exitCode": 0, "note": "revealed 'setup' command auto-loads N8N_HOST/N8N_API_KEY from a workspace .env" },
+    { "order": 17, "command": "npx n8nac setup --help", "exitCode": 0 },
+    { "order": 18, "command": "npx n8nac setup --json", "exitCode": 0, "note": "connect-existing mode (default) picked up N8N_HOST/N8N_API_KEY from .env automatically; workspaceEnvironment resolved to https://etiennel.app.n8n.cloud" },
+    { "order": 19, "command": "curl -sL https://raw.githubusercontent.com/EtienneLescot/n8n-as-code/v2.6.0-rc.6/README.md | grep -n -i MCP", "exitCode": 0, "note": "README does not document N8N_NATIVE_MCP_* vars" },
+    { "order": 20, "command": "grep -rl N8N_NATIVE_MCP node_modules/n8nac", "exitCode": 0, "note": "found in dist/services/config-service.js" },
+    { "order": 21, "command": "grep -n N8N_NATIVE_MCP -A3 -B3 node_modules/n8nac/dist/services/config-service.js", "exitCode": 0, "note": "confirmed N8N_NATIVE_MCP_URL and N8N_NATIVE_MCP_TOKEN are read straight from workspace .env, same mechanism as N8N_HOST/N8N_API_KEY - no separate CLI command needed" },
+    { "order": 22, "command": "npx n8nac workspace --json", "exitCode": 1, "note": "unknown option --json on the 'workspace' group command; --json is only valid on subcommands like 'workspace status'" },
+    { "order": 23, "command": "npx n8nac workspace", "exitCode": 1, "note": "bare group command exits 1 and prints usage/help; a subcommand is required" },
+    { "order": 24, "command": "npx n8nac workspace status", "exitCode": 0, "note": "Instance: default, Project: Personal, Host: https://etiennel.app.n8n.cloud, Workflows path under workspace" },
+    { "order": 25, "command": "npx n8nac env status", "exitCode": 0, "note": "Access: ready - API key from .env accepted by the instance" }
+  ],
+  "deadEnds": [
+    "npm package 'n8n-as-code' does not exist on the npm registry; the published CLI package is named 'n8nac'",
+    "gh api contents endpoint with -F ref=<tag> for a GET request returned 404 instead of the file - used raw.githubusercontent.com instead",
+    "the v2.6.0-rc.6 GitHub release has no attached binary assets, install is via npm not a downloaded artifact",
+    "'n8nac workspace --json' is not a valid invocation; --json only exists on 'workspace status'"
+  ],
+  "outcome": {
+    "installedPackage": "n8nac",
+    "installedVersion": "2.6.0-rc.6",
+    "installMethod": "npm install n8nac@next (local, scoped to this workspace directory, no global install)",
+    "configuration": "npx n8nac setup (connect-existing mode) auto-loaded N8N_HOST and N8N_API_KEY from workspace .env; N8N_NATIVE_MCP_URL/N8N_NATIVE_MCP_TOKEN are read from the same .env by the CLI's config service",
+    "resolvedHost": "https://etiennel.app.n8n.cloud",
+    "workflowInspectionPerformed": false
+  }
+}

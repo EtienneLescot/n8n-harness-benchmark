@@ -1,0 +1,397 @@
+{
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "isArchived": false,
+  "sourceWorkflowId": null,
+  "nodes": [
+    {
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Todays Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        160
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "receivedAfter": "={{ $today.startOf('day').toISO() }}"
+        }
+      }
+    },
+    {
+      "name": "Combine Emails",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        520,
+        160
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails"
+      }
+    },
+    {
+      "name": "Get Todays Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        260,
+        440
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "timeMin": "={{ $today.startOf('day').toISO() }}",
+        "timeMax": "={{ $today.plus(1, 'day').startOf('day').toISO() }}",
+        "returnAll": true,
+        "options": {}
+      }
+    },
+    {
+      "name": "Combine Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        520,
+        440
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events"
+      }
+    },
+    {
+      "name": "Email Sorting Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        780,
+        160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will receive a JSON array of emails from the last 24 hours under the key \"emails\". Each item may have fields like from, subject, snippet, date, and labels.\n\nEMAILS:\n{{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are an email triage specialist. Read the provided emails and sort them into clear categories: Urgent / Needs Reply, Action Items, FYI / Informational, and Newsletters & Promotions. For each email, give a one-line summary with sender and subject. Output plain text with clear headings and short bullet points, ready to be embedded in an HTML report. Do not invent emails that are not in the input. If there are no emails, say so plainly."
+        }
+      }
+    },
+    {
+      "name": "Calendar Sorting Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        780,
+        440
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will receive a JSON array of calendar events for today under the key \"events\". Each item may have fields like summary, start, end, location, and attendees.\n\nEVENTS:\n{{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are a scheduling assistant. Read today's calendar events and sort them chronologically. Flag any back-to-back meetings or conflicts. For each event give time, title, and location/attendees in one line. Output plain text with clear headings and short bullet points, ready to be embedded in an HTML report. Do not invent events that are not in the input. If there are no events, say so plainly."
+        }
+      }
+    },
+    {
+      "name": "Rename Email Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        160
+      ],
+      "parameters": {
+        "mode": "manual",
+        "include": "all",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "emailSummary",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Rename Calendar Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        440
+      ],
+      "parameters": {
+        "mode": "manual",
+        "include": "all",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "calendarSummary",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Merge Summaries",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition"
+      }
+    },
+    {
+      "name": "Dashboard Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1560,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Build today's HTML daily briefing dashboard using the sorted information below.\n\nEMAIL SUMMARY:\n{{ $json.emailSummary }}\n\nCALENDAR SUMMARY:\n{{ $json.calendarSummary }}",
+        "options": {
+          "systemMessage": "You are a dashboard designer. Combine the email summary and the calendar summary you are given into a single, complete, self-contained HTML document (<html><head><style>...</style></head><body>...</body></html>), with inline CSS only and no external resources. Use a clean, readable layout with two clearly labeled sections, 'Inbox' and 'Calendar', a header with today's date, and a light color scheme. Output ONLY the raw HTML, nothing else: no markdown code fences, no explanation before or after it."
+        }
+      }
+    },
+    {
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1300,
+        620
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "etienne@etiennelescot.fr",
+        "subject": "=Daily Briefing — {{ $today.toFormat('cccc, LLLL d, yyyy') }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Todays Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Todays Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Todays Emails": {
+      "main": [
+        [
+          {
+            "node": "Combine Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Sorting Agent": {
+      "main": [
+        [
+          {
+            "node": "Rename Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge Summaries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Todays Events": {
+      "main": [
+        [
+          {
+            "node": "Combine Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Sorting Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Sorting Agent": {
+      "main": [
+        [
+          {
+            "node": "Rename Calendar Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rename Calendar Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge Summaries",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Summaries": {
+      "main": [
+        [
+          {
+            "node": "Dashboard Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dashboard Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Sorting Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Sorting Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Dashboard Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "activeVersion": null
+}

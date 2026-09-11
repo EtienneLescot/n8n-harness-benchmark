@@ -1,0 +1,275 @@
+{
+  "metadata": {
+    "run": "run_14",
+    "label": "2.6.0-rc.6 · 5 builds each · default agent context",
+    "date": "2026-09-11",
+    "harness": "Claude-Code",
+    "model": "claude-opus-5 orchestrator, sonnet workers",
+    "underTest": "n8nac@2.6.0-rc.6",
+    "buildsPerBranch": 5,
+    "judgesPerBuild": 3,
+    "note": "The n8n-as-code arm runs the agent context exactly as update-ai writes it, so every documented command is npx --yes n8nac@next and pays an npx startup plus a registry check. run_13 pointed the same commands at the local install with --cli-cmd. Native MCP is unchanged between the two and its five builds are reused."
+  },
+  "weights": {
+    "quality": 0.35,
+    "correctness": 0.3,
+    "tokenEfficiency": 0.2,
+    "buildTime": 0.15
+  },
+  "n8nac": {
+    "scores": {
+      "composite": 86.83,
+      "quality": 87.8,
+      "correctness": 100,
+      "tokenEfficiency": 100,
+      "buildTime": 40.66
+    },
+    "measured": {
+      "tokens": 143245,
+      "durationMs": 502852,
+      "deliveredOf": [
+        4,
+        5
+      ]
+    },
+    "qualityDimensions": {
+      "idea": 22.4,
+      "structure": 22.4,
+      "connections": 23.4,
+      "answer": 19.6
+    },
+    "builds": [
+      {
+        "label": "dflt_1",
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 24,
+          "answer": 23
+        },
+        "quality": 93,
+        "judgeTotals": [
+          88,
+          94,
+          94
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 157424,
+        "durationMs": 533376
+      },
+      {
+        "label": "dflt_2",
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 24,
+          "answer": 23
+        },
+        "quality": 93,
+        "judgeTotals": [
+          93,
+          88,
+          93
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 129250,
+        "durationMs": 502852
+      },
+      {
+        "label": "dflt_3",
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 24,
+          "answer": 22
+        },
+        "quality": 92,
+        "judgeTotals": [
+          91,
+          94,
+          89
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 144731,
+        "durationMs": 626453
+      },
+      {
+        "label": "dflt_4",
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 23,
+          "answer": 21
+        },
+        "quality": 88,
+        "judgeTotals": [
+          88,
+          85,
+          90
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 11,
+        "tokens": 125447,
+        "durationMs": 501552
+      },
+      {
+        "label": "dflt_5",
+        "dimensions": {
+          "idea": 21,
+          "structure": 21,
+          "connections": 22,
+          "answer": 9
+        },
+        "quality": 73,
+        "judgeTotals": [
+          73,
+          66,
+          73
+        ],
+        "delivers": false,
+        "terminal": "set",
+        "nodes": 15,
+        "tokens": 143245,
+        "durationMs": 480518
+      }
+    ]
+  },
+  "nativeMcp": {
+    "scores": {
+      "composite": 90.05,
+      "quality": 84.6,
+      "correctness": 100,
+      "tokenEfficiency": 77.22,
+      "buildTime": 100
+    },
+    "measured": {
+      "tokens": 167929,
+      "durationMs": 314293,
+      "deliveredOf": [
+        4,
+        5
+      ]
+    },
+    "qualityDimensions": {
+      "idea": 21.4,
+      "structure": 21.6,
+      "connections": 22.6,
+      "answer": 19
+    },
+    "builds": [
+      {
+        "label": "std_mcp_1",
+        "dimensions": {
+          "idea": 22,
+          "structure": 22,
+          "connections": 23,
+          "answer": 20
+        },
+        "quality": 87,
+        "judgeTotals": [
+          87,
+          89,
+          85
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 14,
+        "tokens": 162080,
+        "durationMs": 294794
+      },
+      {
+        "label": "std_mcp_2",
+        "dimensions": {
+          "idea": 23,
+          "structure": 23,
+          "connections": 23,
+          "answer": 22
+        },
+        "quality": 91,
+        "judgeTotals": [
+          89,
+          92,
+          93
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 167929,
+        "durationMs": 442737
+      },
+      {
+        "label": "std_mcp_3",
+        "dimensions": {
+          "idea": 22,
+          "structure": 23,
+          "connections": 23,
+          "answer": 23
+        },
+        "quality": 91,
+        "judgeTotals": [
+          91,
+          90,
+          92
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 11,
+        "tokens": 161248,
+        "durationMs": 314293
+      },
+      {
+        "label": "std_mcp_4",
+        "dimensions": {
+          "idea": 20,
+          "structure": 18,
+          "connections": 21,
+          "answer": 8
+        },
+        "quality": 67,
+        "judgeTotals": [
+          68,
+          65,
+          73
+        ],
+        "delivers": false,
+        "terminal": "set",
+        "nodes": 11,
+        "tokens": 174341,
+        "durationMs": 309681
+      },
+      {
+        "label": "std_mcp_5",
+        "dimensions": {
+          "idea": 20,
+          "structure": 22,
+          "connections": 23,
+          "answer": 22
+        },
+        "quality": 87,
+        "judgeTotals": [
+          88,
+          91,
+          87
+        ],
+        "delivers": true,
+        "terminal": "gmail",
+        "nodes": 13,
+        "tokens": 196917,
+        "durationMs": 458895
+      }
+    ]
+  },
+  "notes": [
+    "The ranking flips against run_13. Same tool, same version, same prompt, same instance: only the CLI invocation form in the generated agent context differs, and n8n-as-code falls from 68.7 to 40.7 on build time.",
+    "Quality moved the other way, 87.8 against 84.4, on one more delivering build out of five. That is inside the variance this benchmark has already measured, and it is not attributed to the context.",
+    "Three installers out of four, across both experiments, followed the README and stopped before `npx n8nac update-ai`, leaving no agent context at all. The context used here was generated by the harness rather than by an installer, which is recorded in the experiment manifest.",
+    "n8nac@2.6.0-rc.7 was published mid-run, at 12:21 UTC. All five sandboxes carry rc.6 locally, but the fifth build made four `npx --yes n8nac@next` calls during the switchover and they failed, which is itself a cost of the default form."
+  ]
+}

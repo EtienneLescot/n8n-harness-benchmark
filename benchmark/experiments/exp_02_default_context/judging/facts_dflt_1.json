@@ -1,0 +1,84 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 13,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 11,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Todays Emails": [
+      "Schedule Trigger"
+    ],
+    "Get Todays Events": [
+      "Schedule Trigger"
+    ],
+    "Aggregate Emails": [
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Aggregate Events": [
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Email Sorting Agent": [
+      "Aggregate Emails",
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Calendar Agent": [
+      "Aggregate Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Rename Email Output": [
+      "Email Sorting Agent",
+      "Aggregate Emails",
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Rename Calendar Output": [
+      "Calendar Agent",
+      "Aggregate Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Merge Briefings": [
+      "Rename Email Output",
+      "Rename Calendar Output",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Sorting Agent",
+      "Aggregate Emails",
+      "Get Todays Emails"
+    ],
+    "Compose HTML Dashboard": [
+      "Merge Briefings",
+      "Rename Email Output",
+      "Rename Calendar Output",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Sorting Agent",
+      "Aggregate Emails",
+      "Get Todays Emails"
+    ],
+    "Send Daily Briefing": [
+      "Compose HTML Dashboard",
+      "Merge Briefings",
+      "Rename Email Output",
+      "Rename Calendar Output",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Sorting Agent",
+      "Aggregate Emails",
+      "Get Todays Emails"
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "builds": [
+    {
+      "label": "dflt_1",
+      "template": "template",
+      "token": "bench-092fd2b7",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_02_default_context\\builds\\dflt_1",
+      "preparedAt": "2026-09-11T11:41:30.445Z",
+      "workflowId": "Fd5c8BeXakokSmom",
+      "workflowName": "bench-092fd2b7",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 157424,
+      "durationMs": 533376,
+      "archivedAt": "2026-09-11T11:50:39.786Z"
+    },
+    {
+      "label": "dflt_2",
+      "template": "template",
+      "token": "bench-6c58a259",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_02_default_context\\builds\\dflt_2",
+      "preparedAt": "2026-09-11T11:50:58.002Z",
+      "workflowId": "paw7J7aHPr0EO8rf",
+      "workflowName": "bench-6c58a259",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 129250,
+      "durationMs": 502852,
+      "archivedAt": "2026-09-11T11:59:42.224Z"
+    },
+    {
+      "label": "dflt_3",
+      "template": "template",
+      "token": "bench-2b44e97d",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_02_default_context\\builds\\dflt_3",
+      "preparedAt": "2026-09-11T12:00:06.966Z",
+      "workflowId": "4Ar2fq08GuMRFeZP",
+      "workflowName": "bench-2b44e97d",
+      "active": false,
+      "nodes": 13,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 144731,
+      "durationMs": 626453,
+      "archivedAt": "2026-09-11T12:10:53.500Z"
+    },
+    {
+      "label": "dflt_4",
+      "template": "template",
+      "token": "bench-2c421cea",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_02_default_context\\builds\\dflt_4",
+      "preparedAt": "2026-09-11T12:11:56.830Z",
+      "workflowId": "Qlosy0BjnB53oeir",
+      "workflowName": "bench-2c421cea",
+      "active": false,
+      "nodes": 11,
+      "agents": 3,
+      "terminalTypes": [
+        "gmail"
+      ],
+      "delivers": true,
+      "tokens": 125447,
+      "durationMs": 501552,
+      "archivedAt": "2026-09-11T12:20:35.662Z"
+    },
+    {
+      "label": "dflt_5",
+      "template": "template",
+      "token": "bench-3fcc3715",
+      "sandbox": "G:\\repos\\n8n-harness-benchmark\\benchmark\\experiments\\exp_02_default_context\\builds\\dflt_5",
+      "preparedAt": "2026-09-11T12:21:57.923Z",
+      "workflowId": "mBVx56RVn3YjkQ4c",
+      "workflowName": "bench-3fcc3715",
+      "active": false,
+      "nodes": 15,
+      "agents": 3,
+      "terminalTypes": [
+        "set"
+      ],
+      "delivers": false,
+      "tokens": 143245,
+      "durationMs": 480518,
+      "archivedAt": "2026-09-11T12:30:18.195Z"
+    }
+  ]
+}

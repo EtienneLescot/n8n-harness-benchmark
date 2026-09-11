@@ -1,0 +1,84 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 13,
+  "triggers": [
+    "Daily 7am Trigger"
+  ],
+  "maxMainDepth": 11,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Recent Emails": [
+      "Daily 7am Trigger"
+    ],
+    "Get Today Events": [
+      "Daily 7am Trigger"
+    ],
+    "Bundle Emails": [
+      "Get Recent Emails",
+      "Daily 7am Trigger"
+    ],
+    "Bundle Events": [
+      "Get Today Events",
+      "Daily 7am Trigger"
+    ],
+    "Email Sorting Agent": [
+      "Bundle Emails",
+      "Get Recent Emails",
+      "Daily 7am Trigger"
+    ],
+    "Calendar Sorting Agent": [
+      "Bundle Events",
+      "Get Today Events",
+      "Daily 7am Trigger"
+    ],
+    "Label Email Summary": [
+      "Email Sorting Agent",
+      "Bundle Emails",
+      "Get Recent Emails",
+      "Daily 7am Trigger"
+    ],
+    "Label Calendar Summary": [
+      "Calendar Sorting Agent",
+      "Bundle Events",
+      "Get Today Events",
+      "Daily 7am Trigger"
+    ],
+    "Join Summaries": [
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Sorting Agent",
+      "Bundle Events",
+      "Get Today Events",
+      "Daily 7am Trigger",
+      "Email Sorting Agent",
+      "Bundle Emails",
+      "Get Recent Emails"
+    ],
+    "Briefing Composer Agent": [
+      "Join Summaries",
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Sorting Agent",
+      "Bundle Events",
+      "Get Today Events",
+      "Daily 7am Trigger",
+      "Email Sorting Agent",
+      "Bundle Emails",
+      "Get Recent Emails"
+    ],
+    "Send Daily Briefing": [
+      "Briefing Composer Agent",
+      "Join Summaries",
+      "Label Email Summary",
+      "Label Calendar Summary",
+      "Calendar Sorting Agent",
+      "Bundle Events",
+      "Get Today Events",
+      "Daily 7am Trigger",
+      "Email Sorting Agent",
+      "Bundle Emails",
+      "Get Recent Emails"
+    ]
+  }
+}

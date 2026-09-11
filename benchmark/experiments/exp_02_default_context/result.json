@@ -1,0 +1,172 @@
+{
+  "question": "What does the default agent context cost, against the same tool with the CLI invocation pointed at the local install?",
+  "perBuild": [
+    {
+      "label": "dflt_1",
+      "dimensions": {
+        "idea": 23,
+        "structure": 23,
+        "connections": 24,
+        "answer": 23
+      },
+      "quality": 93,
+      "judgeTotals": [
+        88,
+        94,
+        94
+      ],
+      "delivers": true,
+      "terminal": "gmail",
+      "nodes": 13,
+      "tokens": 157424,
+      "durationMs": 533376
+    },
+    {
+      "label": "dflt_2",
+      "dimensions": {
+        "idea": 23,
+        "structure": 23,
+        "connections": 24,
+        "answer": 23
+      },
+      "quality": 93,
+      "judgeTotals": [
+        93,
+        88,
+        93
+      ],
+      "delivers": true,
+      "terminal": "gmail",
+      "nodes": 13,
+      "tokens": 129250,
+      "durationMs": 502852
+    },
+    {
+      "label": "dflt_3",
+      "dimensions": {
+        "idea": 23,
+        "structure": 23,
+        "connections": 24,
+        "answer": 22
+      },
+      "quality": 92,
+      "judgeTotals": [
+        91,
+        94,
+        89
+      ],
+      "delivers": true,
+      "terminal": "gmail",
+      "nodes": 13,
+      "tokens": 144731,
+      "durationMs": 626453
+    },
+    {
+      "label": "dflt_4",
+      "dimensions": {
+        "idea": 22,
+        "structure": 22,
+        "connections": 23,
+        "answer": 21
+      },
+      "quality": 88,
+      "judgeTotals": [
+        88,
+        85,
+        90
+      ],
+      "delivers": true,
+      "terminal": "gmail",
+      "nodes": 11,
+      "tokens": 125447,
+      "durationMs": 501552
+    },
+    {
+      "label": "dflt_5",
+      "dimensions": {
+        "idea": 21,
+        "structure": 21,
+        "connections": 22,
+        "answer": 9
+      },
+      "quality": 73,
+      "judgeTotals": [
+        73,
+        66,
+        73
+      ],
+      "delivers": false,
+      "terminal": "set",
+      "nodes": 15,
+      "tokens": 143245,
+      "durationMs": 480518
+    }
+  ],
+  "arms": {
+    "defaultContext": {
+      "label": "n8n-as-code, default context",
+      "quality": 87.8,
+      "dimensions": {
+        "idea": 22.4,
+        "structure": 22.4,
+        "connections": 23.4,
+        "answer": 19.6
+      },
+      "tokens": 143245,
+      "durationMs": 502852,
+      "delivered": [
+        4,
+        5
+      ]
+    },
+    "localCliContext": {
+      "label": "n8n-as-code, local-CLI context",
+      "quality": 84.4,
+      "dimensions": {
+        "idea": 21.8,
+        "structure": 21.8,
+        "connections": 23.4,
+        "answer": 17.4
+      },
+      "tokens": 133331,
+      "durationMs": 392974,
+      "delivered": [
+        3,
+        5
+      ]
+    },
+    "nativeMcp": {
+      "label": "n8n Native MCP",
+      "quality": 84.6,
+      "dimensions": {
+        "idea": 21.4,
+        "structure": 21.6,
+        "connections": 22.6,
+        "answer": 19
+      },
+      "tokens": 167929,
+      "durationMs": 314293,
+      "delivered": [
+        4,
+        5
+      ]
+    }
+  },
+  "headToHead": {
+    "note": "Default context against Native MCP, both on the same harness, model and instance. This is the pairing a user actually gets.",
+    "n8nac": {
+      "quality": 87.8,
+      "correctness": 100,
+      "tokenEfficiency": 100,
+      "buildTime": 40.66,
+      "composite": 86.83
+    },
+    "nativeMcp": {
+      "quality": 84.6,
+      "correctness": 100,
+      "tokenEfficiency": 77.22,
+      "buildTime": 100,
+      "composite": 90.05
+    }
+  }
+}

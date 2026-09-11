@@ -1,0 +1,29 @@
+{
+  "experiment": "exp_02_default_context",
+  "question": "Does the default agent context change anything, against the exp_01 arm whose AGENTS.md and skill were regenerated with --cli-cmd pointing at the local binary?",
+  "underTest": "n8nac@2.6.0-rc.6 from npm, agent context left exactly as update-ai writes it",
+  "comparators": "exp_01 std_nac_* (5 builds, local-CLI context) and std_mcp_* (5 builds, unchanged by this question)",
+  "installerAttempts": [
+    {
+      "attempt": 1,
+      "voided": true,
+      "tokens": 93401,
+      "durationMs": 344468,
+      "reason": "Ran npm install, setup and env status but never npx n8nac update-ai, so no AGENTS.md and no agent skill. Second time out of three that an installer following the README stopped before the fourth line of the CLI quick start."
+    },
+    {
+      "attempt": 2,
+      "voided": true,
+      "tokens": 78842,
+      "durationMs": 109563,
+      "reason": "Also stopped before update-ai, and installed globally so the workspace had no local CLI either. Three installers out of four, across two experiments, followed the README and stopped at the third of its four quick-start commands."
+    }
+  ],
+  "contextBuiltByHarness": {
+    "why": "The question is about the builder, not the installer. Two installers in a row produced no agent context, and re-rolling until one does is how a benchmark gets the answer it wanted rather than the answer it has.",
+    "how": "npm install n8nac@next locally, then env add, env auth set, env use and update-ai with no flags, so AGENTS.md and the skill carry the default form.",
+    "contrast": "exp_01 regenerated the same files with --cli-cmd set to the local binary, which removes an npx startup and a registry lookup from every documented command.",
+    "defaultForm": "npx --yes n8nac@next",
+    "occurrences": 98
+  }
+}

@@ -1,0 +1,372 @@
+{
+  "id": "Qlosy0BjnB53oeir",
+  "name": "bench-2c421cea",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T12:19:11.455Z",
+  "updatedAt": "2026-09-11T12:19:11.455Z",
+  "isArchived": false,
+  "versionId": "8cc22a8d-dd95-4037-a525-1688ea1a9a1d",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "384bf3d8-fe19-471e-8523-5e1df88b5ebd",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c5ed8254-86b5-4733-9388-714c7bea4322",
+      "name": "Fetch Todays Emails",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        280,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "q": "newer_than:1d",
+          "readStatus": "both"
+        }
+      },
+      "webhookId": "894f72cd-2d95-4626-a620-77b1e064f621"
+    },
+    {
+      "id": "d672735a-4c30-430e-b85a-1f09e3e6cfca",
+      "name": "Fetch Todays Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        280,
+        600
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $today.startOf(\"day\") }}",
+        "timeMax": "={{ $today.endOf(\"day\") }}",
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      }
+    },
+    {
+      "id": "f69de1d1-fa06-4dea-9e18-12ae896c628a",
+      "name": "Combine Emails",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        560,
+        0
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "emails"
+      }
+    },
+    {
+      "id": "139287b6-86a5-4a54-9177-8980bb434b25",
+      "name": "Combine Events",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        560,
+        600
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "events"
+      }
+    },
+    {
+      "id": "7f063a7e-386d-4ee5-85e9-073ce80dafa9",
+      "name": "Briefing Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        850,
+        900
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "id": "656e3298-a2cd-4754-b79e-fd0c97dfc74d",
+      "name": "Email Triage Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        850,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today's emails as JSON:\n{{ JSON.stringify($json.emails) }}",
+        "options": {
+          "systemMessage": "You are an email triage assistant. Read the list of today's emails (JSON array with sender, subject, snippet, date). Sort them into Urgent, Needs Reply, and FYI groups, dropping obvious newsletters/promotions into FYI. Respond with a concise plain-text summary organized under those three headings, one line per email (sender - subject)."
+        }
+      }
+    },
+    {
+      "id": "daa461bf-e638-4737-a516-117d6e508045",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        850,
+        600
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Today's calendar events as JSON:\n{{ JSON.stringify($json.events) }}",
+        "options": {
+          "systemMessage": "You are a calendar assistant. Read the list of today's events (JSON array with summary, start, end, location, attendees). Sort them chronologically and flag any back-to-back or overlapping meetings. Respond with a concise plain-text agenda, one line per event (time - title - location)."
+        }
+      }
+    },
+    {
+      "id": "5f8bc8bd-8036-407a-85f2-7a39f4b2ea2f",
+      "name": "Combine Agent Outputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1130,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const emailSummary = $('Email Triage Agent').first().json.output;\nconst calendarSummary = $('Calendar Agent').first().json.output;\nreturn [{ json: { emailSummary, calendarSummary } }];"
+      }
+    },
+    {
+      "id": "1065ca9f-0cd4-456f-92c8-37e74d1353ff",
+      "name": "Briefing Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email triage summary:\n{{ $json.emailSummary }}\n\nCalendar agenda:\n{{ $json.calendarSummary }}",
+        "options": {
+          "systemMessage": "You are a daily-briefing designer. Given an email triage summary and a calendar agenda, produce a single self-contained HTML page (inline <style>, no external assets) that presents an \"Daily Briefing Dashboard\": a header with today's date, an Agenda section rendering the calendar agenda as a timeline, and an Inbox section rendering the email triage groups as cards. Respond with ONLY the raw HTML document, no markdown code fences, no commentary."
+        }
+      }
+    },
+    {
+      "id": "938ab7d6-6b8b-4a60-a42a-599f500964ac",
+      "name": "Send Briefing Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "YOUR_EMAIL@example.com",
+        "subject": "=Daily Briefing Dashboard - {{ $today.toFormat(\"yyyy-LL-dd\") }}",
+        "emailType": "html",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "webhookId": "0b550262-c5cd-42e5-9804-081a52946ccd"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Todays Emails",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Todays Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Todays Emails": {
+      "main": [
+        [
+          {
+            "node": "Combine Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Todays Events": {
+      "main": [
+        [
+          {
+            "node": "Combine Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Emails": {
+      "main": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Events": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Triage Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Combine Agent Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Agent Outputs": {
+      "main": [
+        [
+          {
+            "node": "Briefing Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Briefing Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Triage Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Briefing Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "Qlosy0BjnB53oeir",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T12:19:11.457Z",
+      "updatedAt": "2026-09-11T12:19:11.457Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,84 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 15,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 11,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Gmail": [
+      "Schedule Trigger"
+    ],
+    "Aggregate Emails": [
+      "Gmail",
+      "Schedule Trigger"
+    ],
+    "Google Calendar": [
+      "Schedule Trigger"
+    ],
+    "Aggregate Events": [
+      "Google Calendar",
+      "Schedule Trigger"
+    ],
+    "Email Triage Agent": [
+      "Aggregate Emails",
+      "Gmail",
+      "Schedule Trigger"
+    ],
+    "Calendar Agent": [
+      "Aggregate Events",
+      "Google Calendar",
+      "Schedule Trigger"
+    ],
+    "Prepare Email Summary": [
+      "Email Triage Agent",
+      "Aggregate Emails",
+      "Gmail",
+      "Schedule Trigger"
+    ],
+    "Prepare Calendar Summary": [
+      "Calendar Agent",
+      "Aggregate Events",
+      "Google Calendar",
+      "Schedule Trigger"
+    ],
+    "Merge Summaries": [
+      "Prepare Email Summary",
+      "Prepare Calendar Summary",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Google Calendar",
+      "Schedule Trigger",
+      "Email Triage Agent",
+      "Aggregate Emails",
+      "Gmail"
+    ],
+    "Briefing Composer Agent": [
+      "Merge Summaries",
+      "Prepare Email Summary",
+      "Prepare Calendar Summary",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Google Calendar",
+      "Schedule Trigger",
+      "Email Triage Agent",
+      "Aggregate Emails",
+      "Gmail"
+    ],
+    "Daily Briefing Dashboard": [
+      "Briefing Composer Agent",
+      "Merge Summaries",
+      "Prepare Email Summary",
+      "Prepare Calendar Summary",
+      "Calendar Agent",
+      "Aggregate Events",
+      "Google Calendar",
+      "Schedule Trigger",
+      "Email Triage Agent",
+      "Aggregate Emails",
+      "Gmail"
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "executionOrder": "v1",
+  "functionalNodeCount": 13,
+  "triggers": [
+    "Schedule Trigger"
+  ],
+  "maxMainDepth": 11,
+  "unreachableFromTrigger": [],
+  "brokenReferences": [],
+  "waitsOn": {
+    "Get Todays Emails": [
+      "Schedule Trigger"
+    ],
+    "Combine Emails": [
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Get Todays Events": [
+      "Schedule Trigger"
+    ],
+    "Combine Events": [
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Email Sorting Agent": [
+      "Combine Emails",
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Calendar Sorting Agent": [
+      "Combine Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Rename Email Summary": [
+      "Email Sorting Agent",
+      "Combine Emails",
+      "Get Todays Emails",
+      "Schedule Trigger"
+    ],
+    "Rename Calendar Summary": [
+      "Calendar Sorting Agent",
+      "Combine Events",
+      "Get Todays Events",
+      "Schedule Trigger"
+    ],
+    "Merge Summaries": [
+      "Rename Email Summary",
+      "Rename Calendar Summary",
+      "Calendar Sorting Agent",
+      "Combine Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Sorting Agent",
+      "Combine Emails",
+      "Get Todays Emails"
+    ],
+    "Dashboard Agent": [
+      "Merge Summaries",
+      "Rename Email Summary",
+      "Rename Calendar Summary",
+      "Calendar Sorting Agent",
+      "Combine Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Sorting Agent",
+      "Combine Emails",
+      "Get Todays Emails"
+    ],
+    "Send Daily Briefing": [
+      "Dashboard Agent",
+      "Merge Summaries",
+      "Rename Email Summary",
+      "Rename Calendar Summary",
+      "Calendar Sorting Agent",
+      "Combine Events",
+      "Get Todays Events",
+      "Schedule Trigger",
+      "Email Sorting Agent",
+      "Combine Emails",
+      "Get Todays Emails"
+    ]
+  }
+}

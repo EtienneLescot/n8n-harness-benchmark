@@ -75,6 +75,9 @@ function sandboxesOf(runId, root = 'benchmark/sandboxes') {
 export function checkReady(runId, root = 'benchmark/sandboxes') {
     const problems = [];
     const sandboxes = sandboxesOf(runId, root);
+    if (sandboxes.length === 0) {
+        problems.push({ branch: '-', dir: root, issue: `no sandbox matched "${runId}_*" under ${root}` });
+    }
     for (const { dir, branch } of sandboxes) {
         for (const need of BRANCHES[branch].ready) {
             if (!fs.existsSync(path.join(dir, need.path))) {
@@ -89,7 +92,11 @@ export function checkReady(runId, root = 'benchmark/sandboxes') {
 export function checkUsed(runId, root = 'benchmark/sandboxes') {
     const problems = [];
     const summary = [];
-    for (const { dir, branch } of sandboxesOf(runId, root)) {
+    const found = sandboxesOf(runId, root);
+    if (found.length === 0) {
+        problems.push({ branch: '-', dir: root, issue: `no sandbox matched "${runId}_*" under ${root}` });
+    }
+    for (const { dir, branch } of found) {
         const logPath = path.join(dir, 'builder_log.json');
         if (!fs.existsSync(logPath)) {
             problems.push({ branch, dir, issue: 'no builder_log.json' });
@@ -178,19 +185,29 @@ function selfCheck() {
     mk('u3_n8nac', {});
     assert.strictEqual(checkUsed('u3', tmp).problems.length, 1, 'an absent builder log must not read as success');
 
+    // A run id that matches nothing used to come back green, which is a gate that reports
+    // success because it found nothing to test.
+    assert.strictEqual(checkReady('no_such_run', tmp).problems.length, 1, 'an empty match must fail the readiness gate');
+    assert.strictEqual(checkUsed('no_such_run', tmp).problems.length, 1, 'an empty match must fail the usage gate');
+
     fs.rmSync(tmp, { recursive: true, force: true });
     console.log('✅ toolchain-check self-check passed');
 }
 
 if (process.argv[1] && process.argv[1].endsWith('toolchain-check.mjs')) {
-    const runId = process.argv.find((a) => /^run_\d+$/.test(a));
+    // Any non-flag token is the run id; a second one overrides the sandbox root. The old form
+    // only recognised /^run_N$/ and passed undefined for anything else, which is how a gate
+    // ends up reporting on "undefined_*" and finding nothing wrong with it.
+    const positional = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+    const [runId, rootArg] = positional;
+    const rootDir = rootArg || 'benchmark/sandboxes';
     if (process.argv.includes('--self-check')) {
         selfCheck();
     } else if (process.argv.includes('--ready')) {
-        const { sandboxes, problems } = checkReady(runId);
+        const { sandboxes, problems } = checkReady(runId, rootDir);
         process.exit(report('Toolchain discoverable in every sandbox', problems, ` — ${sandboxes} sandbox(es).`));
     } else if (process.argv.includes('--used')) {
-        const { summary, problems } = checkUsed(runId);
+        const { summary, problems } = checkUsed(runId, rootDir);
         const line = summary.map((s) => `${s.branch}:${s.usedToolchain ? 'used' : 'BYPASSED'}`).join(' ');
         process.exit(report('Every builder drove its own toolchain', problems, ` — ${line}.`));
     } else {
