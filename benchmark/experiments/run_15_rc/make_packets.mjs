@@ -9,9 +9,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { blindWorkflow } from '../../harness/scoring.mjs';
 import { structuralFacts } from '../../harness/predicates.mjs';
+import { fileURLToPath } from 'node:url';
+
+/** This file lives at <repo>/benchmark/experiments/run_15_rc/, so the root is three levels up. */
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, '..', '..', '..');
 
 const NL = String.fromCharCode(10);
-const exp = 'G:/repos/n8n-harness-benchmark/benchmark/experiments/run_15_rc';
+const exp = path.join(ROOT, 'benchmark/experiments/run_15_rc');
 const outDir = path.join(exp, 'judging', 'packets');
 fs.mkdirSync(outDir, { recursive: true });
 

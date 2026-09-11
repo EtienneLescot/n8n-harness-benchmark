@@ -296,10 +296,13 @@ discoverable, and each branch needs a different thing:
   of four commands in the README quick start and the easiest to skip, because the first
   three already report success. `run_12` skipped it and the branch was void.
 - **n8n Native MCP** needs a usable caller seeded from
-  `benchmark/config/native-mcp-windows-helper/`. This is a harness artefact and it is
+  `benchmark/config/native-mcp-helper/`. This is a harness artefact and it is
   deliberate: n8n documents only how to configure an existing MCP client, with no HTTP or
   JSON-RPC example, so an agent without a client has no documented path at all. `run_10`
   worked because its installer copied that helper. Nothing else changed since.
+  Copy `mcp_call.mjs`: it is Node with no dependencies and runs wherever this harness runs.
+  The PowerShell files beside it are the Windows originals and are what made the benchmark
+  Windows-only in practice until run_15.
 
 Seed the helper into branch B before its installer runs. `EVALUATION_RUBRIC.md` already
 excludes acquisition seconds on both branches to compensate for artefacts like this one.

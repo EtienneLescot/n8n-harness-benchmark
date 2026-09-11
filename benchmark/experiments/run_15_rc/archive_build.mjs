@@ -6,8 +6,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = 'G:/repos/n8n-harness-benchmark';
+/** This file lives at <repo>/benchmark/experiments/run_15_rc/, so the root is three levels up. */
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, '..', '..', '..');
+
+const root = ROOT;
 const exp = path.join(root, 'benchmark/experiments/run_15_rc');
 const NL = String.fromCharCode(10);
 

@@ -10,10 +10,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
+/** This file lives at <repo>/benchmark/experiments/run_15_rc/, so the root is three levels up. */
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, '..', '..', '..');
 
 const NL = String.fromCharCode(10);
 const BSLASH = String.fromCharCode(92);
-const root = 'G:/repos/n8n-harness-benchmark';
+const root = ROOT;
 const exp = path.join(root, 'benchmark/experiments/run_15_rc');
 const builds = path.join(exp, 'builds');
 

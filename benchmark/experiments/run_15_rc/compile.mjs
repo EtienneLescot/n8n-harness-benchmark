@@ -7,9 +7,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { COMPOSITE_WEIGHTS, relativeScore, compositeScore } from '../../harness/scoring.mjs';
+import { fileURLToPath } from 'node:url';
+
+/** This file lives at <repo>/benchmark/experiments/run_15_rc/, so the root is three levels up. */
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(HERE, '..', '..', '..');
 
 const NL = String.fromCharCode(10);
-const exp = 'G:/repos/n8n-harness-benchmark/benchmark/experiments/run_15_rc';
+const exp = path.join(ROOT, 'benchmark/experiments/run_15_rc');
 const DIMS = ['idea', 'structure', 'connections', 'answer'];
 
 const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];

@@ -54,7 +54,7 @@ export const BRANCHES = {
         label: 'n8n Native MCP',
         ready: [
             { path: '.mcp.json', why: 'the client configuration n8n documents' },
-            { path: 'mcp_call.ps1', why: 'a usable MCP caller, seeded from benchmark/config/native-mcp-windows-helper' },
+            { path: ['mcp_call.mjs', 'mcp_call.ps1'], why: 'a usable MCP caller, seeded from benchmark/config/native-mcp-helper (the Node one runs anywhere, the PowerShell one is the Windows original)' },
         ],
         // `tools/call` is the JSON-RPC envelope, but the seeded helper writes it for the caller,
         // so a log can show real MCP work without carrying the literal. An MCP tool name is
@@ -87,8 +87,10 @@ export function checkReady(runId, root = 'benchmark/sandboxes') {
     }
     for (const { dir, branch } of sandboxes) {
         for (const need of BRANCHES[branch].ready) {
-            if (!fs.existsSync(path.join(dir, need.path))) {
-                problems.push({ branch, dir, missing: need.path, why: need.why });
+            // A marker may be a list of alternatives; any one of them satisfies it.
+            const candidates = Array.isArray(need.path) ? need.path : [need.path];
+            if (!candidates.some((rel) => fs.existsSync(path.join(dir, rel)))) {
+                problems.push({ branch, dir, missing: candidates.join(' or '), why: need.why });
             }
         }
     }
@@ -165,7 +167,14 @@ function selfCheck() {
     assert.strictEqual(res.sandboxes, 2, 'both branches must be found');
     assert.strictEqual(res.problems.length, 2, 'each branch is missing exactly its discovery surface');
     assert.ok(res.problems.some((p) => p.missing === 'AGENTS.md'));
-    assert.ok(res.problems.some((p) => p.missing === 'mcp_call.ps1'));
+    assert.ok(res.problems.some((p) => p.missing === 'mcp_call.mjs or mcp_call.ps1'));
+
+    // Either helper satisfies branch B. The PowerShell one was the original and only runs on
+    // Windows; the Node one runs wherever the harness does, which is what makes the benchmark
+    // reproducible on Linux and macOS.
+    mk('r3_n8nac', { 'node_modules/n8nac/package.json': '{}', 'AGENTS.md': '# guide' });
+    mk('r3_native_mcp', { '.mcp.json': '{}', 'mcp_call.mjs': 'export {}' });
+    assert.deepStrictEqual(checkReady('r3', tmp).problems, [], 'the Node helper alone must satisfy the gate');
 
     mk('r2_n8nac', { 'node_modules/n8nac/package.json': '{}', 'AGENTS.md': '# guide' });
     mk('r2_native_mcp', { '.mcp.json': '{}', 'mcp_call.ps1': 'param()' });
