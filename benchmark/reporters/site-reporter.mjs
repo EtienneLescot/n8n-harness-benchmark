@@ -542,9 +542,9 @@ function render(runs) {
     <p class="sub">The four scored axes, each normalised 0-100. Further from the centre is better on
       every one of them, tokens and seconds included: the axis is efficiency, not cost.
       Two of the four are relative, so a branch score on them moves when the <em>other</em> branch
-      moves. Between the last two runs Native MCP was not re-run at all, same builds, same tokens,
-      same seconds, and its token score still rose from 67.8 to 77.2 because n8n-as-code got more
-      expensive. A score going up does not always mean that branch did better.
+      moves. It happened here once: between two consecutive published runs Native MCP was not
+      re-run at all, same builds, same tokens, same seconds, and its token score still rose because
+      n8n-as-code had got more expensive. A score going up does not always mean that branch did better.
       Mean of ${scored.length} run${scored.length === 1 ? "" : "s"} on the current weights, across ${new Set(scored.map((r) => r.metadata?.harness).filter(Boolean)).size} orchestrator(s) and ${new Set(scored.map((r) => r.metadata?.model).filter(Boolean)).size} model(s). Every run is listed below.${older ? ` ${older} earlier run(s) are in that table but out of this chart: they were scored under a different weight scheme.` : ""}</p>
     <div class="legend">${legend}</div>
     <div class="radar">
@@ -576,8 +576,22 @@ ${deepRun ? `<section>
       then mean across builds.</p>
     <div class="legend">${legend}</div>
     <div class="chart">${qualityRadarSvg(deepRun)}</div>
-    <p class="sub">Three of the four dimensions are a dead heat. The whole difference sits on the last one,
-      and it is the delivery question: does the briefing reach anyone.</p>
+    ${(() => {
+      const gaps = QUALITY_DIMS.map((d) => ({
+        label: d.label.toLowerCase(),
+        gap: (deepRun.n8nac?.qualityDimensions?.[d.key] ?? 0) - (deepRun.nativeMcp?.qualityDimensions?.[d.key] ?? 0),
+      }));
+      const widest = gaps.reduce((a, b) => (Math.abs(b.gap) > Math.abs(a.gap) ? b : a));
+      const level = gaps.filter((g) => g !== widest && Math.abs(g.gap) < 1).length;
+      if (Math.abs(widest.gap) < 1) {
+        return '<p class="sub">No dimension separates the two tools in this run: the widest gap is under a point.</p>';
+      }
+      const ahead = widest.gap > 0 ? BRANCHES[0].label : BRANCHES[1].label;
+      return '<p class="sub">' + (level === 3 ? 'Three of the four dimensions are a dead heat, and the whole difference sits on one'
+        : level + ' of the four dimensions are level, and the difference sits mostly on one') +
+        ': <strong>' + esc(widest.label) + '</strong>, where ' + esc(ahead) + ' leads by ' +
+        Math.abs(widest.gap).toFixed(1) + ' of 25.</p>';
+    })()}
   </div>
 </section>
 
