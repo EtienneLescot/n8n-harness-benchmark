@@ -1,0 +1,28 @@
+{
+  "n8nac": {
+    "setupEaseTelemetry": 98.25,
+    "setupTime": 98.25,
+    "creationTime": 100,
+    "buildTime": 100,
+    "tokenConsumption": 100,
+    "tokenEfficiency": 100,
+    "tokens": 54670,
+    "workflowQuality": 76,
+    "quality": 76,
+    "correctness": 100,
+    "composite": 91.6
+  },
+  "nativeMcp": {
+    "setupEaseTelemetry": 100,
+    "setupTime": 100,
+    "creationTime": 95.9,
+    "buildTime": 95.9,
+    "tokenConsumption": 34.68,
+    "tokenEfficiency": 34.68,
+    "tokens": 93265,
+    "workflowQuality": 89,
+    "quality": 89,
+    "correctness": 100,
+    "composite": 82.47
+  }
+}

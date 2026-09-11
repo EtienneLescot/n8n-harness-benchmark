@@ -1,0 +1,600 @@
+{
+  "workflowId": "wf-02",
+  "workflow": {
+    "description": null,
+    "active": false,
+    "activeVersionId": null,
+    "isArchived": false,
+    "sourceWorkflowId": null,
+    "nodes": [
+      {
+        "name": "Daily 8AM Schedule",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          120,
+          240
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 8 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Initialize Daily Context",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          360,
+          320
+        ],
+        "parameters": {
+          "mode": "manual",
+          "assignments": {
+            "assignments": [
+              {
+                "id": "date-today",
+                "name": "todayDate",
+                "value": "={{ $today.toFormat(\"yyyy-MM-dd\") }}",
+                "type": "string"
+              },
+              {
+                "id": "date-display",
+                "name": "displayDate",
+                "value": "={{ $today.toFormat(\"cccc, MMMM d, yyyy\") }}",
+                "type": "string"
+              },
+              {
+                "id": "date-iso-start",
+                "name": "startOfDay",
+                "value": "={{ $today.startOf(\"day\").toISO() }}",
+                "type": "string"
+              },
+              {
+                "id": "date-iso-end",
+                "name": "endOfDay",
+                "value": "={{ $today.endOf(\"day\").toISO() }}",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "Manual Run Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          120,
+          420
+        ],
+        "parameters": {}
+      },
+      {
+        "name": "Email Triage Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          680,
+          240
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Today is {{ $json.displayDate }}. Inspect my Google emails using the Gmail Tool. Analyze unread and today's received messages. Sort and prioritize all items by urgency (Critical, High, Medium, Low), extract key senders, subjects, required actions, and deadlines, and categorize them into actionable groups.",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are an elite Email Triage Specialist. Fetch emails via Gmail Tool, evaluate each message with strict attention to urgency, deadlines, and required actions, and return a clean structured briefing."
+          }
+        }
+      },
+      {
+        "name": "Email Agent Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          600,
+          100
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4o"
+          },
+          "options": {
+            "temperature": 0.2
+          }
+        }
+      },
+      {
+        "name": "Gmail Tool",
+        "type": "n8n-nodes-base.gmailTool",
+        "typeVersion": 2.2,
+        "position": [
+          760,
+          100
+        ],
+        "parameters": {
+          "resource": "message",
+          "operation": "getAll",
+          "simple": true,
+          "filters": {
+            "readStatus": "both"
+          }
+        }
+      },
+      {
+        "name": "Email Structured Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          920,
+          100
+        ],
+        "parameters": {
+          "schemaType": "fromJson",
+          "jsonSchemaExample": "{\"totalEmailsChecked\":8,\"unreadCount\":3,\"urgentCount\":2,\"actionItems\":[{\"id\":\"msg-1\",\"sender\":\"vp-sales@enterprise.com\",\"subject\":\"Final contract approval needed before noon\",\"urgency\":\"Critical\",\"deadline\":\"12:00 PM\",\"actionRequired\":\"Review redlined terms and sign agreement\",\"category\":\"Action Required\"},{\"id\":\"msg-2\",\"sender\":\"sarah@partner.io\",\"subject\":\"Q3 Joint Roadmap feedback\",\"urgency\":\"High\",\"deadline\":\"End of Day\",\"actionRequired\":\"Send feedback on slide 8\",\"category\":\"Action Required\"}],\"categories\":[{\"category\":\"Action Required\",\"count\":2},{\"category\":\"Meeting Requests\",\"count\":1},{\"category\":\"Information & Updates\",\"count\":5}],\"summary\":\"2 urgent actions: Contract signature required before noon and partner roadmap feedback by EOD.\"}"
+        }
+      },
+      {
+        "name": "Combine Agent Insights",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          1020,
+          380
+        ],
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition"
+        }
+      },
+      {
+        "name": "Calendar Schedule Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          680,
+          520
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Today is {{ $json.displayDate }}. Inspect my Google Calendar using the Google Calendar Tool for all events scheduled between {{ $json.startOfDay }} and {{ $json.endOfDay }}. Sort events chronologically, detect any conflicting or overlapping times, compute total meeting duration, identify focus work blocks, and extract preparation requirements.",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are an elite Calendar Schedule Specialist. Fetch calendar events via Google Calendar Tool, organize the day chronologically, flag schedule bottlenecks, and output structured schedule intelligence."
+          }
+        }
+      },
+      {
+        "name": "Calendar Agent Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          600,
+          680
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4o"
+          },
+          "options": {
+            "temperature": 0.2
+          }
+        }
+      },
+      {
+        "name": "Google Calendar Tool",
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          760,
+          680
+        ],
+        "parameters": {
+          "resource": "event",
+          "operation": "getAll",
+          "calendar": {
+            "__rl": true,
+            "mode": "list",
+            "value": "primary"
+          },
+          "returnAll": true,
+          "timeMin": "={{ $(\"Initialize Daily Context\").item.json.startOfDay }}",
+          "timeMax": "={{ $(\"Initialize Daily Context\").item.json.endOfDay }}",
+          "options": {
+            "singleEvents": true,
+            "orderBy": "startTime"
+          }
+        }
+      },
+      {
+        "name": "Calendar Structured Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          920,
+          680
+        ],
+        "parameters": {
+          "schemaType": "fromJson",
+          "jsonSchemaExample": "{\"totalEvents\":3,\"totalMeetingHours\":3.5,\"focusHoursRemaining\":4.5,\"conflictsDetected\":0,\"eventsChronological\":[{\"id\":\"evt-1\",\"startTime\":\"09:30\",\"endTime\":\"10:30\",\"title\":\"Executive Staff Weekly Standup\",\"location\":\"Google Meet\",\"attendees\":[\"ceo@company.com\",\"cto@company.com\"],\"importance\":\"High\",\"prepNotes\":\"Review sprint velocity metrics\"},{\"id\":\"evt-2\",\"startTime\":\"11:00\",\"endTime\":\"12:00\",\"title\":\"Enterprise Client Demo: Alpha Corp\",\"location\":\"Zoom\",\"attendees\":[\"deal-lead@alphacorp.com\"],\"importance\":\"Critical\",\"prepNotes\":\"Verify demo sandbox environment\"},{\"id\":\"evt-3\",\"startTime\":\"15:00\",\"endTime\":\"16:30\",\"title\":\"Product Architecture Review\",\"location\":\"Conference Room A\",\"attendees\":[\"lead-architect@company.com\"],\"importance\":\"High\",\"prepNotes\":\"Read RFC-104 design doc beforehand\"}],\"focusBlocks\":[{\"start\":\"12:00\",\"end\":\"15:00\",\"durationMinutes\":180,\"recommendedUse\":\"Contract reviews & deep strategic work\"}],\"summary\":\"3 meetings scheduled today. 3-hour uninterrupted focus block from 12:00 to 15:00.\"}"
+        }
+      },
+      {
+        "name": "Briefing Synthesizer Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          1280,
+          380
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "=Review the email triage findings and calendar schedule for today ({{ $(\"Initialize Daily Context\").item.json.displayDate }}):\n\nEMAIL INTELLIGENCE:\n{{ JSON.stringify($(\"Email Triage Agent\").item.json.output || {}) }}\n\nCALENDAR SCHEDULE:\n{{ JSON.stringify($(\"Calendar Schedule Agent\").item.json.output || {}) }}\n\nSynthesize both data sources into a unified executive daily briefing. Correlate urgent emails with scheduled meetings (e.g. attendee topics or contract deadlines before demos). Construct an integrated chronological day timeline combining meetings, email actions, and focus blocks. Rank top daily priorities, compute an overall readiness score (0-100), and write 3 strategic executive recommendations.",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "You are the Chief of Staff Synthesizer Agent. You bridge communications and calendar commitments into a single coherent action plan for executive success."
+          }
+        }
+      },
+      {
+        "name": "Synthesizer Agent Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          1260,
+          200
+        ],
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4o"
+          },
+          "options": {
+            "temperature": 0.3
+          }
+        }
+      },
+      {
+        "name": "Briefing Structured Parser",
+        "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+        "typeVersion": 1.3,
+        "position": [
+          1420,
+          200
+        ],
+        "parameters": {
+          "schemaType": "fromJson",
+          "jsonSchemaExample": "{\"greeting\":\"Good morning! Here is your synthesized executive briefing for today.\",\"readinessScore\":92,\"topPriorities\":[{\"rank\":1,\"title\":\"Sign Enterprise Contract\",\"urgency\":\"Critical\",\"timeframe\":\"Before 12:00 PM\",\"detail\":\"Action item from VP Sales matches client meeting with Alpha Corp.\"},{\"rank\":2,\"title\":\"Enterprise Client Demo: Alpha Corp\",\"urgency\":\"Critical\",\"timeframe\":\"11:00 AM - 12:00 PM\",\"detail\":\"High-stakes demo with deal-lead@alphacorp.com.\"},{\"rank\":3,\"title\":\"Staff Standup & Metrics Review\",\"urgency\":\"High\",\"timeframe\":\"09:30 AM - 10:30 AM\",\"detail\":\"Present current sprint velocity metrics.\"}],\"dayTimeline\":[{\"time\":\"09:00 AM\",\"type\":\"Email Action\",\"item\":\"Triage overnight client responses & finalize demo notes\",\"status\":\"Action Required\"},{\"time\":\"09:30 AM - 10:30 AM\",\"type\":\"Meeting\",\"item\":\"Executive Staff Weekly Standup\",\"status\":\"Confirmed\"},{\"time\":\"11:00 AM - 12:00 PM\",\"type\":\"Meeting\",\"item\":\"Enterprise Client Demo: Alpha Corp\",\"status\":\"Critical\"},{\"time\":\"12:00 PM - 01:00 PM\",\"type\":\"Urgent Action\",\"item\":\"Review redlined terms and sign Enterprise contract\",\"status\":\"Critical Deadline\"},{\"time\":\"01:00 PM - 03:00 PM\",\"type\":\"Focus Block\",\"item\":\"Protected Deep Work: RFC-104 review & strategic planning\",\"status\":\"Protected\"},{\"time\":\"03:00 PM - 04:30 PM\",\"type\":\"Meeting\",\"item\":\"Product Architecture Review\",\"status\":\"Confirmed\"},{\"time\":\"05:00 PM\",\"type\":\"Email Action\",\"item\":\"Send Q3 Joint Roadmap feedback to Sarah\",\"status\":\"Pending EOD\"}],\"emailSummary\":{\"totalChecked\":8,\"unread\":3,\"urgent\":2,\"notes\":\"2 high-impact items require attention before 12:00 and EOD.\"},\"calendarSummary\":{\"totalEvents\":3,\"totalHours\":3.5,\"focusHours\":4.5,\"notes\":\"Well-paced day with a 3-hour protected focus block in the afternoon.\"},\"executiveRecommendations\":[\"Execute the contract signoff immediately after the Alpha Corp demo to capitalize on momentum.\",\"Keep the 1:00 PM - 3:00 PM block distraction-free to prepare for the Product Architecture Review.\",\"Clear the partner roadmap review before wrapping up the day.\"]}"
+        }
+      },
+      {
+        "name": "Build HTML Dashboard Code",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1560,
+          380
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "\nconst synth = $('Briefing Synthesizer Agent').first()?.json?.output || {};\nconst email = $('Email Triage Agent').first()?.json?.output || {};\nconst cal = $('Calendar Schedule Agent').first()?.json?.output || {};\nconst ctx = $('Initialize Daily Context').first()?.json || {};\n\nconst dateStr = ctx.displayDate || new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\nconst readiness = synth.readinessScore || 90;\nconst greeting = synth.greeting || 'Good morning! Here is your synthesized executive briefing for today.';\n\nconst priorities = synth.topPriorities || [];\nconst timeline = synth.dayTimeline || [];\nconst emailActions = email.actionItems || [];\nconst calendarEvents = cal.eventsChronological || [];\nconst recommendations = synth.executiveRecommendations || [];\n\nconst totalEmails = email.totalEmailsChecked || emailActions.length || 0;\nconst urgentEmails = email.urgentCount || emailActions.filter(a => a.urgency === 'Critical' || a.urgency === 'High').length || 0;\nconst totalMeetings = cal.totalEvents || calendarEvents.length || 0;\nconst focusHours = cal.focusHoursRemaining || 4.5;\n\nfunction badgeClass(urgency) {\n  const u = (urgency || '').toLowerCase();\n  if (u.includes('crit')) return 'badge-critical';\n  if (u.includes('high')) return 'badge-high';\n  if (u.includes('med')) return 'badge-medium';\n  return 'badge-low';\n}\n\nfunction timelineTypeBadge(type) {\n  const t = (type || '').toLowerCase();\n  if (t.includes('meet')) return 'pill-meeting';\n  if (t.includes('focus')) return 'pill-focus';\n  if (t.includes('action') || t.includes('dead')) return 'pill-urgent';\n  return 'pill-email';\n}\n\nconst prioritiesHtml = priorities.map((p, idx) => `\n  <div class=\"priority-card\">\n    <div class=\"priority-rank\">${p.rank || idx + 1}</div>\n    <div class=\"priority-content\">\n      <div class=\"priority-header\">\n        <span class=\"priority-title\">${p.title || ''}</span>\n        <span class=\"badge ${badgeClass(p.urgency)}\">${p.urgency || 'Normal'}</span>\n      </div>\n      <div class=\"priority-time\">${p.timeframe || ''}</div>\n      <div class=\"priority-desc\">${p.detail || ''}</div>\n    </div>\n  </div>\n`).join('');\n\nconst timelineHtml = timeline.map(t => `\n  <div class=\"timeline-row\">\n    <div class=\"timeline-time\">${t.time || ''}</div>\n    <div class=\"timeline-marker\"></div>\n    <div class=\"timeline-body\">\n      <div class=\"timeline-top\">\n        <span class=\"timeline-title\">${t.item || ''}</span>\n        <span class=\"pill ${timelineTypeBadge(t.type)}\">${t.type || 'Event'}</span>\n      </div>\n      <div class=\"timeline-status\">${t.status || ''}</div>\n    </div>\n  </div>\n`).join('');\n\nconst emailActionsHtml = emailActions.map(e => `\n  <div class=\"card-item\">\n    <div class=\"card-item-header\">\n      <span class=\"card-item-title\">${e.subject || 'Email Action'}</span>\n      <span class=\"badge ${badgeClass(e.urgency)}\">${e.urgency || 'Normal'}</span>\n    </div>\n    <div class=\"card-item-sub\">From: <strong>${e.sender || 'Unknown'}</strong> &bull; Deadline: <strong>${e.deadline || 'Today'}</strong></div>\n    <div class=\"card-item-desc\">${e.actionRequired || ''}</div>\n  </div>\n`).join('');\n\nconst calendarEventsHtml = calendarEvents.map(c => `\n  <div class=\"card-item\">\n    <div class=\"card-item-header\">\n      <span class=\"card-item-title\">${c.title || 'Meeting'}</span>\n      <span class=\"badge ${badgeClass(c.importance)}\">${c.importance || 'Normal'}</span>\n    </div>\n    <div class=\"card-item-sub\">${c.startTime || ''} - ${c.endTime || ''} &bull; ${c.location || 'Online'}</div>\n    ${c.prepNotes ? `<div class=\"card-item-desc\"><strong>Prep:</strong> ${c.prepNotes}</div>` : ''}\n  </div>\n`).join('');\n\nconst recommendationsHtml = recommendations.map((r, i) => `\n  <li class=\"recom-item\">\n    <span class=\"recom-num\">${i + 1}</span>\n    <span class=\"recom-text\">${r}</span>\n  </li>\n`).join('');\n\nconst fullHtml = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Daily Executive Briefing Dashboard</title>\n  <style>\n    :root {\n      --bg: #0f172a;\n      --card-bg: #1e293b;\n      --card-sub: #283548;\n      --text: #f8fafc;\n      --text-muted: #94a3b8;\n      --primary: #38bdf8;\n      --accent: #818cf8;\n      --critical: #f43f5e;\n      --high: #fb923c;\n      --medium: #facc15;\n      --low: #34d399;\n      --border: #334155;\n    }\n    * { box-sizing: border-box; margin: 0; padding: 0; }\n    body {\n      font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;\n      background: var(--bg);\n      color: var(--text);\n      line-height: 1.5;\n      padding: 24px;\n    }\n    .container { max-width: 1200px; margin: 0 auto; }\n    header {\n      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);\n      border: 1px solid var(--border);\n      border-radius: 16px;\n      padding: 28px 32px;\n      margin-bottom: 24px;\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      flex-wrap: wrap;\n      gap: 16px;\n    }\n    .header-title h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 4px; }\n    .header-title p { color: var(--text-muted); font-size: 15px; }\n    .header-meta { display: flex; align-items: center; gap: 16px; }\n    .date-badge {\n      background: rgba(56, 189, 248, 0.1);\n      border: 1px solid rgba(56, 189, 248, 0.3);\n      color: var(--primary);\n      padding: 8px 16px;\n      border-radius: 9999px;\n      font-size: 14px;\n      font-weight: 600;\n    }\n    .score-circle {\n      background: linear-gradient(135deg, #059669 0%, #10b981 100%);\n      color: #fff;\n      padding: 10px 18px;\n      border-radius: 12px;\n      text-align: center;\n      font-weight: 700;\n      font-size: 14px;\n      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);\n    }\n    .greeting-card {\n      background: rgba(56, 189, 248, 0.05);\n      border-left: 4px solid var(--primary);\n      padding: 16px 20px;\n      border-radius: 0 12px 12px 0;\n      margin-bottom: 24px;\n      font-size: 16px;\n      color: #e2e8f0;\n    }\n    .stats-grid {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));\n      gap: 16px;\n      margin-bottom: 24px;\n    }\n    .stat-card {\n      background: var(--card-bg);\n      border: 1px solid var(--border);\n      border-radius: 14px;\n      padding: 20px;\n      transition: transform 0.2s;\n    }\n    .stat-card:hover { transform: translateY(-2px); }\n    .stat-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }\n    .stat-val { font-size: 32px; font-weight: 700; color: #fff; }\n    .stat-hint { font-size: 13px; color: var(--primary); margin-top: 4px; }\n    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }\n    .priorities-container { margin-bottom: 24px; }\n    .priority-card {\n      background: var(--card-bg);\n      border: 1px solid var(--border);\n      border-radius: 12px;\n      padding: 16px 20px;\n      margin-bottom: 12px;\n      display: flex;\n      align-items: flex-start;\n      gap: 16px;\n    }\n    .priority-rank {\n      background: var(--card-sub);\n      color: var(--primary);\n      width: 36px;\n      height: 36px;\n      border-radius: 50%;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-weight: 700;\n      font-size: 16px;\n      flex-shrink: 0;\n    }\n    .priority-content { flex: 1; }\n    .priority-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }\n    .priority-title { font-size: 16px; font-weight: 600; color: #fff; }\n    .priority-time { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }\n    .priority-desc { font-size: 14px; color: #cbd5e1; }\n    .split-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 24px;\n      margin-bottom: 24px;\n    }\n    @media (max-width: 840px) { .split-grid { grid-template-columns: 1fr; } }\n    .panel {\n      background: var(--card-bg);\n      border: 1px solid var(--border);\n      border-radius: 14px;\n      padding: 24px;\n    }\n    .card-item {\n      background: var(--card-sub);\n      border: 1px solid rgba(255, 255, 255, 0.05);\n      border-radius: 10px;\n      padding: 14px 16px;\n      margin-bottom: 12px;\n    }\n    .card-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }\n    .card-item-title { font-weight: 600; font-size: 15px; color: #fff; }\n    .card-item-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }\n    .card-item-desc { font-size: 13px; color: #cbd5e1; }\n    .timeline { position: relative; padding-left: 20px; }\n    .timeline-row { display: flex; align-items: flex-start; margin-bottom: 16px; position: relative; }\n    .timeline-time { width: 130px; font-size: 13px; font-weight: 600; color: var(--primary); flex-shrink: 0; }\n    .timeline-marker {\n      width: 12px;\n      height: 12px;\n      border-radius: 50%;\n      background: var(--primary);\n      margin: 4px 16px 0 0;\n      flex-shrink: 0;\n      box-shadow: 0 0 8px var(--primary);\n    }\n    .timeline-body { flex: 1; background: var(--card-sub); border-radius: 8px; padding: 12px 14px; }\n    .timeline-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }\n    .timeline-title { font-size: 14px; font-weight: 600; color: #fff; }\n    .timeline-status { font-size: 12px; color: var(--text-muted); }\n    .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }\n    .badge-critical { background: rgba(244, 63, 94, 0.2); color: var(--critical); border: 1px solid rgba(244, 63, 94, 0.4); }\n    .badge-high { background: rgba(251, 146, 60, 0.2); color: var(--high); border: 1px solid rgba(251, 146, 60, 0.4); }\n    .badge-medium { background: rgba(250, 204, 21, 0.2); color: var(--medium); border: 1px solid rgba(250, 204, 21, 0.4); }\n    .badge-low { background: rgba(52, 211, 153, 0.2); color: var(--low); border: 1px solid rgba(52, 211, 153, 0.4); }\n    .pill { padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }\n    .pill-meeting { background: rgba(129, 140, 248, 0.2); color: var(--accent); }\n    .pill-focus { background: rgba(52, 211, 153, 0.2); color: var(--low); }\n    .pill-urgent { background: rgba(244, 63, 94, 0.2); color: var(--critical); }\n    .pill-email { background: rgba(56, 189, 248, 0.2); color: var(--primary); }\n    .recommendations-panel {\n      background: var(--card-bg);\n      border: 1px solid var(--border);\n      border-radius: 14px;\n      padding: 24px;\n      margin-bottom: 24px;\n    }\n    .recom-list { list-style: none; }\n    .recom-item {\n      display: flex;\n      align-items: center;\n      gap: 14px;\n      padding: 10px 0;\n      border-bottom: 1px solid rgba(255, 255, 255, 0.05);\n      font-size: 14px;\n      color: #e2e8f0;\n    }\n    .recom-item:last-child { border-bottom: none; }\n    .recom-num {\n      width: 24px;\n      height: 24px;\n      border-radius: 50%;\n      background: rgba(56, 189, 248, 0.15);\n      color: var(--primary);\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-weight: 700;\n      font-size: 12px;\n      flex-shrink: 0;\n    }\n    footer {\n      text-align: center;\n      color: var(--text-muted);\n      font-size: 13px;\n      padding: 20px 0;\n      border-top: 1px solid var(--border);\n      margin-top: 32px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <header>\n      <div class=\"header-title\">\n        <h1>Daily Briefing Dashboard</h1>\n        <p>AI Multi-Agent Briefing &bull; Google Emails & Calendar Intelligence</p>\n      </div>\n      <div class=\"header-meta\">\n        <div class=\"date-badge\">${dateStr}</div>\n        <div class=\"score-circle\">Readiness: ${readiness}%</div>\n      </div>\n    </header>\n\n    <div class=\"greeting-card\">${greeting}</div>\n\n    <div class=\"stats-grid\">\n      <div class=\"stat-card\">\n        <div class=\"stat-label\">Google Emails Checked</div>\n        <div class=\"stat-val\">${totalEmails}</div>\n        <div class=\"stat-hint\">${urgentEmails} urgent action items</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-label\">Scheduled Meetings</div>\n        <div class=\"stat-val\">${totalMeetings}</div>\n        <div class=\"stat-hint\">${cal.totalMeetingHours || 3.5}h meeting time</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-label\">Focus Work Available</div>\n        <div class=\"stat-val\">${focusHours}h</div>\n        <div class=\"stat-hint\">Protected productivity blocks</div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-label\">Schedule Health</div>\n        <div class=\"stat-val\">${cal.conflictsDetected === 0 ? 'Optimal' : 'Conflicts'}</div>\n        <div class=\"stat-hint\">${cal.conflictsDetected || 0} overlap flags</div>\n      </div>\n    </div>\n\n    <div class=\"priorities-container\">\n      <div class=\"section-title\">Top Priorities for Today</div>\n      ${prioritiesHtml}\n    </div>\n\n    <div class=\"panel\" style=\"margin-bottom: 24px;\">\n      <div class=\"section-title\">Master Daily Agenda & Unified Timeline</div>\n      <div class=\"timeline\">\n        ${timelineHtml}\n      </div>\n    </div>\n\n    <div class=\"split-grid\">\n      <div class=\"panel\">\n        <div class=\"section-title\">Email Intelligence & Triage</div>\n        ${emailActionsHtml || '<p style=\"color:var(--text-muted);font-size:14px;\">No critical email actions pending.</p>'}\n      </div>\n      <div class=\"panel\">\n        <div class=\"section-title\">Google Calendar Schedule</div>\n        ${calendarEventsHtml || '<p style=\"color:var(--text-muted);font-size:14px;\">No meetings scheduled today.</p>'}\n      </div>\n    </div>\n\n    <div class=\"recommendations-panel\">\n      <div class=\"section-title\">Executive Strategic Advice</div>\n      <ul class=\"recom-list\">\n        ${recommendationsHtml}\n      </ul>\n    </div>\n\n    <footer>\n      Multi-Agent Daily Briefing Workflow &bull; Orchestrated via Email Specialist, Calendar Specialist & Chief of Staff Synthesizer &bull; Generated at ${new Date().toISOString()}\n    </footer>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { html: fullHtml, generatedAt: new Date().toISOString(), readinessScore: readiness } }];\n"
+        }
+      },
+      {
+        "name": "Present HTML Dashboard",
+        "type": "n8n-nodes-base.html",
+        "typeVersion": 1.2,
+        "position": [
+          1800,
+          380
+        ],
+        "parameters": {
+          "operation": "generateHtmlTemplate",
+          "html": "={{ $json.html }}"
+        }
+      },
+      {
+        "name": "Sticky Note 1868ba94",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          100,
+          300
+        ],
+        "parameters": {
+          "content": "### Triggers & Context\nDaily scheduled trigger at 08:00 AM combined with on-demand manual trigger. Initializes current date and time windows.",
+          "color": 7
+        }
+      },
+      {
+        "name": "Sticky Note 17ceb184",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          100,
+          560
+        ],
+        "parameters": {
+          "content": "### Multi-Agent Intelligence Layer\n- **Email Triage Agent**: Fetches Google emails, categorizes & sorts by urgency.\n- **Calendar Schedule Agent**: Fetches Google Calendar, detects conflicts & computes focus blocks.",
+          "color": 4
+        }
+      },
+      {
+        "name": "Sticky Note 706e0ff7",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          100,
+          816
+        ],
+        "parameters": {
+          "content": "### Synthesis & HTML Dashboard Presentation\n- **Synthesizer Agent**: Merges email & calendar insights, generates master timeline & priorities.\n- **Code Node & HTML Node**: Compiles and presents modern responsive briefing dashboard.",
+          "color": 6
+        }
+      }
+    ],
+    "connections": {
+      "Daily 8AM Schedule": {
+        "main": [
+          [
+            {
+              "node": "Initialize Daily Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Initialize Daily Context": {
+        "main": [
+          [
+            {
+              "node": "Email Triage Agent",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Calendar Schedule Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Run Trigger": {
+        "main": [
+          [
+            {
+              "node": "Initialize Daily Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Triage Agent": {
+        "main": [
+          [
+            {
+              "node": "Combine Agent Insights",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Agent Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Email Triage Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gmail Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "Email Triage Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Structured Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Email Triage Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Combine Agent Insights": {
+        "main": [
+          [
+            {
+              "node": "Briefing Synthesizer Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calendar Schedule Agent": {
+        "main": [
+          [
+            {
+              "node": "Combine Agent Insights",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Calendar Agent Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Calendar Schedule Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Calendar Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "Calendar Schedule Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calendar Structured Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Calendar Schedule Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Briefing Synthesizer Agent": {
+        "main": [
+          [
+            {
+              "node": "Build HTML Dashboard Code",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Synthesizer Agent Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Briefing Synthesizer Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Briefing Structured Parser": {
+        "ai_outputParser": [
+          [
+            {
+              "node": "Briefing Synthesizer Agent",
+              "type": "ai_outputParser",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build HTML Dashboard Code": {
+        "main": [
+          [
+            {
+              "node": "Present HTML Dashboard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true
+    },
+    "staticData": null,
+    "activeVersion": null
+  },
+  "structuralFacts": {
+    "executionOrder": "v1",
+    "functionalNodeCount": 17,
+    "triggers": [
+      "Daily 8AM Schedule",
+      "Manual Run Trigger"
+    ],
+    "maxMainDepth": 8,
+    "unreachableFromTrigger": [],
+    "brokenReferences": [],
+    "waitsOn": {
+      "Initialize Daily Context": [
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ],
+      "Email Triage Agent": [
+        "Initialize Daily Context",
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ],
+      "Combine Agent Insights": [
+        "Email Triage Agent",
+        "Calendar Schedule Agent",
+        "Initialize Daily Context",
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ],
+      "Calendar Schedule Agent": [
+        "Initialize Daily Context",
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ],
+      "Briefing Synthesizer Agent": [
+        "Combine Agent Insights",
+        "Email Triage Agent",
+        "Calendar Schedule Agent",
+        "Initialize Daily Context",
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ],
+      "Build HTML Dashboard Code": [
+        "Briefing Synthesizer Agent",
+        "Combine Agent Insights",
+        "Email Triage Agent",
+        "Calendar Schedule Agent",
+        "Initialize Daily Context",
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ],
+      "Present HTML Dashboard": [
+        "Build HTML Dashboard Code",
+        "Briefing Synthesizer Agent",
+        "Combine Agent Insights",
+        "Email Triage Agent",
+        "Calendar Schedule Agent",
+        "Initialize Daily Context",
+        "Daily 8AM Schedule",
+        "Manual Run Trigger"
+      ]
+    }
+  }
+}

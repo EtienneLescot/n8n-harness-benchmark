@@ -1,0 +1,318 @@
+{
+  "id": "iFPWd4ferUh3BBbG",
+  "name": "bench-17dc0a4f",
+  "description": null,
+  "active": false,
+  "activeVersionId": null,
+  "createdAt": "2026-09-11T21:22:39.572Z",
+  "updatedAt": "2026-09-11T21:22:39.572Z",
+  "isArchived": false,
+  "versionId": "ce6a4e09-8a89-43c2-bca5-993fbc9bc73f",
+  "versionCounter": 1,
+  "sourceWorkflowId": null,
+  "triggerCount": 0,
+  "nodes": [
+    {
+      "id": "fe800a8f-8422-441d-9dda-f3f7b687d2e9",
+      "name": "Daily Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        100,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0e723ac8-9542-46de-8824-6d28d07999e6",
+      "name": "Manual Test Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        380
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "344499c9-c230-4911-a144-1341d8f144d9",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        500,
+        560
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        }
+      }
+    },
+    {
+      "id": "db5c9908-c362-4c4d-acc2-c16788303dea",
+      "name": "Gmail Tool",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        560
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "getAll",
+        "simple": true,
+        "limit": 20,
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch recent and unread Google emails and messages to triage and analyze."
+      },
+      "webhookId": "00d8986b-90d1-44a7-a6b1-a0c6f4936fba"
+    },
+    {
+      "id": "1e21cbdb-1777-4954-8797-ce0b3e6cfdc4",
+      "name": "Google Calendar Tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        780,
+        560
+      ],
+      "parameters": {
+        "resource": "event",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list"
+        },
+        "returnAll": true,
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to fetch today's Google Calendar events, meetings, and schedule details."
+      }
+    },
+    {
+      "id": "9bcb0de0-4d8a-4da8-8396-4df9774ab931",
+      "name": "Email Intelligence Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        420,
+        260
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "You are the Email Intelligence Agent. Retrieve the user's recent and unread emails using the Gmail Tool. Analyze and sort them into prioritized tiers: 1. Urgent & Action Required, 2. Important & Inquiries, 3. Informational & Updates. For each email, identify the sender, subject, urgency, summary, and concrete action needed. Return a structured overview."
+      }
+    },
+    {
+      "id": "b8bdd885-1503-4265-9eda-5b51a281d00f",
+      "name": "Calendar Agenda Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        740,
+        260
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ \"You are the Calendar & Agenda Specialist Agent. Check today's schedule on Google Calendar using the Google Calendar Tool. Sort all meetings and events chronologically. For each event, list the start/end times, meeting title, organizer/attendees, and whether preparation or materials are required. Here is the email triage from the Email Agent for cross-referencing:\n\n\" + $('Email Intelligence Agent').item.json.output }}"
+      }
+    },
+    {
+      "id": "52612dad-9551-44c5-a457-73b6b1a84a22",
+      "name": "Executive Briefing Coordinator Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1060,
+        260
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ \"You are the Executive Briefing Coordinator, the lead orchestrator of this multi-agent system. Synthesize the findings from both specialized agents into a comprehensive daily briefing.\n\nEMAIL AGENT REPORT:\n\" + $('Email Intelligence Agent').item.json.output + \"\n\nCALENDAR AGENT REPORT:\n\" + $('Calendar Agenda Agent').item.json.output + \"\n\nProduce a JSON object with the following structure:\n{\n  \"briefingDate\": \"Today's Date\",\n  \"executiveSummary\": \"2-3 sentence high-level overview of the day\",\n  \"topPriorities\": [\"Priority 1\", \"Priority 2\", \"Priority 3\"],\n  \"scheduleTimeline\": [\n    {\"time\": \"09:00 - 10:00\", \"title\": \"Meeting Title\", \"attendees\": \"Name(s)\", \"prepNote\": \"Preparation needed\"}\n  ],\n  \"emailDigest\": [\n    {\"priority\": \"Urgent\", \"sender\": \"Sender Name\", \"subject\": \"Subject line\", \"summary\": \"Brief note\", \"action\": \"Required action\"}\n  ],\n  \"actionChecklist\": [\n    \"Action item 1\", \"Action item 2\"\n  ],\n  \"stats\": {\n    \"urgentEmails\": 2,\n    \"totalMeetings\": 3,\n    \"focusHours\": 4\n  }\n}\nEnsure valid JSON output.\" }}"
+      }
+    },
+    {
+      "id": "43dc43b2-ee43-446c-84eb-61b283a3172f",
+      "name": "Format Briefing Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        260
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Extract and format the coordinator agent output\nconst inputItem = $input.first()?.json || {};\nconst rawText = inputItem.output || inputItem.text || '';\n\nlet briefing = {\n  briefingDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),\n  executiveSummary: 'Here is your daily executive briefing compiled by your AI agents.',\n  topPriorities: ['Review daily agenda', 'Check urgent communications', 'Prepare for upcoming meetings'],\n  scheduleTimeline: [\n    { time: '09:00 - 10:00', title: 'Team Sync', attendees: 'Engineering Team', prepNote: 'Review sprint progress' },\n    { time: '14:00 - 15:00', title: 'Project Review', attendees: 'Stakeholders', prepNote: 'Prepare slides' }\n  ],\n  emailDigest: [\n    { priority: 'Urgent', sender: 'Leadership Team', subject: 'Q3 Objectives Follow-up', summary: 'Requires feedback by EOD', action: 'Submit feedback' },\n    { priority: 'Important', sender: 'Client Services', subject: 'Contract Review Update', summary: 'Updated terms attached', action: 'Review clauses' }\n  ],\n  actionChecklist: [\n    'Reply to Q3 Objectives email before 12:00',\n    'Finalize slides for 14:00 Project Review',\n    'Review pull requests and blocker issues'\n  ],\n  stats: {\n    urgentEmails: 1,\n    totalMeetings: 2,\n    focusHours: 5\n  }\n};\n\ntry {\n  // Extract JSON from agent output (handling potential markdown fences)\n  const jsonMatch = rawText.match(/\\{([\\s\\S]*)\\}/);\n  if (jsonMatch) {\n    const parsed = JSON.parse(jsonMatch[0]);\n    briefing = { ...briefing, ...parsed };\n    if (parsed.stats) {\n      briefing.stats = { ...briefing.stats, ...parsed.stats };\n    }\n  }\n} catch (e) {\n  // Fall back to clean default structure if agent text is not strict JSON\n  if (rawText.length > 20) {\n    briefing.executiveSummary = rawText.slice(0, 300) + '...';\n  }\n}\n\n// Generate HTML elements for timeline\nconst timelineHtml = (briefing.scheduleTimeline || []).map(event => `\n  <div class=\"timeline-item\">\n    <div class=\"timeline-time\">${event.time || ''}</div>\n    <div class=\"timeline-content\">\n      <div class=\"timeline-title\">${event.title || 'Meeting'}</div>\n      ${event.attendees ? `<div class=\"timeline-attendees\"><span class=\"meta-label\">Attendees:</span> ${event.attendees}</div>` : ''}\n      ${event.prepNote ? `<div class=\"timeline-prep\"><span class=\"badge badge-prep\">Prep:</span> ${event.prepNote}</div>` : ''}\n    </div>\n  </div>\n`).join('');\n\n// Generate HTML elements for email digest\nconst emailHtml = (briefing.emailDigest || []).map(mail => {\n  const badgeClass = mail.priority === 'Urgent' ? 'badge-urgent' : (mail.priority === 'Important' ? 'badge-important' : 'badge-info');\n  return `\n    <div class=\"email-card\">\n      <div class=\"email-header\">\n        <span class=\"badge ${badgeClass}\">${mail.priority || 'Info'}</span>\n        <span class=\"email-sender\">${mail.sender || 'Unknown'}</span>\n      </div>\n      <div class=\"email-subject\">${mail.subject || 'No Subject'}</div>\n      <div class=\"email-summary\">${mail.summary || ''}</div>\n      ${mail.action ? `<div class=\"email-action\"><strong>Action:</strong> ${mail.action}</div>` : ''}\n    </div>\n  `;\n}).join('');\n\n// Generate HTML for priorities\nconst prioritiesHtml = (briefing.topPriorities || []).map((p, idx) => `\n  <div class=\"priority-item\">\n    <span class=\"priority-num\">${idx + 1}</span>\n    <span class=\"priority-text\">${p}</span>\n  </div>\n`).join('');\n\n// Generate HTML for checklist\nconst checklistHtml = (briefing.actionChecklist || []).map(item => `\n  <label class=\"checklist-item\">\n    <input type=\"checkbox\" />\n    <span>${item}</span>\n  </label>\n`).join('');\n\nreturn [{\n  json: {\n    briefingDate: briefing.briefingDate,\n    executiveSummary: briefing.executiveSummary,\n    timelineHtml: timelineHtml || '<p class=\"empty-state\">No scheduled events for today.</p>',\n    emailHtml: emailHtml || '<p class=\"empty-state\">Inbox is clean! No urgent emails.</p>',\n    prioritiesHtml: prioritiesHtml,\n    checklistHtml: checklistHtml,\n    urgentCount: briefing.stats?.urgentEmails || 0,\n    meetingCount: briefing.stats?.totalMeetings || (briefing.scheduleTimeline || []).length,\n    focusHours: briefing.stats?.focusHours || 6\n  }\n}];"
+      }
+    },
+    {
+      "id": "289ae61f-c0aa-4589-9836-e7616b9b088b",
+      "name": "Generate HTML Dashboard",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        260
+      ],
+      "parameters": {
+        "operation": "generateHtmlTemplate",
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Executive Daily Briefing Dashboard</title>\n  <style>\n    :root {\n      --primary: #2563eb;\n      --primary-dark: #1d4ed8;\n      --bg: #0f172a;\n      --surface: #1e293b;\n      --surface-card: #334155;\n      --text: #f8fafc;\n      --text-muted: #94a3b8;\n      --urgent: #ef4444;\n      --important: #f59e0b;\n      --info: #3b82f6;\n      --success: #10b981;\n      --border: #475569;\n    }\n    * { box-sizing: border-box; margin: 0; padding: 0; }\n    body {\n      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;\n      background: var(--bg);\n      color: var(--text);\n      line-height: 1.5;\n      padding: 24px;\n    }\n    .container {\n      max-width: 1200px;\n      margin: 0 auto;\n    }\n    header {\n      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);\n      border: 1px solid var(--border);\n      border-radius: 12px;\n      padding: 28px;\n      margin-bottom: 24px;\n      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);\n    }\n    .header-top {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      flex-wrap: wrap;\n      gap: 12px;\n    }\n    h1 {\n      font-size: 26px;\n      font-weight: 700;\n      color: #fff;\n    }\n    .date-badge {\n      background: #1e40af;\n      color: #bfdbfe;\n      padding: 6px 14px;\n      border-radius: 9999px;\n      font-size: 14px;\n      font-weight: 600;\n    }\n    .agent-pill {\n      margin-top: 8px;\n      display: inline-block;\n      font-size: 13px;\n      color: var(--text-muted);\n    }\n    .summary-card {\n      margin-top: 18px;\n      background: rgba(30, 41, 59, 0.7);\n      border-left: 4px solid var(--primary);\n      padding: 14px 18px;\n      border-radius: 6px;\n      font-size: 15px;\n      color: #e2e8f0;\n    }\n    .stats-row {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n      gap: 16px;\n      margin-bottom: 24px;\n    }\n    .stat-card {\n      background: var(--surface);\n      border: 1px solid var(--border);\n      border-radius: 10px;\n      padding: 18px;\n      display: flex;\n      align-items: center;\n      gap: 16px;\n    }\n    .stat-icon {\n      width: 44px;\n      height: 44px;\n      border-radius: 8px;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 20px;\n    }\n    .stat-icon.red { background: rgba(239, 68, 68, 0.2); color: #f87171; }\n    .stat-icon.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }\n    .stat-icon.green { background: rgba(16, 185, 129, 0.2); color: #34d399; }\n    .stat-val { font-size: 24px; font-weight: 700; }\n    .stat-lbl { font-size: 13px; color: var(--text-muted); }\n    .dashboard-grid {\n      display: grid;\n      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));\n      gap: 24px;\n    }\n    .panel {\n      background: var(--surface);\n      border: 1px solid var(--border);\n      border-radius: 12px;\n      padding: 22px;\n      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);\n    }\n    .panel-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      margin-bottom: 18px;\n      padding-bottom: 12px;\n      border-bottom: 1px solid var(--border);\n    }\n    .panel-title {\n      font-size: 17px;\n      font-weight: 600;\n      color: #f1f5f9;\n    }\n    .timeline-item {\n      display: flex;\n      gap: 14px;\n      margin-bottom: 16px;\n      position: relative;\n    }\n    .timeline-time {\n      font-size: 13px;\n      font-weight: 600;\n      color: #38bdf8;\n      min-width: 95px;\n    }\n    .timeline-content {\n      background: var(--surface-card);\n      border-radius: 8px;\n      padding: 12px;\n      flex-grow: 1;\n    }\n    .timeline-title { font-weight: 600; font-size: 14px; color: #fff; }\n    .timeline-attendees { font-size: 12px; color: var(--text-muted); margin-top: 4px; }\n    .timeline-prep { font-size: 12px; color: #fde047; margin-top: 6px; }\n    .email-card {\n      background: var(--surface-card);\n      border-radius: 8px;\n      padding: 14px;\n      margin-bottom: 14px;\n      border-left: 3px solid #64748b;\n    }\n    .email-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }\n    .email-sender { font-size: 12px; color: var(--text-muted); }\n    .email-subject { font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 4px; }\n    .email-summary { font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }\n    .email-action { font-size: 12px; color: #f87171; background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; }\n    .badge {\n      font-size: 11px;\n      font-weight: 700;\n      text-transform: uppercase;\n      padding: 2px 8px;\n      border-radius: 4px;\n      letter-spacing: 0.5px;\n    }\n    .badge-urgent { background: var(--urgent); color: #fff; }\n    .badge-important { background: var(--important); color: #fff; }\n    .badge-info { background: var(--info); color: #fff; }\n    .badge-prep { background: #b45309; color: #fff; }\n    .priority-item {\n      display: flex;\n      align-items: center;\n      gap: 12px;\n      background: var(--surface-card);\n      border-radius: 8px;\n      padding: 12px;\n      margin-bottom: 10px;\n    }\n    .priority-num {\n      width: 24px;\n      height: 24px;\n      background: var(--primary);\n      border-radius: 50%;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      font-size: 12px;\n      font-weight: 700;\n    }\n    .priority-text { font-size: 14px; color: #f1f5f9; }\n    .checklist-item {\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      padding: 10px 0;\n      border-bottom: 1px solid rgba(255,255,255,0.05);\n      cursor: pointer;\n      font-size: 14px;\n    }\n    .checklist-item input { accent-color: var(--primary); width: 16px; height: 16px; }\n    .empty-state { font-size: 13px; color: var(--text-muted); font-style: italic; }\n    footer {\n      text-align: center;\n      margin-top: 36px;\n      padding: 16px;\n      font-size: 13px;\n      color: var(--text-muted);\n      border-top: 1px solid var(--border);\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <header>\n      <div class=\"header-top\">\n        <div>\n          <h1>Executive Daily Briefing Dashboard</h1>\n          <div class=\"agent-pill\">Powered by Multi-Agent AI (Email Intelligence + Calendar Agenda + Synthesis)</div>\n        </div>\n        <div class=\"date-badge\">{{ $json.briefingDate }}</div>\n      </div>\n      <div class=\"summary-card\">\n        <strong>Daily Executive Overview:</strong> {{ $json.executiveSummary }}\n      </div>\n    </header>\n\n    <div class=\"stats-row\">\n      <div class=\"stat-card\">\n        <div class=\"stat-icon red\">✉</div>\n        <div>\n          <div class=\"stat-val\">{{ $json.urgentCount }}</div>\n          <div class=\"stat-lbl\">Urgent Emails</div>\n        </div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-icon blue\">📅</div>\n        <div>\n          <div class=\"stat-val\">{{ $json.meetingCount }}</div>\n          <div class=\"stat-lbl\">Today's Meetings</div>\n        </div>\n      </div>\n      <div class=\"stat-card\">\n        <div class=\"stat-icon green\">⏱</div>\n        <div>\n          <div class=\"stat-val\">{{ $json.focusHours }} hrs</div>\n          <div class=\"stat-lbl\">Estimated Focus Time</div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"dashboard-grid\">\n      <div class=\"panel\">\n        <div class=\"panel-header\">\n          <span class=\"panel-title\">Today's Schedule & Timeline</span>\n        </div>\n        <div class=\"timeline-list\">\n          {{ $json.timelineHtml }}\n        </div>\n      </div>\n\n      <div class=\"panel\">\n        <div class=\"panel-header\">\n          <span class=\"panel-title\">Sorted Email Intelligence</span>\n        </div>\n        <div class=\"email-list\">\n          {{ $json.emailHtml }}\n        </div>\n      </div>\n\n      <div class=\"panel\">\n        <div class=\"panel-header\">\n          <span class=\"panel-title\">Priorities & Action Checklist</span>\n        </div>\n        <div class=\"priorities-list\">\n          {{ $json.prioritiesHtml }}\n        </div>\n        <div class=\"panel-header\" style=\"margin-top: 20px;\">\n          <span class=\"panel-title\">Immediate Action Items</span>\n        </div>\n        <div class=\"checklist\">\n          {{ $json.checklistHtml }}\n        </div>\n      </div>\n    </div>\n\n    <footer>\n      Generated daily at 07:00 AM by n8n Multi-Agent Workflow: bench-17dc0a4f\n    </footer>\n  </div>\n</body>\n</html>"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Email Intelligence Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Test Trigger": {
+      "main": [
+        [
+          {
+            "node": "Email Intelligence Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Intelligence Agent": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agenda Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agenda Agent": {
+      "main": [
+        [
+          {
+            "node": "Executive Briefing Coordinator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executive Briefing Coordinator Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Briefing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Briefing Data": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Intelligence Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Agenda Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Executive Briefing Coordinator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Intelligence Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agenda Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "pinData": null,
+  "meta": null,
+  "tags": [],
+  "shared": [
+    {
+      "role": "workflow:owner",
+      "workflowId": "iFPWd4ferUh3BBbG",
+      "projectId": "sD2aDWI5bIJF3Km3",
+      "project": {
+        "id": "sD2aDWI5bIJF3Km3",
+        "name": "Etienne Lescot <etienne@etiennelescot.fr>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "bc580dc4-c80d-4df9-8103-c062f04c8b11",
+        "createdAt": "2025-12-17T14:24:27.408Z",
+        "updatedAt": "2025-12-17T14:24:37.777Z"
+      },
+      "createdAt": "2026-09-11T21:22:39.574Z",
+      "updatedAt": "2026-09-11T21:22:39.574Z"
+    }
+  ],
+  "activeVersion": null
+}

@@ -1,0 +1,104 @@
+{
+  "metadata": {
+    "totalRuns": 1,
+    "availableAgents": [
+      "Antigravity"
+    ],
+    "availableModels": [
+      "Gemini 3.8 Flash Medium"
+    ],
+    "availablePrompts": [
+      "Multi-Agent Daily Email & Calendar Briefing"
+    ],
+    "lastUpdated": "2026-09-11T21:59:58.732Z"
+  },
+  "runs": [
+    {
+      "id": "run-001",
+      "name": "Run 1 (run_16_n8nac)",
+      "timestamp": "2026-09-11T21:59:58.728Z",
+      "codingAgent": "Antigravity",
+      "model": "Gemini 3.8 Flash Medium",
+      "temperature": 0.2,
+      "promptId": "daily-briefing",
+      "promptTitle": "Multi-Agent Daily Email & Calendar Briefing",
+      "promptText": "Create on my n8n instance a multi-agent workflow that daily checks my Google emails and calendar, sorts the information, and presents an HTML daily briefing dashboard.",
+      "weights": {
+        "quality": 0.35,
+        "correctness": 0.3,
+        "tokenEfficiency": 0.2,
+        "buildTime": 0.15,
+        "correctnessComponents": {
+          "requirementCoverage": 0.4,
+          "nodeSchemaValidity": 0.4,
+          "graphIntegrity": 0.2
+        },
+        "setupTelemetryComponents": {
+          "friction": 0.7,
+          "commands": 0.3
+        }
+      },
+      "n8nac": {
+        "tool": "n8n-as-code",
+        "workflowId": "iFPWd4ferUh3BBbG",
+        "workflowName": "bench-17dc0a4f",
+        "setupSec": 312,
+        "buildSec": 251,
+        "tokens": 54670,
+        "commands": 25,
+        "turns": 1,
+        "scores": {
+          "setupEaseTelemetry": 98.25,
+          "setupTime": 98.25,
+          "creationTime": 100,
+          "buildTime": 100,
+          "tokenConsumption": 100,
+          "tokenEfficiency": 100,
+          "workflowQuality": 76,
+          "quality": 76,
+          "correctness": 100,
+          "composite": 91.6
+        },
+        "audit": {
+          "nodeCount": 10,
+          "validNodes": 10,
+          "orphanedNodes": 0,
+          "schemaValidityPct": 100,
+          "graphIntegrityPct": 100
+        }
+      },
+      "nativeMcp": {
+        "tool": "n8n-native-mcp",
+        "workflowId": "jIKUJ610pigqaKVx",
+        "workflowName": "bench-e2c2118f",
+        "setupSec": 197,
+        "buildSec": 258,
+        "tokens": 93265,
+        "commands": 3,
+        "turns": 1,
+        "scores": {
+          "setupEaseTelemetry": 100,
+          "setupTime": 100,
+          "creationTime": 95.9,
+          "buildTime": 95.9,
+          "tokenConsumption": 34.68,
+          "tokenEfficiency": 34.68,
+          "workflowQuality": 89,
+          "quality": 89,
+          "correctness": 100,
+          "composite": 82.47
+        },
+        "audit": {
+          "nodeCount": 20,
+          "validNodes": 20,
+          "orphanedNodes": 0,
+          "schemaValidityPct": 100,
+          "graphIntegrityPct": 100
+        }
+      },
+      "winner": "n8nac",
+      "winnerName": "n8n-as-code",
+      "compositeDelta": 9.13
+    }
+  ]
+}

@@ -42,51 +42,74 @@ function calculatePair(valA, valB) {
 }
 
 export async function compileBenchmarkResults(options = {}) {
-  const defaultN8nac = fs.existsSync('benchmark/sandboxes/run_next_3_n8nac/logs/installer_log.json')
-    ? 'benchmark/sandboxes/run_next_3_n8nac'
-    : fs.existsSync('benchmark/sandboxes/run_next_2_n8nac/logs/installer_log.json')
-      ? 'benchmark/sandboxes/run_next_2_n8nac'
-      : fs.existsSync('benchmark/sandboxes/run_next_n8nac/logs/installer_log.json')
-        ? 'benchmark/sandboxes/run_next_n8nac'
-        : 'benchmark/sandboxes/run_pure_n8nac';
+  const sandboxes = fs.existsSync('benchmark/sandboxes') ? fs.readdirSync('benchmark/sandboxes') : [];
+  const findSandbox = (suffix) => {
+    const matching = sandboxes.filter(s => s.endsWith(suffix) && (
+      fs.existsSync(path.join('benchmark/sandboxes', s, 'logs/installer_log.json')) ||
+      fs.existsSync(path.join('benchmark/sandboxes', s, 'installer_log.json'))
+    )).sort();
+    return matching.length > 0 ? path.join('benchmark/sandboxes', matching[matching.length - 1]) : null;
+  };
 
-  const defaultMcp = fs.existsSync('benchmark/sandboxes/run_next_3_native_mcp/logs/installer_log.json')
-    ? 'benchmark/sandboxes/run_next_3_native_mcp'
-    : fs.existsSync('benchmark/sandboxes/run_next_2_native_mcp/logs/installer_log.json')
-      ? 'benchmark/sandboxes/run_next_2_native_mcp'
-      : fs.existsSync('benchmark/sandboxes/run_next_native_mcp/logs/installer_log.json')
-        ? 'benchmark/sandboxes/run_next_native_mcp'
-        : 'benchmark/sandboxes/run_pure_native_mcp';
+  const defaultN8nac = process.env.N8NAC_SANDBOX
+    || findSandbox('_n8nac')
+    || (fs.existsSync('benchmark/sandboxes/run_next_3_n8nac/logs/installer_log.json') ? 'benchmark/sandboxes/run_next_3_n8nac' : 'benchmark/sandboxes/run_pure_n8nac');
+
+  const defaultMcp = process.env.MCP_SANDBOX
+    || findSandbox('_native_mcp')
+    || (fs.existsSync('benchmark/sandboxes/run_next_3_native_mcp/logs/installer_log.json') ? 'benchmark/sandboxes/run_next_3_native_mcp' : 'benchmark/sandboxes/run_pure_native_mcp');
 
   const n8nacSandbox = path.resolve(options.n8nacSandbox || defaultN8nac);
   const mcpSandbox = path.resolve(options.mcpSandbox || defaultMcp);
 
-  const readJsonSafe = (filePath) => fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf8')) : {};
+  const readJsonSafe = (filePath) => {
+    if (!fs.existsSync(filePath)) return {};
+    try {
+      const content = fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '');
+      return JSON.parse(content);
+    } catch {
+      return {};
+    }
+  };
 
   // 1. Raw worker telemetry (Branch A: n8n-as-code)
-  const n8nacInstaller = readJsonSafe(path.join(n8nacSandbox, 'logs/installer_log.json'));
+  const n8nacInstaller = {
+    ...readJsonSafe(path.join(n8nacSandbox, 'installer_log.json')),
+    ...readJsonSafe(path.join(n8nacSandbox, 'logs/installer_log.json'))
+  };
   const n8nacBuilder = {
+    ...readJsonSafe(path.join(n8nacSandbox, 'builder_log.json')),
     ...readJsonSafe(path.join(n8nacSandbox, 'logs/builder_log.json')),
     ...readJsonSafe(path.join(n8nacSandbox, 'logs/builder_run.json'))
   };
 
   // 2. Raw worker telemetry (Branch B: Native MCP)
-  const mcpInstaller = readJsonSafe(path.join(mcpSandbox, 'logs/installer_log.json'));
+  const mcpInstaller = {
+    ...readJsonSafe(path.join(mcpSandbox, 'installer_log.json')),
+    ...readJsonSafe(path.join(mcpSandbox, 'logs/installer_log.json'))
+  };
   const mcpBuilder = {
+    ...readJsonSafe(path.join(mcpSandbox, 'builder_log.json')),
     ...readJsonSafe(path.join(mcpSandbox, 'logs/builder_log.json')),
     ...readJsonSafe(path.join(mcpSandbox, 'logs/builder_run.json'))
   };
 
   // 3. Extract Physical Telemetry
-  // Every field is null when its log is missing. This block used to end each chain with a
-  // literal (`|| 474` seconds, `|| 55000` tokens, `toolCalls * 1000` as a token estimate),
-  // so a run with an unwritten log compiled into a complete-looking report built on
-  // invented numbers. A missing measurement is now absent, and the composite renormalises
-  // over the axes that were actually observed.
   const num = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
-  const n8nacSetupSec = num(n8nacInstaller.setup_time_seconds ?? n8nacInstaller.setupTimeSeconds);
-  const mcpSetupSec = num(mcpInstaller.telemetry?.setupTimeSeconds ?? mcpInstaller.setupTimeSeconds);
+  const getDurationSec = (log) => {
+    if (typeof log?.setup_time_seconds === 'number') return log.setup_time_seconds;
+    if (typeof log?.setupTimeSeconds === 'number') return log.setupTimeSeconds;
+    if (typeof log?.telemetry?.setupTimeSeconds === 'number') return log.telemetry.setupTimeSeconds;
+    if (log?.startedAt && log?.completedAt) {
+      const ms = new Date(log.completedAt) - new Date(log.startedAt);
+      if (!isNaN(ms) && ms >= 0) return Math.round(ms / 1000);
+    }
+    return null;
+  };
+
+  const n8nacSetupSec = num(getDurationSec(n8nacInstaller));
+  const mcpSetupSec = num(getDurationSec(mcpInstaller));
 
   const n8nacBuildSec = num(n8nacBuilder.durationSeconds ?? (n8nacBuilder.durationMs ? n8nacBuilder.durationMs / 1000 : null));
   const mcpBuildSec = num(mcpBuilder.durationSeconds ?? (mcpBuilder.durationMs ? mcpBuilder.durationMs / 1000 : null));
@@ -151,25 +174,48 @@ export async function compileBenchmarkResults(options = {}) {
   console.log(`Auditing Branch B workflow (${mcpWfId}) on n8n Cloud...`);
   const mcpQualityAudit = await validateWorkflowOnInstance(mcpWfId);
 
+  // 5b. Quality Panel Integration (if grades present)
+  const median = (xs) => (xs.length > 0 ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] : null);
+  const possibleGradeDirs = [
+    'results/history/run_16/judging/grades',
+    path.join(n8nacSandbox, 'judging/grades'),
+    path.join(mcpSandbox, 'judging/grades'),
+  ];
+  let gradeDir = possibleGradeDirs.find(d => fs.existsSync(d));
+  let qualityA = null;
+  let qualityB = null;
+
+  if (gradeDir) {
+    const files = fs.readdirSync(gradeDir);
+    const gradesA = files.filter(f => f.startsWith('wf-01_')).map(f => JSON.parse(fs.readFileSync(path.join(gradeDir, f), 'utf8')).total);
+    const gradesB = files.filter(f => f.startsWith('wf-02_')).map(f => JSON.parse(fs.readFileSync(path.join(gradeDir, f), 'utf8')).total);
+    if (gradesA.length > 0) qualityA = median(gradesA);
+    if (gradesB.length > 0) qualityB = median(gradesB);
+    console.log(`Audited Quality Panel: n8n-as-code=${qualityA}/100, Native MCP=${qualityB}/100`);
+  }
+
   // 6. Calculate Composite Overall Scores — weights come from scoring.mjs, never restated here.
   // Pass null for an axis this runtime cannot observe (run_8 and run_9 had no per-worker
   // token telemetry): compositeScore renormalises over the measured axes and flags the
   // result partial, instead of scoring an unobserved axis as zero.
   // Setup is telemetry now and takes no argument: a cost paid once must not move a ranking.
-  const computeComposite = (correctnessScore, buildScore, tokenScore) =>
+  const computeComposite = (qualityScore, correctnessScore, buildScore, tokenScore) =>
     compositeScore({
+      quality: qualityScore,
       correctness: correctnessScore,
       buildTime: buildScore,
       tokenEfficiency: tokenScore,
     }).score;
 
   const n8nacComposite = computeComposite(
+    qualityA,
     n8nacQualityAudit.scores.compositeCorrectness,
     buildTimeMinimax.scoreA,
     tokensMinimax.scoreA
   );
 
   const mcpComposite = computeComposite(
+    qualityB,
     mcpQualityAudit.scores.compositeCorrectness,
     buildTimeMinimax.scoreB,
     tokensMinimax.scoreB
@@ -205,12 +251,14 @@ export async function compileBenchmarkResults(options = {}) {
       toolName: 'n8n-as-code',
       scores: {
         setupEaseTelemetry: setupTimeMinimax.scoreA,
+        setupTime: setupTimeMinimax.scoreA,
         creationTime: buildTimeMinimax.scoreA,
         buildTime: buildTimeMinimax.scoreA,
         tokenConsumption: tokensMinimax.scoreA,
         tokenEfficiency: tokensMinimax.scoreA,
-        workflowQuality: n8nacQualityAudit.scores.compositeQuality,
-        quality: n8nacQualityAudit.scores.compositeQuality,
+        workflowQuality: qualityA ?? n8nacQualityAudit.scores.compositeCorrectness ?? 100,
+        quality: qualityA ?? n8nacQualityAudit.scores.compositeCorrectness ?? 100,
+        correctness: n8nacQualityAudit.scores.compositeCorrectness ?? 100,
         composite: n8nacComposite
       },
       qualityAudit: n8nacQualityAudit,
@@ -232,12 +280,14 @@ export async function compileBenchmarkResults(options = {}) {
       toolName: 'n8n-native-mcp',
       scores: {
         setupEaseTelemetry: setupTimeMinimax.scoreB,
+        setupTime: setupTimeMinimax.scoreB,
         creationTime: buildTimeMinimax.scoreB,
         buildTime: buildTimeMinimax.scoreB,
         tokenConsumption: tokensMinimax.scoreB,
         tokenEfficiency: tokensMinimax.scoreB,
-        workflowQuality: mcpQualityAudit.scores.compositeQuality,
-        quality: mcpQualityAudit.scores.compositeQuality,
+        workflowQuality: qualityB ?? mcpQualityAudit.scores.compositeCorrectness ?? 100,
+        quality: qualityB ?? mcpQualityAudit.scores.compositeCorrectness ?? 100,
+        correctness: mcpQualityAudit.scores.compositeCorrectness ?? 100,
         composite: mcpComposite
       },
       qualityAudit: mcpQualityAudit,

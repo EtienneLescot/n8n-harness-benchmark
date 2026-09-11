@@ -1,5 +1,11 @@
 {
   "metadata": {
+    "run": "run_16",
+    "label": "Antigravity Live · 1 build each · Gemini 3.8 Flash",
+    "date": "2026-09-11",
+    "underTest": "n8nac@2.7.0",
+    "buildsPerBranch": 1,
+    "judgesPerBuild": 3,
     "harness": "Antigravity",
     "primaryAgent": "Antigravity Orchestrator",
     "model": "Gemini 3.8 Flash Medium",
@@ -147,6 +153,12 @@
       "timestamp": "2026-09-11T21:59:58.506Z"
     },
     "rawMetrics": {
+      "tokens": 54670,
+      "buildSeconds": 251,
+      "installCommands": 25,
+      "installFrictions": 0,
+      "buildFrictions": 2,
+      "acquisitionSeconds": 312,
       "setupTimeSec": 312,
       "setupCommandsCount": 25,
       "totalDurationSec": 251,
@@ -157,7 +169,37 @@
       "interactions": {
         "turns": 1
       }
-    }
+    },
+    "qualityDimensions": {
+      "idea": 22,
+      "structure": 20,
+      "connections": 16,
+      "answer": 18
+    },
+    "builds": [
+      {
+        "label": "run16_n8nac",
+        "judgeId": "wf-01",
+        "nodes": 10,
+        "tokens": 54670,
+        "durationMs": 251000,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 76,
+        "judgeTotals": [
+          76,
+          79,
+          75
+        ],
+        "spread": 4,
+        "dimensions": {
+          "idea": 22,
+          "structure": 20,
+          "connections": 16,
+          "answer": 18
+        }
+      }
+    ]
   },
   "nativeMcp": {
     "runId": "run_16_native_mcp",
@@ -254,6 +296,12 @@
       "timestamp": "2026-09-11T21:59:58.727Z"
     },
     "rawMetrics": {
+      "tokens": 93265,
+      "buildSeconds": 258,
+      "installCommands": 3,
+      "installFrictions": 0,
+      "buildFrictions": 0,
+      "acquisitionSeconds": 197,
       "setupTimeSec": 197,
       "setupCommandsCount": 3,
       "totalDurationSec": 258,
@@ -264,6 +312,36 @@
       "interactions": {
         "turns": 1
       }
-    }
+    },
+    "qualityDimensions": {
+      "idea": 24,
+      "structure": 23,
+      "connections": 25,
+      "answer": 18
+    },
+    "builds": [
+      {
+        "label": "run16_native_mcp",
+        "judgeId": "wf-02",
+        "nodes": 20,
+        "tokens": 93265,
+        "durationMs": 258000,
+        "delivers": true,
+        "correctness": 100,
+        "quality": 89,
+        "judgeTotals": [
+          89,
+          89,
+          88
+        ],
+        "spread": 1,
+        "dimensions": {
+          "idea": 24,
+          "structure": 23,
+          "connections": 25,
+          "answer": 18
+        }
+      }
+    ]
   }
 }

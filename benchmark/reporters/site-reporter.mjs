@@ -89,8 +89,14 @@ function comparable(runs) {
     return runs.filter((r) => JSON.stringify(r.weights || {}) === want);
 }
 
-/** The deepest comparable run: most builds per branch, newest on a tie. */
+/** The deepest comparable run: most builds per branch, newest on a tie (or overridden via --run). */
 function headlineRun(runs) {
+    const runArgIdx = process.argv.indexOf('--run');
+    const target = process.env.HEADLINE_RUN || (runArgIdx !== -1 ? process.argv[runArgIdx + 1] : null);
+    if (target) {
+        const found = runs.find((r) => r.metadata?.run === target);
+        if (found) return found;
+    }
     const pool = comparable(runs);
     if (!pool.length) return null;
     return [...pool].sort((a, b) => (a.metadata?.buildsPerBranch || 1) - (b.metadata?.buildsPerBranch || 1))
@@ -335,9 +341,12 @@ function measureBar(label, cls, value, formatted, max) {
 
 function render(runs) {
     const n = runs.length;
-    // The newest run carrying per-build detail drives the two quality charts.
-    const deepRun = [...runs].reverse().find((r) => r.n8nac?.builds?.length && r.n8nac?.qualityDimensions) || null;
+    const runArgIdx = process.argv.indexOf('--run');
+    const target = process.env.HEADLINE_RUN || (runArgIdx !== -1 ? process.argv[runArgIdx + 1] : null);
     const head = headlineRun(runs);
+    const deepRun = (head && head.metadata?.run === target && head.n8nac?.qualityDimensions)
+        ? head
+        : ([...runs].reverse().find((r) => r.n8nac?.builds?.length && r.n8nac?.qualityDimensions) || null);
     const scored = head ? [head] : runs;
     const older = runs.length - comparable(runs).length;
     const agg = aggregate(scored);
@@ -619,6 +628,9 @@ if (runs.length === 0) {
     console.error('No runs found under results/history/*/benchmark_results.json');
     process.exit(1);
 }
-fs.mkdirSync(path.dirname(outFile), { recursive: true });
-fs.writeFileSync(outFile, render(runs), 'utf8');
-console.log(`docs/index.html generated from ${runs.length} run(s): ${runs.map((r) => r.metadata?.run).join(', ')}`);
+const outArgIdx = process.argv.indexOf('--out');
+const targetOut = outArgIdx !== -1 ? path.resolve(process.argv[outArgIdx + 1]) : outFile;
+
+fs.mkdirSync(path.dirname(targetOut), { recursive: true });
+fs.writeFileSync(targetOut, render(runs), 'utf8');
+console.log(`${path.relative(repoRoot, targetOut)} generated from ${runs.length} run(s): ${runs.map((r) => r.metadata?.run).join(', ')}`);
