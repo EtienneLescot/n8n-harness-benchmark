@@ -85,8 +85,14 @@ const round = (n, d = 2) => parseFloat(Number(n).toFixed(d));
 /** Mean of per-run scores — see the header note on why this is not the score of the means. */
 /** Runs scored under the weights in force today. Anything else is history, not evidence. */
 function comparable(runs) {
-    const want = JSON.stringify(COMPOSITE_WEIGHTS);
-    return runs.filter((r) => JSON.stringify(r.weights || {}) === want);
+    // Compare the four scored weights only. Whole-object equality excluded a run whose
+    // weights block carried extra descriptive keys, which silently dropped a whole
+    // orchestrator out of the aggregate the page exists to show.
+    const keys = Object.keys(COMPOSITE_WEIGHTS);
+    return runs.filter((r) => {
+        const w = r.weights || {};
+        return keys.every((k) => w[k] === COMPOSITE_WEIGHTS[k]);
+    });
 }
 
 /** The deepest comparable run: most builds per branch, newest on a tie (or overridden via --run). */
@@ -347,7 +353,9 @@ function render(runs) {
     const deepRun = (head && head.metadata?.run === target && head.n8nac?.qualityDimensions)
         ? head
         : ([...runs].reverse().find((r) => r.n8nac?.builds?.length && r.n8nac?.qualityDimensions) || null);
-    const scored = head ? [head] : runs;
+    // Every run on the current weight scheme. One run is one paired trial; the aggregate is
+    // the whole point of collecting runs from several orchestrators and models.
+    const scored = comparable(runs).length ? comparable(runs) : runs;
     const older = runs.length - comparable(runs).length;
     const agg = aggregate(scored);
     const latest = runs[n - 1];
@@ -517,7 +525,7 @@ function render(runs) {
       moves. Between the last two runs Native MCP was not re-run at all, same builds, same tokens,
       same seconds, and its token score still rose from 67.8 to 77.2 because n8n-as-code got more
       expensive. A score going up does not always mean that branch did better.
-      From the deepest run on the current weights: ${esc(head?.metadata?.label || "?")}, and ${head?.metadata?.judgesPerBuild || 0} isolated judges per build.${older ? ` ${older} earlier run(s) are in the table below but out of this chart: they were scored under a different weight scheme and their composites are not comparable.` : ""}</p>
+      Mean of ${scored.length} run${scored.length === 1 ? "" : "s"} on the current weights, across ${new Set(scored.map((r) => r.metadata?.harness).filter(Boolean)).size} orchestrator(s) and ${new Set(scored.map((r) => r.metadata?.model).filter(Boolean)).size} model(s). Every run is listed below.${older ? ` ${older} earlier run(s) are in that table but out of this chart: they were scored under a different weight scheme.` : ""}</p>
     <div class="legend">${legend}</div>
     <div class="radar">
       ${radar.svg}
@@ -570,10 +578,12 @@ ${deepRun ? `<section>
 <section>
   <div class="wrap">
     <h2>Runs</h2>
-    <p class="sub">Each submitted run, with its own composite. The mean above is the mean of
-      these, not a score recomputed from pooled measurements: the minimax ratio is defined
-      between the two branches <em>within</em> a run, and runs from different harnesses and
-      models have no common absolute scale.</p>
+    <p class="sub">Every submitted run, one line each. The figures above are the mean of this
+      column, which is the point of collecting runs from several orchestrators and models:
+      one run is a single paired trial, and a tool that only wins under one harness has not
+      won. What cannot be pooled is the raw measurements, because the relative axes are
+      defined between the two branches <em>within</em> a run; the composites themselves
+      average fine.</p>
     <div class="scroll">
       <table>
         <tr><th>Run</th><th>Harness</th><th>Model</th><th class="num">n8n-as-code</th><th class="num">Native MCP</th></tr>
